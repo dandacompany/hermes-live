@@ -1,0 +1,39 @@
+name: hermes-live
+version: 0.9.0
+requires_hermes: '>=0.22.5'
+description: Gemini, Grok, Qwen, and Codex subscription live voice calls beside the Hermes Desktop composer.
+author: Dante Labs
+config_schema:
+  gemini_api_key:
+    type: secret
+    env: HERMES_LIVE_GEMINI_API_KEY
+    description: Optional Gemini API key. Leave blank to use a key already configured in Hermes.
+  grok_api_key:
+    type: secret
+    env: HERMES_LIVE_GROK_API_KEY
+    description: Optional xAI API key. Leave blank to use a key already configured in Hermes.
+  qwen_api_key:
+    type: secret
+    env: HERMES_LIVE_QWEN_API_KEY
+    description: Optional regional DashScope API key. Workspace ID and region are also required.
+  gemini_key_env:
+    type: str
+    default: ''
+    description: Advanced optional Hermes secret variable name. An explicit binding overrides the key field.
+  grok_key_env:
+    type: str
+    default: ''
+    description: Advanced optional Hermes secret variable name. An explicit binding overrides the key field.
+  qwen_key_env:
+    type: str
+    default: ''
+    description: Advanced optional Hermes secret variable name. An explicit binding overrides the key field.
+  qwen_workspace_id:
+    type: str
+    default: ''
+    description: Model Studio workspace ID (ws-...). Must match the API key's workspace.
+  qwen_region:
+    type: str
+    default: singapore
+    choices: [singapore, beijing]
+    description: Qwen region. Must match the API key region.

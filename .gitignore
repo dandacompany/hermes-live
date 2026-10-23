@@ -1,0 +1,16 @@
+.*
+!.gitignore
+!.github/
+!.github/**
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+docs/
+tests/
+dist/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+scripts/*
+!scripts/build.mjs
