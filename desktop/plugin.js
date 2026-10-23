@@ -2625,7 +2625,7 @@ function DeviceSettings({ value, onChange, active }) {
   const supported = typeof AudioContext.prototype.setSinkId === "function";
   return /* @__PURE__ */ jsxs3("section", { "aria-label": t("audio"), style: section, children: [
     /* @__PURE__ */ jsxs3("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
-      /* @__PURE__ */ jsx3("span", {}),
+      /* @__PURE__ */ jsx3("strong", { style: { fontSize: ".8125rem" }, children: t("audio") }),
       /* @__PURE__ */ jsx3(Button2, { variant: "ghost", size: "sm", onClick: () => void refresh(), children: t("refreshDevices") })
     ] }),
     ["input", "output"].map((kind) => {

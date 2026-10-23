@@ -24,7 +24,7 @@ export function DeviceSettings({value,onChange,active}:{value:AudioDevices;onCha
  };
  const supported=typeof (AudioContext.prototype as any).setSinkId==='function';
  return <section aria-label={t('audio')} style={section}>
-  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span/><Button variant="ghost" size="sm" onClick={()=>void refresh()}>{t('refreshDevices')}</Button></div>
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><strong style={{fontSize:'.8125rem'}}>{t('audio')}</strong><Button variant="ghost" size="sm" onClick={()=>void refresh()}>{t('refreshDevices')}</Button></div>
   {(['input','output'] as const).map(kind=>{
    const items=(kind==='output'&&!supported?[]:devices).filter(d=>d.kind===(kind==='input'?'audioinput':'audiooutput')&&d.deviceId&&d.deviceId!=='default');
    const options=[{value:'system',label:t('systemDefault')},...(value[kind]&&!items.some(d=>d.deviceId===value[kind])?[{value:'device:'+value[kind],label:t('missingDevice')}]:[]),...items.map((d,i)=>({value:'device:'+d.deviceId,label:d.label||`${kind==='input'?t('microphone'):t('speaker')} ${i+1}`}))];
