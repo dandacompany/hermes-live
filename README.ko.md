@@ -6,9 +6,23 @@ English: [README.md](./README.md)
 
 공식 앱을 수정하거나 다시 빌드하지 않고 입력란에 통화 버튼을 추가합니다. 최근 채팅 맥락을 음성 모델에 전달하며, 파일 확인이나 작업 요청은 현재 Hermes 채팅에 위임합니다. 마이크·스피커 선택, 음소거, 실시간 자막, 제공자별 사용량과 예상 요금을 지원합니다.
 
-![Hermes Live 기능 소개](assets/hermes-live-demo.gif)
+## 미리보기
 
-영상은 v0.7.0의 기능 소개입니다. v0.9.0에서는 Hermes 공식 디자인 시스템에 맞춰 선택 상자, 탭, 간격과 인증 안내 배치를 정리했습니다.
+Hermes Desktop의 기본 선택 상자와 탭을 사용하는 v0.9.0 설정 화면입니다.
+
+![Hermes Live v0.9.0 통화 설정](assets/settings-v0.9.png)
+
+현재 영문 화면을 순서대로 보여주는 GIF입니다. 보라색 통화 버튼은 저장된 설정으로 통화를 시작하고, 옆 화살표는 설정 패널을 엽니다.
+
+![Hermes Live v0.9.0 제공자·오디오·사용량 화면 소개](assets/hermes-live-demo.gif)
+
+| 네 가지 음성 제공자 | 마이크·스피커 설정 |
+| --- | --- |
+| ![Gemini·Grok·Qwen·Codex 구독 제공자 선택](assets/providers.png) | ![시스템 기본 마이크·스피커 선택과 마이크 테스트](assets/audio-settings.png) |
+| **API 사용량과 예상 요금** | **Codex 구독 한도** |
+| ![Grok 통화 시간과 예상 API 요금](assets/api-usage.png) | ![Codex Pro 주간 사용률·잔여량·초기화 시간](assets/codex-usage.png) |
+
+2026년 10월 23일 Hermes Desktop v0.22.5와 Hermes Live v0.9.0에서 촬영했습니다. GIF는 실제 설정 화면을 엮은 애니메이션이며 실통화 녹화가 아닙니다. 개인 백엔드 정보는 촬영 영역에서 제외했습니다. 사용량 수치는 촬영 당시 값이며 구독 한도를 보장하지 않습니다. 인터페이스는 앱의 언어 설정에 따라 17개 언어를 지원합니다.
 
 ## 요구 사항
 

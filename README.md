@@ -12,7 +12,7 @@ The v0.9.0 settings panel uses Hermes Desktop’s native selectors and segmented
 
 ![Hermes Live v0.9.0 native settings controls](assets/settings-v0.9.png)
 
-An English-interface tour of the installed plugin: account usage, API cost estimates, audio devices, and provider settings. The purple composer button starts a call with saved settings; its adjacent arrow opens this panel.
+An animated tour assembled from current English-interface screenshots: provider settings, audio devices, API cost estimates, and account usage. The purple composer button starts a call with saved settings; its adjacent arrow opens this panel.
 
 ![Hermes Live settings tour in Hermes Desktop](assets/hermes-live-demo.gif)
 
@@ -22,7 +22,7 @@ An English-interface tour of the installed plugin: account usage, API cost estim
 | **API usage and estimated costs** | **Codex subscription limits** |
 | ![Grok call duration and estimated API cost](assets/api-usage.png) | ![Codex Pro weekly usage, remaining allowance, and reset time](assets/codex-usage.png) |
 
-Captured in Hermes Desktop v0.22.5 with Hermes Live v0.7.0. Usage figures are snapshots, not plan guarantees. The demo shows settings navigation; it does not record a live voice conversation. The interface follows the main app language across all 17 supported languages.
+Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. Usage figures are snapshots, not plan guarantees. The GIF cycles through actual settings screenshots; it is not a live call recording. Personal backend details are outside the capture area. The interface follows the main app language across all 17 supported languages.
 
 ## Requirements
 
