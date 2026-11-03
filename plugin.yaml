@@ -1,5 +1,5 @@
 name: hermes-live
-version: 0.9.0
+version: 0.9.1
 requires_hermes: '>=0.22.5'
 description: Gemini, Grok, Qwen, and Codex subscription live voice calls beside the Hermes Desktop composer.
 author: Dante Labs

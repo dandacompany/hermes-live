@@ -108,5 +108,9 @@ hermes plugins validate . --install-deps
 
 [MIT License](LICENSE). 필요한 제3자 고지는 [NOTICE.md](NOTICE.md)에 포함되어 있습니다.
 
+## 홈페이지 상담 연동
+
+0.9.1부터 [Hermes Consult](https://github.com/dandacompany/hermes-consult)를 위한 음성 전용 연동 API를 제공합니다. 두 플러그인을 설치하면 홈페이지에서 구독 음성 상담을 사용할 수 있습니다. 상담 세션은 별도로 관리하고 제공자가 설정한 상담 지침을 적용하며 shell·MCP·앱·플러그인·훅은 비활성화합니다. 기존 Desktop 통화의 기본 역할은 유지합니다.
+
 ---
 [Dante Labs](https://dante-labs.com) · [YouTube @dante-labs](https://youtube.com/@dante-labs) · [Email](mailto:dante@dante-labs.com) · [Discord](https://discord.com/invite/rXyy5e9ujs) · [Support](https://buymeacoffee.com/dante.labs)

@@ -207,7 +207,7 @@ class Sessions:
         for key in expired:
             self.stop(key)
 
-    def start(self, call_id, voice, offer, model="gpt-live-1-codex"):
+    def start(self, call_id, voice, offer, model="gpt-live-1-codex", persona=PERSONA):
         self.reap()
         with self.lock:
             if call_id in self.cancelled or call_id in self.calls:
@@ -237,7 +237,7 @@ class Sessions:
             server.request('thread/realtime/start', {
                 'threadId':thread_id,'transport':{'type':'webrtc','sdp':offer},
                 'outputModality':'audio','version':'v3','voice':voice,'model':model,
-                'prompt':PERSONA,'realtimeStartInstructions':SKIP,'realtimeEndInstructions':SKIP,
+                'prompt':persona,'realtimeStartInstructions':SKIP,'realtimeEndInstructions':SKIP,
                 'includeStartupContext':False,'clientManagedHandoffs':True,'delegationAckFiller':True})
             answer = server.answer(thread_id)
             with self.lock:
