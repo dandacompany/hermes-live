@@ -1,5 +1,42 @@
+// src/setup.tsx
+import { useEffect as useEffect3, useRef as useRef3, useState as useState3, useSyncExternalStore } from "react";
+import { Button as Button3, host as host2 } from "@hermes/plugin-sdk";
+
+// src/i18n-react.ts
+import { useI18n, usePluginI18n } from "@hermes/plugin-sdk";
+function useLiveI18n() {
+  const { locale } = useI18n();
+  const t = usePluginI18n("hermes-live");
+  return { t, locale };
+}
+
 // src/locales/en.ts
 var en = {
+  errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+  wake: "Wake",
+  wakeEmpty: "Choose a bot in Wake settings",
+  wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+  wakeLocalOnly: "Name calling is available only on this Mac.",
+  wakeAliases: "Spoken aliases (up to 3)",
+  wakeAliasesFor: "Spoken aliases for {0}",
+  wakeAliasesHint: "Separate aliases with commas",
+  wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+  wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+  wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+  wakeNameRequired: "Set a bot display name or a spoken alias.",
+  wakeSaved: "Saved. Changes apply to the next call.",
+  wakeSave: "Save bot selection",
+  errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+  errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+  wakeToggle: "Hands-free calling",
+  wakeWarming: "Preparing local speech recognition\u2026",
+  wakeHelp: "Say {0} to call; say your goodbye to end.",
+  wakeOn: "Wake on",
+  wakeOff: "Wake off",
+  wakeArmed: "Listening for {0}",
+  wakeCalling: "Voice call",
+  wakeRearming: "Returning to standby",
+  wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
   authentication: "Authentication",
   authTarget: "Backend: {0} \xB7 Connection: {1} \xB7 Profile: {2}",
   authSignedIn: "ChatGPT subscription login detected.",
@@ -21,7 +58,7 @@ var en = {
   audio: "Audio",
   usage: "Usage",
   settings: "Hermes Live settings",
-  settingsHint: "Call \xB7 Audio \xB7 Usage",
+  settingsHint: "Call \xB7 Audio \xB7 Wake \xB7 Usage",
   provider: "Provider",
   model: "Model",
   voice: "Voice",
@@ -136,7 +173,7 @@ var translations_default = {
     audio: "\uC624\uB514\uC624",
     usage: "\uC0AC\uC6A9\uB7C9",
     settings: "Hermes Live \uC124\uC815",
-    settingsHint: "\uD1B5\uD654 \xB7 \uC624\uB514\uC624 \xB7 \uC0AC\uC6A9\uB7C9",
+    settingsHint: "\uD1B5\uD654 \xB7 \uC624\uB514\uC624 \xB7 \uC774\uB984 \uD638\uCD9C \xB7 \uC0AC\uC6A9\uB7C9",
     provider: "\uC81C\uACF5\uC790",
     model: "\uBAA8\uB378",
     voice: "\uBAA9\uC18C\uB9AC",
@@ -258,7 +295,32 @@ var translations_default = {
     errCodexMissing: "\uC774 \uBC31\uC5D4\uB4DC\uC5D0 Codex CLI\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uACF5\uC2DD \uC548\uB0B4\uC5D0 \uB530\uB77C \uC124\uCE58\uD558\uC138\uC694.",
     errCodexSignedOut: "\uC774 \uBC31\uC5D4\uB4DC\uC758 Codex\uC5D0 \uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4. ChatGPT \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778\uD558\uC138\uC694.",
     errCodexApiLogin: "Codex\uAC00 API \uD0A4 \uC778\uC99D\uC744 \uC0AC\uC6A9 \uC911\uC785\uB2C8\uB2E4. \uAD6C\uB3C5 \uC74C\uC131\uC744 \uC0AC\uC6A9\uD558\uB824\uBA74 ChatGPT\uB85C \uB85C\uADF8\uC778\uD558\uC138\uC694.",
-    errCodexCheck: "Codex \uB85C\uADF8\uC778 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uBC31\uC5D4\uB4DC CLI\uB97C \uD655\uC778\uD558\uACE0 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."
+    errCodexCheck: "Codex \uB85C\uADF8\uC778 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uBC31\uC5D4\uB4DC CLI\uB97C \uD655\uC778\uD558\uACE0 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.",
+    wakeToggle: "\uC74C\uC131 \uD638\uCD9C \uB300\uAE30",
+    wakeHelp: "{0}\uB77C\uACE0 \uBD88\uB7EC \uD1B5\uD654\uB97C \uC2DC\uC791\uD558\uACE0 \uC885\uB8CC \uC778\uC0AC\uB85C \uB05D\uB0C5\uB2C8\uB2E4.",
+    wakeOn: "\uD638\uCD9C \uCF1C\uC9D0",
+    wakeOff: "\uD638\uCD9C \uAEBC\uC9D0",
+    wakeArmed: "{0} \uB300\uAE30 \uC911",
+    wakeCalling: "\uC74C\uC131 \uD1B5\uD654 \uC911",
+    wakeRearming: "\uD638\uCD9C \uB300\uAE30\uB85C \uBCF5\uADC0 \uC911",
+    wakeSuspended: "\uB300\uAE30 \uBD88\uAC00 \xB7 \uD504\uB85C\uD544, \uB9C8\uC774\uD06C \uB610\uB294 \uB2E4\uB978 \uCC3D \uD655\uC778",
+    wakeWarming: "\uB85C\uCEEC \uC74C\uC131 \uC778\uC2DD \uC900\uBE44 \uC911\u2026",
+    wake: "\uC774\uB984 \uD638\uCD9C",
+    wakeEmpty: "\uC774\uB984 \uD638\uCD9C \uC124\uC815\uC5D0\uC11C \uBD07\uC744 \uC120\uD0DD\uD558\uC138\uC694",
+    wakeDescription: "\uC774 \uB9E5\uC758 \uBD07\uC744 \uCF1C\uBA74 \u201C\uD5E4\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uD1B5\uD654\uD569\uB2C8\uB2E4. \uBCC0\uACBD\uC740 \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4. \u201CBye {\uC774\uB984}\u201D \uB610\uB294 \u201C\uBC14\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uC885\uB8CC\uD569\uB2C8\uB2E4.",
+    wakeLocalOnly: "\uC774\uB984 \uD638\uCD9C\uC740 \uC774 \uB9E5\uC758 \uB85C\uCEEC \uBD07\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+    wakeAliases: "\uBD80\uB97C \uB54C \uC4F8 \uBCC4\uCE6D (\uCD5C\uB300 3\uAC1C)",
+    wakeAliasesFor: "{0} \uD638\uCD9C \uBCC4\uCE6D",
+    wakeAliasesHint: "\uC27C\uD45C\uB85C \uAD6C\uBD84\uD574 \uC785\uB825",
+    wakeExample: "\uD638\uCD9C\uC5B4: \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "\uC774 \uBD07\uC5D0\uC11C Hermes Live\uB97C \uBA3C\uC800 \uCF1C\uC138\uC694. \uAD6C\uB3C5 \uB85C\uADF8\uC778\uC740 \uC5F0\uACB0\uD560 \uB54C \uD655\uC778\uD569\uB2C8\uB2E4.",
+    wakeDuplicate: "\uB2E4\uB978 \uD65C\uC131 \uBD07\uACFC \uC774\uB984\uC774 \uACB9\uCE69\uB2C8\uB2E4. \uBCC4\uCE6D\uC744 \uBC14\uAFB8\uAC70\uB098 \uD55C \uBD07\uC744 \uAEBC \uC8FC\uC138\uC694.",
+    wakeNameRequired: "\uBD07 \uD45C\uC2DC \uC774\uB984\uC774\uB098 \uD638\uCD9C \uBCC4\uCE6D\uC744 \uC9C0\uC815\uD558\uC138\uC694.",
+    wakeSaved: "\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
+    wakeSave: "\uD638\uCD9C\uD560 \uBD07 \uC800\uC7A5",
+    errWakeChanged: "\uBD07 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68 \uD6C4 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.",
+    errWakeRegistry: "\uBCC4\uCE6D \uC218(\uCD5C\uB300 3\uAC1C), \uC911\uBCF5 \uC774\uB984, \uC120\uD0DD\uD55C \uBD07\uC758 \uC124\uC815\uC744 \uD655\uC778\uD558\uC138\uC694.",
+    errBotsView: "\uD638\uCD9C\uD55C \uBD07\uC744 \uC5F4\uB824\uBA74 Hermes Desktop\uC5D0\uC11C Bots\uB97C \uCF1C\uC138\uC694. Bots \uD654\uBA74\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 Desktop\uC744 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694."
   },
   ja: {
     call: "\u901A\u8A71",
@@ -387,7 +449,32 @@ var translations_default = {
     errCodexMissing: "\u3053\u306E\u30D0\u30C3\u30AF\u30A8\u30F3\u30C9\u306B Codex CLI \u304C\u3042\u308A\u307E\u305B\u3093\u3002\u516C\u5F0F\u30AC\u30A4\u30C9\u306B\u5F93\u3063\u3066\u30A4\u30F3\u30B9\u30C8\u30FC\u30EB\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
     errCodexSignedOut: "\u3053\u306E\u30D0\u30C3\u30AF\u30A8\u30F3\u30C9\u306E Codex \u306F\u672A\u30ED\u30B0\u30A4\u30F3\u3067\u3059\u3002ChatGPT \u30A2\u30AB\u30A6\u30F3\u30C8\u3067\u30ED\u30B0\u30A4\u30F3\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
     errCodexApiLogin: "Codex \u306F API \u30AD\u30FC\u8A8D\u8A3C\u3092\u4F7F\u7528\u3057\u3066\u3044\u307E\u3059\u3002\u30B5\u30D6\u30B9\u30AF\u30EA\u30D7\u30B7\u30E7\u30F3\u97F3\u58F0\u306B\u306F ChatGPT \u3067\u30ED\u30B0\u30A4\u30F3\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
-    errCodexCheck: "Codex \u306E\u30ED\u30B0\u30A4\u30F3\u3092\u78BA\u8A8D\u3067\u304D\u307E\u305B\u3093\u3002\u30D0\u30C3\u30AF\u30A8\u30F3\u30C9\u306E CLI \u3092\u78BA\u8A8D\u3057\u3066\u518D\u8A66\u884C\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+    errCodexCheck: "Codex \u306E\u30ED\u30B0\u30A4\u30F3\u3092\u78BA\u8A8D\u3067\u304D\u307E\u305B\u3093\u3002\u30D0\u30C3\u30AF\u30A8\u30F3\u30C9\u306E CLI \u3092\u78BA\u8A8D\u3057\u3066\u518D\u8A66\u884C\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   zh: {
     call: "\u901A\u8BDD",
@@ -516,7 +603,32 @@ var translations_default = {
     errCodexMissing: "\u6B64\u540E\u7AEF\u672A\u5B89\u88C5 Codex CLI\u3002\u8BF7\u6309\u5B98\u65B9\u6307\u5357\u5B89\u88C5\u3002",
     errCodexSignedOut: "\u6B64\u540E\u7AEF\u7684 Codex \u5C1A\u672A\u767B\u5F55\u3002\u8BF7\u4F7F\u7528 ChatGPT \u8D26\u6237\u767B\u5F55\u3002",
     errCodexApiLogin: "Codex \u6B63\u5728\u4F7F\u7528 API \u5BC6\u94A5\u8BA4\u8BC1\u3002\u4F7F\u7528\u8BA2\u9605\u8BED\u97F3\u9700\u767B\u5F55 ChatGPT\u3002",
-    errCodexCheck: "\u65E0\u6CD5\u68C0\u67E5 Codex \u767B\u5F55\u72B6\u6001\u3002\u8BF7\u68C0\u67E5\u540E\u7AEF CLI \u540E\u91CD\u8BD5\u3002"
+    errCodexCheck: "\u65E0\u6CD5\u68C0\u67E5 Codex \u767B\u5F55\u72B6\u6001\u3002\u8BF7\u68C0\u67E5\u540E\u7AEF CLI \u540E\u91CD\u8BD5\u3002",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "zh-hant": {
     call: "\u901A\u8A71",
@@ -645,7 +757,32 @@ var translations_default = {
     errCodexMissing: "\u6B64\u5F8C\u7AEF\u672A\u5B89\u88DD Codex CLI\u3002\u8ACB\u4F9D\u5B98\u65B9\u6307\u5357\u5B89\u88DD\u3002",
     errCodexSignedOut: "\u6B64\u5F8C\u7AEF\u7684 Codex \u5C1A\u672A\u767B\u5165\u3002\u8ACB\u4F7F\u7528 ChatGPT \u5E33\u6236\u767B\u5165\u3002",
     errCodexApiLogin: "Codex \u6B63\u4F7F\u7528 API \u91D1\u9470\u9A57\u8B49\u3002\u4F7F\u7528\u8A02\u95B1\u8A9E\u97F3\u9700\u767B\u5165 ChatGPT\u3002",
-    errCodexCheck: "\u7121\u6CD5\u6AA2\u67E5 Codex \u767B\u5165\u72C0\u614B\u3002\u8ACB\u6AA2\u67E5\u5F8C\u7AEF CLI \u5F8C\u91CD\u8A66\u3002"
+    errCodexCheck: "\u7121\u6CD5\u6AA2\u67E5 Codex \u767B\u5165\u72C0\u614B\u3002\u8ACB\u6AA2\u67E5\u5F8C\u7AEF CLI \u5F8C\u91CD\u8A66\u3002",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   fr: {
     call: "Appel",
@@ -774,7 +911,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI n\u2019est pas install\xE9 sur ce backend. Suivez le guide officiel.",
     errCodexSignedOut: "Codex est d\xE9connect\xE9 sur ce backend. Connectez-vous avec votre compte ChatGPT.",
     errCodexApiLogin: "Codex utilise une cl\xE9 API. Connectez-vous avec ChatGPT pour la voix sur abonnement.",
-    errCodexCheck: "Impossible de v\xE9rifier la connexion Codex. V\xE9rifiez le CLI du backend et r\xE9essayez."
+    errCodexCheck: "Impossible de v\xE9rifier la connexion Codex. V\xE9rifiez le CLI du backend et r\xE9essayez.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   de: {
     call: "Anruf",
@@ -903,7 +1065,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI ist auf diesem Backend nicht installiert. Der offiziellen Anleitung folgen.",
     errCodexSignedOut: "Codex ist auf diesem Backend abgemeldet. Mit dem ChatGPT-Konto anmelden.",
     errCodexApiLogin: "Codex verwendet API-Schl\xFCssel-Authentifizierung. F\xFCr Abonnement-Sprachfunktionen mit ChatGPT anmelden.",
-    errCodexCheck: "Codex-Anmeldung konnte nicht gepr\xFCft werden. Backend-CLI pr\xFCfen und erneut versuchen."
+    errCodexCheck: "Codex-Anmeldung konnte nicht gepr\xFCft werden. Backend-CLI pr\xFCfen und erneut versuchen.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   es: {
     call: "Llamada",
@@ -1032,7 +1219,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI no est\xE1 instalado en este backend. Sigue la gu\xEDa oficial.",
     errCodexSignedOut: "Codex no tiene sesi\xF3n en este backend. Inicia sesi\xF3n con tu cuenta de ChatGPT.",
     errCodexApiLogin: "Codex usa autenticaci\xF3n por clave API. Inicia sesi\xF3n con ChatGPT para usar voz por suscripci\xF3n.",
-    errCodexCheck: "No se pudo comprobar la sesi\xF3n de Codex. Revisa el CLI del backend e int\xE9ntalo de nuevo."
+    errCodexCheck: "No se pudo comprobar la sesi\xF3n de Codex. Revisa el CLI del backend e int\xE9ntalo de nuevo.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   it: {
     call: "Chiamata",
@@ -1161,7 +1373,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI non \xE8 installato su questo backend. Segui la guida ufficiale.",
     errCodexSignedOut: "Codex non ha effettuato l\u2019accesso su questo backend. Accedi con il tuo account ChatGPT.",
     errCodexApiLogin: "Codex usa una chiave API. Accedi con ChatGPT per la voce in abbonamento.",
-    errCodexCheck: "Impossibile verificare l\u2019accesso Codex. Controlla il CLI del backend e riprova."
+    errCodexCheck: "Impossibile verificare l\u2019accesso Codex. Controlla il CLI del backend e riprova.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   pt: {
     call: "Chamada",
@@ -1290,7 +1527,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI n\xE3o est\xE1 instalado neste backend. Siga o guia oficial.",
     errCodexSignedOut: "Codex n\xE3o est\xE1 conectado neste backend. Entre com sua conta ChatGPT.",
     errCodexApiLogin: "Codex usa autentica\xE7\xE3o por chave API. Entre com ChatGPT para usar voz por assinatura.",
-    errCodexCheck: "N\xE3o foi poss\xEDvel verificar o login Codex. Verifique o CLI do backend e tente novamente."
+    errCodexCheck: "N\xE3o foi poss\xEDvel verificar o login Codex. Verifique o CLI do backend e tente novamente.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ru: {
     call: "\u0417\u0432\u043E\u043D\u043E\u043A",
@@ -1419,7 +1681,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI \u043D\u0435 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D \u043D\u0430 \u044D\u0442\u043E\u043C \u0441\u0435\u0440\u0432\u0435\u0440\u0435. \u0421\u043B\u0435\u0434\u0443\u0439\u0442\u0435 \u043E\u0444\u0438\u0446\u0438\u0430\u043B\u044C\u043D\u043E\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438.",
     errCodexSignedOut: "\u041D\u0430 \u044D\u0442\u043E\u043C \u0441\u0435\u0440\u0432\u0435\u0440\u0435 \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D \u0432\u0445\u043E\u0434 \u0432 Codex. \u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u0441 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u043E\u043C ChatGPT.",
     errCodexApiLogin: "Codex \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442 \u043A\u043B\u044E\u0447 API. \u0414\u043B\u044F \u0433\u043E\u043B\u043E\u0441\u0430 \u043F\u043E \u043F\u043E\u0434\u043F\u0438\u0441\u043A\u0435 \u0432\u043E\u0439\u0434\u0438\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 ChatGPT.",
-    errCodexCheck: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0445\u043E\u0434 \u0432 Codex. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 CLI \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043F\u043E\u043F\u044B\u0442\u043A\u0443."
+    errCodexCheck: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C \u0432\u0445\u043E\u0434 \u0432 Codex. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 CLI \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043F\u043E\u043F\u044B\u0442\u043A\u0443.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   uk: {
     call: "\u0412\u0438\u043A\u043B\u0438\u043A",
@@ -1548,7 +1835,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI \u043D\u0435 \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u043D\u0430 \u0446\u044C\u043E\u043C\u0443 \u0441\u0435\u0440\u0432\u0435\u0440\u0456. \u0414\u043E\u0442\u0440\u0438\u043C\u0443\u0439\u0442\u0435\u0441\u044C \u043E\u0444\u0456\u0446\u0456\u0439\u043D\u043E\u0457 \u0456\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0456\u0457.",
     errCodexSignedOut: "\u041D\u0430 \u0446\u044C\u043E\u043C\u0443 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u043D\u0435 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043E \u0432\u0445\u0456\u0434 \u0443 Codex. \u0423\u0432\u0456\u0439\u0434\u0456\u0442\u044C \u0447\u0435\u0440\u0435\u0437 ChatGPT.",
     errCodexApiLogin: "Codex \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u043E\u0432\u0443\u0454 \u043A\u043B\u044E\u0447 API. \u0414\u043B\u044F \u0433\u043E\u043B\u043E\u0441\u0443 \u0437\u0430 \u043F\u0456\u0434\u043F\u0438\u0441\u043A\u043E\u044E \u0443\u0432\u0456\u0439\u0434\u0456\u0442\u044C \u0447\u0435\u0440\u0435\u0437 ChatGPT.",
-    errCodexCheck: "\u041D\u0435 \u0432\u0434\u0430\u043B\u043E\u0441\u044F \u043F\u0435\u0440\u0435\u0432\u0456\u0440\u0438\u0442\u0438 \u0432\u0445\u0456\u0434 \u0443 Codex. \u041F\u0435\u0440\u0435\u0432\u0456\u0440\u0442\u0435 CLI \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u0439 \u043F\u043E\u0432\u0442\u043E\u0440\u0456\u0442\u044C \u0441\u043F\u0440\u043E\u0431\u0443."
+    errCodexCheck: "\u041D\u0435 \u0432\u0434\u0430\u043B\u043E\u0441\u044F \u043F\u0435\u0440\u0435\u0432\u0456\u0440\u0438\u0442\u0438 \u0432\u0445\u0456\u0434 \u0443 Codex. \u041F\u0435\u0440\u0435\u0432\u0456\u0440\u0442\u0435 CLI \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u0439 \u043F\u043E\u0432\u0442\u043E\u0440\u0456\u0442\u044C \u0441\u043F\u0440\u043E\u0431\u0443.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   tr: {
     call: "Arama",
@@ -1677,7 +1989,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI bu sunucuda kurulu de\u011Fil. Resm\xEE k\u0131lavuzu izleyin.",
     errCodexSignedOut: "Bu sunucuda Codex oturumu kapal\u0131. ChatGPT hesab\u0131n\u0131zla oturum a\xE7\u0131n.",
     errCodexApiLogin: "Codex API anahtar\u0131yla kimlik do\u011Fruluyor. Abonelik sesi i\xE7in ChatGPT ile oturum a\xE7\u0131n.",
-    errCodexCheck: "Codex oturumu kontrol edilemedi. Sunucu CLI\u2019sini kontrol edip tekrar deneyin."
+    errCodexCheck: "Codex oturumu kontrol edilemedi. Sunucu CLI\u2019sini kontrol edip tekrar deneyin.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ar: {
     call: "\u0645\u0643\u0627\u0644\u0645\u0629",
@@ -1806,7 +2143,32 @@ var translations_default = {
     errCodexMissing: "\u0644\u0645 \u064A\u062A\u0645 \u062A\u062B\u0628\u064A\u062A Codex CLI \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062E\u0627\u062F\u0645. \u0627\u062A\u0628\u0639 \u0627\u0644\u062F\u0644\u064A\u0644 \u0627\u0644\u0631\u0633\u0645\u064A.",
     errCodexSignedOut: "\u0644\u0645 \u064A\u062A\u0645 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u062F\u062E\u0648\u0644 \u0625\u0644\u0649 Codex \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062E\u0627\u062F\u0645. \u0633\u062C\u0651\u0644 \u0627\u0644\u062F\u062E\u0648\u0644 \u0628\u062D\u0633\u0627\u0628 ChatGPT.",
     errCodexApiLogin: "\u064A\u0633\u062A\u062E\u062F\u0645 Codex \u0645\u0641\u062A\u0627\u062D API \u0644\u0644\u0645\u0635\u0627\u062F\u0642\u0629. \u0633\u062C\u0651\u0644 \u0627\u0644\u062F\u062E\u0648\u0644 \u0639\u0628\u0631 ChatGPT \u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0635\u0648\u062A \u0628\u0627\u0644\u0627\u0634\u062A\u0631\u0627\u0643.",
-    errCodexCheck: "\u062A\u0639\u0630\u0631 \u0627\u0644\u062A\u062D\u0642\u0642 \u0645\u0646 \u062A\u0633\u062C\u064A\u0644 \u062F\u062E\u0648\u0644 Codex. \u062A\u062D\u0642\u0642 \u0645\u0646 CLI \u0639\u0644\u0649 \u0627\u0644\u062E\u0627\u062F\u0645 \u0648\u0623\u0639\u062F \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629."
+    errCodexCheck: "\u062A\u0639\u0630\u0631 \u0627\u0644\u062A\u062D\u0642\u0642 \u0645\u0646 \u062A\u0633\u062C\u064A\u0644 \u062F\u062E\u0648\u0644 Codex. \u062A\u062D\u0642\u0642 \u0645\u0646 CLI \u0639\u0644\u0649 \u0627\u0644\u062E\u0627\u062F\u0645 \u0648\u0623\u0639\u062F \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   af: {
     call: "Oproep",
@@ -1935,7 +2297,32 @@ var translations_default = {
     errCodexMissing: "Codex CLI is nie op hierdie bediener ge\xEFnstalleer nie. Volg die amptelike gids.",
     errCodexSignedOut: "Codex is afgemeld op hierdie bediener. Meld met jou ChatGPT-rekening aan.",
     errCodexApiLogin: "Codex gebruik API-sleutelstawing. Meld met ChatGPT aan vir intekeningstem.",
-    errCodexCheck: "Kon nie Codex-aanmelding nagaan nie. Gaan die bediener-CLI na en probeer weer."
+    errCodexCheck: "Kon nie Codex-aanmelding nagaan nie. Gaan die bediener-CLI na en probeer weer.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   hu: {
     call: "H\xEDv\xE1s",
@@ -2064,7 +2451,32 @@ var translations_default = {
     errCodexMissing: "A Codex CLI nincs telep\xEDtve erre a h\xE1tt\xE9rkiszolg\xE1l\xF3ra. K\xF6vesse a hivatalos \xFAtmutat\xF3t.",
     errCodexSignedOut: "A Codex nincs bejelentkezve ezen a h\xE1tt\xE9rkiszolg\xE1l\xF3n. Jelentkezzen be ChatGPT-fi\xF3kj\xE1val.",
     errCodexApiLogin: "A Codex API-kulcsos hiteles\xEDt\xE9st haszn\xE1l. Az el\u0151fizet\xE9ses hanghoz jelentkezzen be ChatGPT-vel.",
-    errCodexCheck: "A Codex-bejelentkez\xE9s nem ellen\u0151rizhet\u0151. Ellen\u0151rizze a h\xE1tt\xE9rkiszolg\xE1l\xF3 CLI-j\xE9t, \xE9s pr\xF3b\xE1lja \xFAjra."
+    errCodexCheck: "A Codex-bejelentkez\xE9s nem ellen\u0151rizhet\u0151. Ellen\u0151rizze a h\xE1tt\xE9rkiszolg\xE1l\xF3 CLI-j\xE9t, \xE9s pr\xF3b\xE1lja \xFAjra.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ga: {
     call: "Glao",
@@ -2193,7 +2605,32 @@ var translations_default = {
     errCodexMissing: "N\xEDl Codex CLI suite\xE1ilte ar an bhfreastala\xED seo. Lean an treoir oifigi\xFAil.",
     errCodexSignedOut: "N\xEDl Codex log\xE1ilte isteach ar an bhfreastala\xED seo. Log\xE1il isteach le do chuntas ChatGPT.",
     errCodexApiLogin: "\xDAs\xE1ideann Codex eochair API. Log\xE1il isteach le ChatGPT chun guth s\xEDnti\xFAis a \xFAs\xE1id.",
-    errCodexCheck: "N\xEDorbh fh\xE9idir log\xE1il isteach Codex a sheice\xE1il. Seice\xE1il CLI an fhreastala\xED agus bain triail eile as."
+    errCodexCheck: "N\xEDorbh fh\xE9idir log\xE1il isteach Codex a sheice\xE1il. Seice\xE1il CLI an fhreastala\xED agus bain triail eile as.",
+    wakeToggle: "Hands-free calling",
+    wakeHelp: "Say {0} to call; say your goodbye to end.",
+    wakeOn: "Wake on",
+    wakeOff: "Wake off",
+    wakeArmed: "Listening for {0}",
+    wakeCalling: "Voice call",
+    wakeRearming: "Returning to standby",
+    wakeSuspended: "Standby unavailable \xB7 check profile, microphone or another window",
+    wakeWarming: "Preparing local speech recognition\u2026",
+    wake: "Wake",
+    wakeEmpty: "Choose a bot in Wake settings",
+    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeLocalOnly: "Name calling is available only on this Mac.",
+    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliasesFor: "Spoken aliases for {0}",
+    wakeAliasesHint: "Separate aliases with commas",
+    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
+    wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
+    wakeNameRequired: "Set a bot display name or a spoken alias.",
+    wakeSaved: "Saved. Changes apply to the next call.",
+    wakeSave: "Save bot selection",
+    errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
+    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   }
 };
 
@@ -2300,10 +2737,10 @@ function formatMessage(template, args) {
 var bundles = Object.fromEntries(Object.entries(catalogs).map(([locale, messages]) => [locale, Object.fromEntries(Object.entries(messages).map(([key, value]) => [key, (...args) => formatMessage(value, args)]))]));
 var legacyEntries = Object.entries(legacy_errors_default).sort((a, b) => b[0].length - a[0].length);
 function errorKey(value) {
-  const text = value instanceof Error ? value.message : String(value ?? "");
-  const code = text.match(/HL_ERROR:(err[A-Za-z]+)/)?.[1];
+  const text2 = value instanceof Error ? value.message : String(value ?? "");
+  const code = text2.match(/HL_ERROR:(err[A-Za-z]+)/)?.[1];
   if (code && Object.hasOwn(en, code)) return code;
-  for (const [message, key] of legacyEntries) if (text.includes(message)) return key;
+  for (const [message, key] of legacyEntries) if (text2.includes(message)) return key;
   return "errGeneric";
 }
 function localizeError(t, value) {
@@ -2334,12 +2771,134 @@ function formatCalendarDate(locale, date) {
   return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeZone: "UTC" }).format(/* @__PURE__ */ new Date(date + "T00:00:00Z"));
 }
 
-// src/i18n-react.ts
-import { useI18n, usePluginI18n } from "@hermes/plugin-sdk";
-function useLiveI18n() {
-  const { locale } = useI18n();
-  const t = usePluginI18n("hermes-live");
-  return { t, locale };
+// src/setup-copy.ts
+var text = {
+  pauseVoice: ["Pause Live voice", "\uC74C\uC131 \uAE30\uB2A5 \uC7A0\uC2DC \uC26C\uAE30"],
+  resumeVoice: ["Resume name listening", "\uD638\uCD9C \uB300\uAE30 \uC7AC\uAC1C"],
+  resumingVoice: ["Resuming name listening\u2026", "\uD638\uCD9C \uB300\uAE30\uB97C \uC7AC\uAC1C\uD558\uB294 \uC911\u2026"],
+  resumeFailed: ["Could not resume name listening. Check the microphone and setup, then retry.", "\uD638\uCD9C \uB300\uAE30\uB97C \uC7AC\uAC1C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB9C8\uC774\uD06C\uC640 \uC900\uBE44 \uC0C1\uD0DC\uB97C \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."],
+  pausingVoice: ["Releasing Live audio\u2026", "Live \uC74C\uC131\uC744 \uC815\uB9AC\uD558\uB294 \uC911\u2026"],
+  pausedVoice: ["Live voice is paused", "Live \uC74C\uC131 \uAE30\uB2A5 \uC77C\uC2DC\uC815\uC9C0"],
+  pauseFailed: ["Could not confirm microphone release. Retry before using another voice feature.", "\uB9C8\uC774\uD06C \uD574\uC81C\uB97C \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uC74C\uC131 \uAE30\uB2A5\uC744 \uC0AC\uC6A9\uD558\uAE30 \uC804\uC5D0 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."],
+  pauseHelp: ["Before using Hermes\u2019s built-in voice or dictation, pause Live here. End that voice feature before resuming. Live does not detect it automatically.", "Hermes \uAE30\uBCF8 \uC74C\uC131\xB7\uBC1B\uC544\uC4F0\uAE30\uB97C \uC4F0\uAE30 \uC804\uC5D0 \uC5EC\uAE30\uC11C Live\uB97C \uC7A0\uC2DC \uC26C\uAC8C \uD574 \uC8FC\uC138\uC694. \uC0AC\uC6A9\uC744 \uB9C8\uCE5C \uB4A4 \uD638\uCD9C \uB300\uAE30\uB97C \uC7AC\uAC1C\uD558\uC138\uC694. \uC790\uB3D9\uC73C\uB85C \uAC10\uC9C0\uD558\uC9C0\uB294 \uC54A\uC2B5\uB2C8\uB2E4."],
+  pausedHelp: ["Live calls and name listening are paused. This stays paused after reload; your bot, voice and microphone choices are kept.", "Live \uD1B5\uD654\uC640 \uC774\uB984 \uD638\uCD9C \uB300\uAE30\uB97C \uBA48\uCDC4\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68 \uD6C4\uC5D0\uB3C4 \uC720\uC9C0\uB418\uBA70 \uBD07\xB7\uBAA9\uC18C\uB9AC\xB7\uB9C8\uC774\uD06C \uC124\uC815\uC740 \uBCF4\uC874\uB429\uB2C8\uB2E4."],
+  prepareHint: ["The existing file is verified and prepared locally. No download is needed.", "\uAE30\uC874 \uD30C\uC77C\uC744 \uAC80\uC99D\uD558\uACE0 \uB85C\uCEEC\uC5D0\uC11C \uC900\uBE44\uD569\uB2C8\uB2E4. \uB2E4\uC6B4\uB85C\uB4DC\uB294 \uD544\uC694\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
+  manualReady: ["Audio preferences are saved. Choose a provider in Call settings and start a call to verify the connection.", "\uC624\uB514\uC624 \uC120\uD0DD\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uD1B5\uD654 \uC124\uC815\uC5D0\uC11C \uC74C\uC131 \uC11C\uBE44\uC2A4\uB97C \uC120\uD0DD\uD558\uACE0 \uC2E4\uC81C \uC5F0\uACB0\uC744 \uD655\uC778\uD558\uC138\uC694."],
+  modelUnsupported: ["This model is not supported by automatic setup. Select base, small, large-v3-turbo, or large-v3 in plugin settings.", "\uC790\uB3D9 \uC900\uBE44\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uBAA8\uB378\uC785\uB2C8\uB2E4. \uD50C\uB7EC\uADF8\uC778 \uC124\uC815\uC5D0\uC11C base, small, large-v3-turbo \uB610\uB294 large-v3\uB97C \uC120\uD0DD\uD558\uC138\uC694."],
+  title: ["Set up Hermes Live", "Hermes Live \uC2DC\uC791\uD558\uAE30"],
+  intro: ["Complete what is missing. Keep what already works.", "\uD544\uC694\uD55C \uD56D\uBAA9\uB9CC \uC900\uBE44\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC124\uC815\uD55C \uD56D\uBAA9\uC740 \uC720\uC9C0\uD569\uB2C8\uB2E4."],
+  overview: ["Start", "\uC2DC\uC791"],
+  bots: ["Choose bots", "\uBD07 \uC120\uD0DD"],
+  account: ["Voice account", "\uD1B5\uD654 \uACC4\uC815"],
+  model: ["Wake model", "\uD638\uCD9C \uBAA8\uB378"],
+  audio: ["Microphone", "\uB9C8\uC774\uD06C"],
+  test: ["Try it", "\uC9C1\uC811 \uD574\uBCF4\uAE30"],
+  done: ["Ready", "\uC900\uBE44 \uACB0\uACFC"],
+  wakeMode: ["Call bots by name", "\uC774\uB984\uC73C\uB85C \uBD80\uB974\uAE30"],
+  manualMode: ["Start calls with a button", "\uBC84\uD2BC\uC73C\uB85C \uD1B5\uD654\uD558\uAE30"],
+  wakeHint: ["Local recognition, followed by a Codex subscription voice call.", "\uC774 Mac\uC5D0\uC11C \uC774\uB984\uC744 \uC778\uC2DD\uD55C \uB4A4 Codex \uAD6C\uB3C5\uC73C\uB85C \uD1B5\uD654\uD569\uB2C8\uB2E4."],
+  manualHint: ["No wake model is needed. Configure a voice provider in Call settings.", "\uD638\uCD9C \uBAA8\uB378\uC740 \uD544\uC694\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uD1B5\uD654 \uC124\uC815\uC5D0\uC11C \uC74C\uC131 \uC11C\uBE44\uC2A4\uB97C \uC120\uD0DD\uD558\uC138\uC694."],
+  next: ["Continue", "\uB2E4\uC74C"],
+  back: ["Back", "\uC774\uC804"],
+  later: ["Continue later", "\uB098\uC911\uC5D0 \uACC4\uC18D\uD558\uAE30"],
+  refresh: ["Check again", "\uB2E4\uC2DC \uD655\uC778"],
+  checking: ["Checking\u2026", "\uD655\uC778 \uC911\u2026"],
+  close: ["Close", "\uB2EB\uAE30"],
+  localOnly: ["Name calling is supported on a local Apple Silicon Mac. Button calls remain available.", "\uC774\uB984 \uD638\uCD9C\uC740 \uB85C\uCEEC Apple Silicon Mac\uC5D0\uC11C \uC9C0\uC6D0\uD569\uB2C8\uB2E4. \uBC84\uD2BC \uD1B5\uD654\uB294 \uACC4\uC18D \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."],
+  failed: ["Could not check preparation. Reconnect this profile and try again.", "\uC900\uBE44 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC774 \uD504\uB85C\uD544\uC5D0 \uB2E4\uC2DC \uC5F0\uACB0\uD55C \uB4A4 \uD655\uC778\uD574 \uC8FC\uC138\uC694."],
+  selectBots: ["Select the bots you want to call. New bots stay off until selected.", "\uD638\uCD9C\uD560 \uBD07\uC744 \uC120\uD0DD\uD558\uC138\uC694. \uC0C8\uB85C \uCD94\uAC00\uB41C \uBD07\uC740 \uC9C1\uC811 \uC120\uD0DD\uD560 \uB54C\uAE4C\uC9C0 \uAEBC\uC838 \uC788\uC2B5\uB2C8\uB2E4."],
+  noBots: ["No local bots found. Add a bot in Bots, then check again.", "\uB85C\uCEEC \uBD07\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. Bots\uC5D0\uC11C \uBD07\uC744 \uCD94\uAC00\uD55C \uB4A4 \uB2E4\uC2DC \uD655\uC778\uD558\uC138\uC694."],
+  botsView: ["Open Bots", "Bots \uC5F4\uAE30"],
+  manage: ["Open plugin settings", "\uD50C\uB7EC\uADF8\uC778 \uC124\uC815 \uC5F4\uAE30"],
+  botsDisabled: ["Enable Bots in Hermes plugin management, then return here.", "Hermes \uD50C\uB7EC\uADF8\uC778 \uAD00\uB9AC\uC5D0\uC11C Bots\uB97C \uD65C\uC131\uD654\uD55C \uB4A4 \uB3CC\uC544\uC624\uC138\uC694."],
+  authHint: ["Use the Codex login on this computer. Signing into the ChatGPT app alone is not enough.", "\uC774 \uCEF4\uD4E8\uD130\uC758 Codex \uB85C\uADF8\uC778\uC744 \uD655\uC778\uD569\uB2C8\uB2E4. ChatGPT \uC571 \uB85C\uADF8\uC778\uACFC\uB294 \uBCC4\uAC1C\uC785\uB2C8\uB2E4."],
+  signedIn: ["ChatGPT login detected. Voice access is checked in a test call.", "ChatGPT \uB85C\uADF8\uC778\uC744 \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4. \uC2E4\uC81C \uC74C\uC131 \uC5F0\uACB0\uC740 \uC2DC\uD5D8 \uD1B5\uD654\uC5D0\uC11C \uD655\uC778\uD569\uB2C8\uB2E4."],
+  login: ["Sign in with ChatGPT", "ChatGPT\uB85C \uB85C\uADF8\uC778"],
+  openLogin: ["Open sign-in page", "\uB85C\uADF8\uC778 \uD398\uC774\uC9C0 \uC5F4\uAE30"],
+  cancel: ["Cancel", "\uCDE8\uC18C"],
+  waitingLogin: ["Complete sign-in in your browser, then return here.", "\uBE0C\uB77C\uC6B0\uC800\uC5D0\uC11C \uB85C\uADF8\uC778\uC744 \uB9C8\uCE5C \uB4A4 \uB3CC\uC544\uC624\uC138\uC694."],
+  loginFailed: ["Sign-in stopped, expired, or is unsupported by this Codex version. Retry or use the CLI instructions.", "\uB85C\uADF8\uC778\uC774 \uC911\uB2E8\xB7\uB9CC\uB8CC\uB410\uAC70\uB098 \uC774 Codex \uBC84\uC804\uC5D0\uC11C \uC9C0\uC6D0\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uAC70\uB098 CLI \uC548\uB0B4\uB97C \uC0AC\uC6A9\uD558\uC138\uC694."],
+  installCodex: ["Install Codex first", "Codex \uBA3C\uC800 \uC124\uCE58\uD558\uAE30"],
+  loginCli: ["CLI sign-in instructions", "CLI \uB85C\uADF8\uC778 \uC548\uB0B4"],
+  download: ["Prepare wake model", "\uD638\uCD9C \uBAA8\uB378 \uC900\uBE44"],
+  recheckModel: ["Verify and prepare existing model", "\uAE30\uC874 \uBAA8\uB378 \uD655\uC778\xB7\uC900\uBE44"],
+  modelHint: ["Whisper runs locally. Standby audio is not sent to a paid transcription API.", "Whisper\uB294 \uB85C\uCEEC\uC5D0\uC11C \uC2E4\uD589\uB429\uB2C8\uB2E4. \uB300\uAE30 \uC911 \uC74C\uC131\uC744 \uC720\uB8CC \uC804\uC0AC API\uB85C \uBCF4\uB0B4\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
+  modelReady: ["Model and engine are ready.", "\uBAA8\uB378\uACFC \uC2E4\uD589 \uC5D4\uC9C4\uC774 \uC900\uBE44\uB410\uC2B5\uB2C8\uB2E4."],
+  existing: ["Existing model found; no download needed.", "\uAE30\uC874 \uBAA8\uB378\uC744 \uCC3E\uC558\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB0B4\uB824\uBC1B\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
+  managed: ["Model files are shared by all selected bots.", "\uBAA8\uB378\uC740 \uC120\uD0DD\uD55C \uBD07\uB4E4\uC774 \uD568\uAED8 \uC0AC\uC6A9\uD569\uB2C8\uB2E4."],
+  downloadHint: ["Download from whisper.cpp on Hugging Face, verify, then prepare. Closing this page does not cancel the download.", "Hugging Face\uC758 whisper.cpp \uBAA8\uB378\uC744 \uB0B4\uB824\uBC1B\uC544 \uAC80\uC99D\uD558\uACE0 \uC900\uBE44\uD569\uB2C8\uB2E4. \uD654\uBA74\uC744 \uB2EB\uC544\uB3C4 \uB2E4\uC6B4\uB85C\uB4DC\uB294 \uACC4\uC18D\uB429\uB2C8\uB2E4."],
+  downloading: ["Downloading", "\uB2E4\uC6B4\uB85C\uB4DC \uC911"],
+  verifying: ["Verifying files", "\uD30C\uC77C \uD655\uC778 \uC911"],
+  preparing: ["Preparing model", "\uBAA8\uB378 \uC900\uBE44 \uC911"],
+  cancelDownload: ["Cancel download / preparation", "\uB2E4\uC6B4\uB85C\uB4DC\xB7\uC900\uBE44 \uCDE8\uC18C"],
+  downloadFailed: ["Download failed. Check the connection and retry. Previous choices are saved.", "\uB2E4\uC6B4\uB85C\uB4DC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC5F0\uACB0\uC744 \uD655\uC778\uD558\uACE0 \uB2E4\uC2DC \uBC1B\uC73C\uC138\uC694. \uC55E\uC11C \uC120\uD0DD\uD55C \uC124\uC815\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4."],
+  downloadInterrupted: ["Preparation was interrupted. Retry from the start.", "\uC900\uBE44\uAC00 \uC911\uB2E8\uB410\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uC791\uD558\uC138\uC694."],
+  downloadCancelled: ["Preparation cancelled. Retry whenever ready.", "\uC900\uBE44\uB97C \uCDE8\uC18C\uD588\uC2B5\uB2C8\uB2E4. \uC6D0\uD560 \uB54C \uB2E4\uC2DC \uC2DC\uC791\uD558\uC138\uC694."],
+  diskSpace: ["Not enough free disk space. Free space and retry.", "\uC800\uC7A5 \uACF5\uAC04\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4. \uACF5\uAC04\uC744 \uD655\uBCF4\uD55C \uB4A4 \uB2E4\uC2DC \uBC1B\uC73C\uC138\uC694."],
+  modelIntegrity: ["The file did not pass verification. Download it again.", "\uD30C\uC77C \uAC80\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uB0B4\uB824\uBC1B\uC73C\uC138\uC694."],
+  filePermission: ["Cannot write the model cache. Check folder permissions.", "\uBAA8\uB378\uC744 \uC800\uC7A5\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC800\uC7A5 \uD3F4\uB354 \uAD8C\uD55C\uC744 \uD655\uC778\uD558\uC138\uC694."],
+  engineMissing: ["The bundled engine is missing or damaged. Reinstall Hermes Live.", "\uD3EC\uD568\uB41C \uC2E4\uD589 \uC5D4\uC9C4\uC774 \uC5C6\uAC70\uB098 \uC190\uC0C1\uB410\uC2B5\uB2C8\uB2E4. Hermes Live\uB97C \uB2E4\uC2DC \uC124\uCE58\uD558\uC138\uC694."],
+  modelStartFailed: ["The model could not start. Check system resources and retry.", "\uBAA8\uB378\uC744 \uC2DC\uC791\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC2DC\uC2A4\uD15C \uC790\uC6D0\uC744 \uD655\uC778\uD558\uACE0 \uB2E4\uC2DC \uC900\uBE44\uD558\uC138\uC694."],
+  modelMissing: ["Prepare the local model first.", "\uB85C\uCEEC \uBAA8\uB378\uC744 \uBA3C\uC800 \uC900\uBE44\uD558\uC138\uC694."],
+  unsupportedPlatform: ["Name calling currently supports Apple Silicon macOS.", "\uC774\uB984 \uD638\uCD9C\uC740 \uD604\uC7AC Apple Silicon macOS\uB97C \uC9C0\uC6D0\uD569\uB2C8\uB2E4."],
+  legacyMissing: ["An older manually configured path is unavailable. Prepare the bundled model and save the microphone to migrate.", "\uC774\uC804 \uC218\uB3D9 \uC124\uC815 \uACBD\uB85C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBAA8\uB378\uC744 \uC900\uBE44\uD558\uACE0 \uB9C8\uC774\uD06C\uB97C \uC800\uC7A5\uD558\uBA74 \uC0C8 \uC2E4\uD589\uAE30\uB85C \uC804\uD658\uD569\uB2C8\uB2E4."],
+  audioHint: ["Use the same physical microphone for wake recognition and calls. Tests do not save audio.", "\uD638\uCD9C\uACFC \uD1B5\uD654\uC5D0 \uAC19\uC740 \uB9C8\uC774\uD06C\uB97C \uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uD14C\uC2A4\uD2B8 \uC74C\uC131\uC740 \uC800\uC7A5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
+  grantMic: ["Allow microphone and list devices", "\uB9C8\uC774\uD06C \uD5C8\uC6A9\xB7\uC7A5\uCE58 \uC870\uD68C"],
+  saveMic: ["Use this microphone", "\uC774 \uB9C8\uC774\uD06C \uC0AC\uC6A9"],
+  testMic: ["Check microphone input", "\uB9C8\uC774\uD06C \uC785\uB825 \uD655\uC778"],
+  micGood: ["Input was detected. Now test a wake phrase.", "\uC74C\uC131 \uC785\uB825\uC744 \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4. \uC774\uC81C \uD638\uCD9C\uC5B4\uB97C \uD14C\uC2A4\uD2B8\uD558\uC138\uC694."],
+  silent: ["No speech detected yet. Speak near the selected microphone.", "\uC544\uC9C1 \uB9D0\uC18C\uB9AC\uB97C \uAC10\uC9C0\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC120\uD0DD\uD55C \uB9C8\uC774\uD06C \uC55E\uC5D0\uC11C \uB9D0\uD574 \uC8FC\uC138\uC694."],
+  microphoneBusy: ["Another call or window owns the microphone. End its test or call, then retry.", "\uB2E4\uB978 \uD1B5\uD654\uB098 \uCC3D\uC5D0\uC11C \uB9C8\uC774\uD06C\uB97C \uC0AC\uC6A9 \uC911\uC785\uB2C8\uB2E4. \uD574\uB2F9 \uD14C\uC2A4\uD2B8\xB7\uD1B5\uD654\uB97C \uC885\uB8CC\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."],
+  microphoneFailed: ["Could not open the wake microphone. Check macOS microphone permissions for Hermes and its backend, then retry.", "\uD638\uCD9C\uC6A9 \uB9C8\uC774\uD06C\uB97C \uC5F4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. macOS\uC5D0\uC11C Hermes\uC640 \uBC31\uC5D4\uB4DC\uC758 \uB9C8\uC774\uD06C \uAD8C\uD55C\uC744 \uD655\uC778\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."],
+  audioDependencies: ["Audio support is missing. Enable/reinstall the plugin with its declared dependencies, then restart the backend.", "\uC624\uB514\uC624 \uC2E4\uD589 \uAD6C\uC131\uC694\uC18C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. \uD50C\uB7EC\uADF8\uC778\uC758 \uC758\uC874\uC131\uC744 \uD3EC\uD568\uD574 \uD65C\uC131\uD654\xB7\uC7AC\uC124\uCE58\uD55C \uB4A4 \uBC31\uC5D4\uB4DC\uB97C \uB2E4\uC2DC \uC2DC\uC791\uD558\uC138\uC694."],
+  audioDevices: ["The selected microphone is missing or ambiguous. Refresh and choose another device.", "\uB9C8\uC774\uD06C\uAC00 \uC5C6\uAC70\uB098 \uAC19\uC740 \uC774\uB984\uC758 \uC7A5\uCE58\uAC00 \uC5EC\uB7EC \uAC1C\uC785\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68 \uD6C4 \uC7A5\uCE58\uB97C \uC120\uD0DD\uD558\uC138\uC694."],
+  permission: ["Open microphone permissions", "\uB9C8\uC774\uD06C \uAD8C\uD55C \uC124\uC815 \uC5F4\uAE30"],
+  cue: ["Play confirmation sound", "\uD655\uC778\uC74C \uB4E4\uC5B4\uBCF4\uAE30"],
+  cueVolume: ["Confirmation sound volume (0 = off)", "\uD655\uC778\uC74C \uC74C\uB7C9 (0 = \uB054)"],
+  testWake: ["Test wake phrase", "\uD638\uCD9C\uC5B4 \uD14C\uC2A4\uD2B8"],
+  testHint: ["This test only recognizes the name. It never starts a cloud call.", "\uC774 \uD14C\uC2A4\uD2B8\uB294 \uC774\uB984\uB9CC \uD655\uC778\uD569\uB2C8\uB2E4. \uD074\uB77C\uC6B0\uB4DC \uD1B5\uD654\uB97C \uC2DC\uC791\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
+  recognized: ["Recognized", "\uC778\uC2DD\uD55C \uBD07"],
+  notMatched: ["Speech received, but the wake phrase did not match. Try again or edit an alias.", "\uB9D0\uC18C\uB9AC\uB294 \uB4E4\uC5B4\uC654\uC9C0\uB9CC \uD638\uCD9C\uC5B4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uBD80\uB974\uAC70\uB098 \uBCC4\uCE6D\uC744 \uC218\uC815\uD558\uC138\uC694."],
+  stopTest: ["Stop test", "\uD14C\uC2A4\uD2B8 \uC911\uC9C0"],
+  testExpired: ["Test ended. Try again when ready.", "\uD14C\uC2A4\uD2B8\uB97C \uC885\uB8CC\uD588\uC2B5\uB2C8\uB2E4. \uC900\uBE44\uB418\uBA74 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694."],
+  trial: ["Start test call", "\uC2DC\uD5D8 \uD1B5\uD654 \uC2DC\uC791"],
+  trialHint: ["Hear the greeting, then say \u201CBye\u201D and the bot name. Your voice account\u2019s usage limits apply.", "\uCCAB \uC778\uC0AC\uB97C \uB4E3\uACE0 \u201C\uBC14\uC774\u201D\uC640 \uBD07 \uC774\uB984\uC744 \uB9D0\uD574 \uC885\uB8CC\uD558\uC138\uC694. \uD1B5\uD654 \uACC4\uC815\uC758 \uC0AC\uC6A9 \uC81C\uD55C\uC774 \uC801\uC6A9\uB429\uB2C8\uB2E4."],
+  endCall: ["End call", "\uD1B5\uD654 \uC885\uB8CC"],
+  unverified: ["Call not yet verified", "\uD1B5\uD654 \uBBF8\uD655\uC778"],
+  verified: ["Connection and end verified", "\uC5F0\uACB0\xB7\uC885\uB8CC \uD655\uC778"],
+  begin: ["Start listening", "\uD638\uCD9C \uB300\uAE30 \uC2DC\uC791"],
+  standby: ["Listening for your bot names", "\uBD07 \uC774\uB984 \uD638\uCD9C \uB300\uAE30 \uC911"],
+  resumeHint: ["Hermes must remain open. This does not wake a sleeping Mac or launch a closed app.", "Hermes\uAC00 \uC2E4\uD589 \uC911\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4. \uC7A0\uC790\uB294 Mac\uC744 \uAE68\uC6B0\uAC70\uB098 \uB2EB\uD78C \uC571\uC744 \uC2E4\uD589\uD558\uC9C0\uB294 \uC54A\uC2B5\uB2C8\uB2E4."],
+  autoStart: ["Listen when Hermes opens next time", "\uB2E4\uC74C\uC5D0 Hermes\uB97C \uC5F4 \uB54C \uD638\uCD9C \uB300\uAE30"],
+  setupSaved: ["Settings saved. The microphone has not started automatically.", "\uC124\uC815\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uB9C8\uC774\uD06C\uAC00 \uC790\uB3D9\uC73C\uB85C \uCF1C\uC9C0\uC9C0\uB294 \uC54A\uC2B5\uB2C8\uB2E4."],
+  callSettings: ["Open call settings", "\uD1B5\uD654 \uC124\uC815 \uC5F4\uAE30"],
+  busy: ["Finish the current call or task before testing.", "\uC9C4\uD589 \uC911\uC778 \uD1B5\uD654\xB7\uC791\uC5C5\uC744 \uB9C8\uCE5C \uB4A4 \uD14C\uC2A4\uD2B8\uD558\uC138\uC694."],
+  readyHint: ["Prepared items are reused. Recheck only what changed.", "\uC900\uBE44\uB41C \uD56D\uBAA9\uC740 \uC7AC\uC0AC\uC6A9\uD569\uB2C8\uB2E4. \uBCC0\uACBD\uD55C \uD56D\uBAA9\uB9CC \uB2E4\uC2DC \uD655\uC778\uD558\uC138\uC694."],
+  newBots: ["New bots can be selected in Choose bots.", "\uC0C8 \uBD07\uC740 \uBD07 \uC120\uD0DD\uC5D0\uC11C \uCD94\uAC00\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."]
+};
+var setupCopy = (locale) => (key) => text[key][locale.startsWith("ko") ? 1 : 0];
+function setupError(locale, value) {
+  const match = String(value).match(/HL_SETUP:(\w+)/)?.[1];
+  return match && match in text ? setupCopy(locale)(match) : null;
+}
+
+// src/setup-state.ts
+var preparingModel = (value) => ["downloading", "verifying", "preparing"].includes(value?.progress?.state ?? "");
+function basicReady(value) {
+  return Boolean(value?.assets.supported && value.assets.engine && value.assets.installed && value.device && value.enabled && !value.audio.error && value.audio.devices.includes(value.device) && !value.audio.duplicates.includes(value.device));
+}
+function setupSteps(mode) {
+  return mode === "wake" ? [0, 1, 2, 3, 4, 5, 6] : [0, 2, 4, 6];
+}
+
+// src/wake-settings.tsx
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@hermes/plugin-sdk";
+import { host } from "@hermes/plugin-sdk";
+
+// src/auth.ts
+function settingsHref(profile) {
+  return "/settings?" + new URLSearchParams({ tab: "plugins", agent: "hermes-live", profile }).toString();
 }
 
 // src/ui.tsx
@@ -2358,50 +2917,97 @@ function FieldSelect({ label, value, options, onChange, disabled = false }) {
   ] });
 }
 
-// src/auth-settings.tsx
-import { useEffect, useState } from "react";
-import { Button, DisclosureCaret } from "@hermes/plugin-sdk";
+// src/wake-settings.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
-function AuthSettings({ provider, selected, backend, connection, profile, active, loading, configure, recheck }) {
-  const { t } = useLiveI18n();
-  const codex = selected === "codex";
-  const [expanded, setExpanded] = useState(false);
+function WakeSettings({ rest, changed, local }) {
+  const { t, locale } = useLiveI18n();
+  const c = setupCopy(locale);
+  const [data, setData] = useState(null), [aliases, setAliases] = useState({});
+  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [saved, setSaved] = useState(false);
+  const alive = useRef(true), request = useRef(0);
+  const accept = (value) => {
+    setData(value);
+    setAliases(Object.fromEntries(value.bots.map((b) => [b.profile, b.aliases.join(", ")])));
+  };
+  const load = async () => {
+    if (!local) return;
+    const id = ++request.current;
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      const value = await rest("/wake/bots");
+      if (alive.current && id === request.current) accept(value);
+    } catch (e) {
+      if (alive.current && id === request.current) setError(String(e));
+    } finally {
+      if (alive.current && id === request.current) setBusy(false);
+    }
+  };
   useEffect(() => {
-    setExpanded(provider?.available === false);
-  }, [selected, provider?.available]);
-  return /* @__PURE__ */ jsxs2("section", { "aria-label": t("authentication"), style: { ...section, borderTop: divider, paddingTop: 16 }, children: [
-    /* @__PURE__ */ jsxs2("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }, children: [
-      /* @__PURE__ */ jsx2("strong", { style: { fontSize: ".8125rem" }, children: t("authentication") }),
-      /* @__PURE__ */ jsx2(Button, { variant: "ghost", size: "sm", disabled: active || loading, onClick: recheck, children: loading ? t("checking") : t("refresh") })
-    ] }),
-    /* @__PURE__ */ jsxs2("div", { style: { ...section, gap: 4 }, children: [
-      provider?.available && /* @__PURE__ */ jsx2("p", { role: "status", style: { ...hint, color: "var(--dt-foreground)" }, children: t(codex ? "authSignedIn" : "authConfigured") }),
-      /* @__PURE__ */ jsx2("p", { style: { ...hint, overflowWrap: "anywhere" }, children: t("authTarget", backend || "\u2014", connection, profile) })
-    ] }),
-    codex ? /* @__PURE__ */ jsxs2("div", { style: { display: "grid", gap: expanded ? 12 : 0 }, children: [
-      /* @__PURE__ */ jsxs2(Button, { variant: "ghost", size: "sm", "aria-expanded": expanded, onClick: () => setExpanded((value) => !value), style: { justifyContent: "flex-start", gap: 6, paddingInline: 0, width: "fit-content" }, children: [
-        /* @__PURE__ */ jsx2(DisclosureCaret, { open: expanded }),
-        t("authSignIn")
+    alive.current = true;
+    void load();
+    return () => {
+      alive.current = false;
+      ++request.current;
+    };
+  }, [local]);
+  const save = async () => {
+    if (!data || busy) return;
+    const id = ++request.current;
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: (aliases[b.profile] ?? "").split(/[,，]/u).map((n) => n.trim()).filter(Boolean) }));
+      if (bots.some((b) => b.aliases.length > 3)) throw new Error("HL_ERROR:errWakeRegistry");
+      const value = await rest("/wake/bots", { method: "PUT", body: { revision: data.revision, bots } });
+      if (alive.current && id === request.current) {
+        accept(value);
+        setSaved(true);
+        changed();
+      }
+    } catch (e) {
+      if (alive.current && id === request.current) setError(String(e));
+    } finally {
+      if (alive.current && id === request.current) setBusy(false);
+    }
+  };
+  if (!local) return /* @__PURE__ */ jsx2("p", { style: hint, children: t("wakeLocalOnly") });
+  return /* @__PURE__ */ jsxs2("section", { "aria-label": t("wake"), style: { display: "grid", gap: 12 }, children: [
+    /* @__PURE__ */ jsx2("p", { style: { ...hint, margin: 0 }, children: t("wakeDescription") }),
+    data?.bots.length === 0 && /* @__PURE__ */ jsx2("p", { children: c("noBots") }),
+    data?.bots.map((bot) => /* @__PURE__ */ jsxs2("div", { style: { display: "grid", gap: 8, paddingBottom: 12, borderBottom: divider }, children: [
+      /* @__PURE__ */ jsxs2("label", { style: { display: "flex", gap: 8, alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx2("input", { type: "checkbox", checked: bot.enabled, disabled: busy || !bot.ready && !bot.enabled, onChange: (e) => {
+          const enabled = e.target.checked;
+          setSaved(false);
+          setData({ ...data, bots: data.bots.map((b) => b.profile === bot.profile ? { ...b, enabled } : b) });
+        } }),
+        /* @__PURE__ */ jsx2("strong", { children: bot.display_name || bot.profile })
       ] }),
-      expanded && /* @__PURE__ */ jsxs2("div", { style: { ...section, ...hint, gap: 12 }, children: [
-        /* @__PURE__ */ jsx2("p", { style: { margin: 0 }, children: t("authCodexScope") }),
-        [["authLocal", "codex login"], ["authRemote", "codex login --device-auth"]].map(([key, command]) => /* @__PURE__ */ jsxs2("div", { style: { display: "grid", gap: 6 }, children: [
-          /* @__PURE__ */ jsx2("p", { style: { margin: 0 }, children: t(key) }),
-          /* @__PURE__ */ jsx2("code", { style: { display: "block", userSelect: "text", padding: "8px 10px", border: divider, borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", color: "var(--dt-foreground)", overflowWrap: "anywhere" }, children: command })
-        ] }, key)),
-        /* @__PURE__ */ jsx2("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", style: { color: "var(--dt-primary)", textDecoration: "underline", textUnderlineOffset: 3 }, children: t("authDocs") })
-      ] })
-    ] }) : /* @__PURE__ */ jsx2(Button, { variant: "secondary", size: "sm", disabled: active || loading, onClick: configure, style: { justifySelf: "start" }, children: t("authConfigure") })
+      /* @__PURE__ */ jsxs2("label", { style: { display: "grid", gap: 4, ...hint }, children: [
+        t("wakeAliases"),
+        /* @__PURE__ */ jsx2("input", { "aria-label": t("wakeAliasesFor", bot.display_name || bot.profile), value: aliases[bot.profile] ?? "", disabled: busy || !bot.ready, maxLength: 126, onChange: (e) => {
+          setSaved(false);
+          setAliases({ ...aliases, [bot.profile]: e.target.value });
+        }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
+      ] }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026") : t("wakeSetup") }),
+      !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
+      bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
+    ] }, bot.profile)),
+    error && /* @__PURE__ */ jsx2("div", { role: "alert", style: hint, children: localizeError(t, error) }),
+    saved && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t("wakeSaved") }),
+    /* @__PURE__ */ jsxs2("div", { style: { display: "flex", gap: 8 }, children: [
+      /* @__PURE__ */ jsx2(Button, { size: "sm", disabled: busy || !data, onClick: () => void save(), children: t("wakeSave") }),
+      /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", disabled: busy, onClick: () => void load(), children: busy ? t("checking") : t("refresh") })
+    ] })
   ] });
 }
 
-// src/auth.ts
-function settingsHref(profile) {
-  return "/settings?" + new URLSearchParams({ tab: "plugins", agent: "hermes-live", profile }).toString();
-}
-
 // src/device-settings.tsx
-import { useEffect as useEffect2, useRef, useState as useState2 } from "react";
+import { useEffect as useEffect2, useRef as useRef2, useState as useState2 } from "react";
 import { Button as Button2 } from "@hermes/plugin-sdk";
 
 // src/devices.ts
@@ -2425,6 +3031,17 @@ function audioDeviceError(error) {
   if (name === "NotAllowedError") return "HL_ERROR:errMicPermission";
   return error instanceof Error ? error.message : "HL_ERROR:errAudio";
 }
+function selectWakeMicrophone(devices, name) {
+  const canonical = (label) => label.trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, "");
+  const concrete = new Map(devices.filter((d) => d.kind === "audioinput" && d.deviceId && !["default", "communications"].includes(d.deviceId)).map((d) => [d.deviceId, d]));
+  const virtual = concrete.size === 1 && name === "Apple Virtual Sound Device" && [...concrete.values()][0]?.label === "Microphone (Built-in)";
+  const matches = new Map([...concrete].filter(([, d]) => canonical(d.label) === canonical(name) || virtual));
+  if (matches.size !== 1) throw new Error("HL_ERROR:errMicMissing");
+  return [...matches.values()][0];
+}
+function canonicalMicrophoneLabel(label) {
+  return label.replace(/^(Default|기본값)\s*-\s*/i, "").trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, "");
+}
 
 // src/pcm.ts
 function pcm16(samples) {
@@ -2439,9 +3056,9 @@ function pcm16(samples) {
   return btoa(s);
 }
 function decodePCM(data) {
-  const text = atob(data);
-  if (text.length % 2) throw new Error("HL_ERROR:errProtocol");
-  const bytes = Uint8Array.from(text, (c) => c.charCodeAt(0));
+  const text2 = atob(data);
+  if (text2.length % 2) throw new Error("HL_ERROR:errProtocol");
+  const bytes = Uint8Array.from(text2, (c) => c.charCodeAt(0));
   const view = new DataView(bytes.buffer);
   const out = new Float32Array(bytes.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = view.getInt16(i * 2, true) / 32768;
@@ -2565,7 +3182,7 @@ import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 function DeviceSettings({ value, onChange, active }) {
   const { t } = useLiveI18n();
   const [devices, setDevices] = useState2([]), [error, setError] = useState2(""), [testing, setTesting] = useState2(false), [level, setLevel] = useState2(0);
-  const test = useRef(null), alive = useRef(true);
+  const test = useRef2(null), alive = useRef2(true);
   const refresh = async () => {
     try {
       const list = await navigator.mediaDevices.enumerateDevices();
@@ -2648,9 +3265,877 @@ function DeviceSettings({ value, onChange, active }) {
   ] });
 }
 
+// src/assets/wake.wav
+var wake_default = "data:audio/wave;base64,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";
+
+// src/wake-cue.ts
+async function playWakeCue(output = "", volume = 1) {
+  if (volume <= 0) return;
+  let context;
+  try {
+    context = new AudioContext();
+    const ac = context;
+    const buffer = await (await fetch(wake_default)).arrayBuffer();
+    const [decoded] = await Promise.all([ac.decodeAudioData(buffer), ac.resume(), routeOutput(ac, output)]);
+    const source = ac.createBufferSource();
+    source.buffer = decoded;
+    const gain = ac.createGain();
+    gain.gain.value = Math.max(0, Math.min(1, volume));
+    source.connect(gain);
+    gain.connect(ac.destination);
+    source.onended = () => void ac.close().catch(() => {
+    });
+    source.start();
+  } catch {
+    await context?.close().catch(() => {
+    });
+  }
+}
+
+// src/setup.tsx
+import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, active, hold, standby, listening, trial, stop, subscribe, callState, callSettings }) {
+  const { locale, t } = useLiveI18n(), c = setupCopy(locale);
+  const saved = ctx.storage.get(`setup:${scopeKey}`, { mode: "wake", step: 0 });
+  const [mode, setMode] = useState3(saved.mode), [step, setStep] = useState3(saved.step), [data, setData] = useState3(null);
+  const [auth, setAuth] = useState3(null), [targets, setTargets] = useState3([]), [target, setTarget] = useState3("");
+  const [loading, setLoading] = useState3(false), [error, setError] = useState3(""), [note, setNote] = useState3(""), [device, setDevice] = useState3(""), [level, setLevel] = useState3(0), [testing, setTesting] = useState3(false);
+  const [login, setLogin] = useState3({ state: "idle" }), [devices, setDevices] = useState3(ctx.storage.get("audio-devices", { input: "", output: "" }));
+  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1));
+  const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
+  const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
+  const captureTask = useRef3(null);
+  useEffect3(() => registerStopTest?.(async () => {
+    cancel.current?.abort();
+    await captureTask.current;
+  }), [registerStopTest]);
+  useEffect3(() => {
+    if (suspended) cancel.current?.abort();
+  }, [suspended]);
+  const currentCall = useSyncExternalStore(subscribe, callState);
+  const steps = setupSteps(mode), labels = ["overview", "bots", "account", "model", "audio", "test", "done"];
+  const safe = (fn) => {
+    if (alive.current) fn();
+  };
+  const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
+  const load = async () => {
+    if (!local) return;
+    setLoading(true);
+    setError("");
+    try {
+      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
+      safe(() => {
+        setData(value);
+        setTargets(bots.targets);
+        setDevice((d) => d || value.device || value.audio.devices[0] || "");
+        setTarget((id) => bots.targets.some((b) => b.target === id) ? id : bots.targets[0]?.target ?? "");
+        if (initial.current) {
+          initial.current = false;
+          if (basicReady(value) && ctx.storage.get("hands-free-enabled", false)) setStep(6);
+        }
+      });
+    } catch (e) {
+      fail(e);
+    } finally {
+      safe(() => setLoading(false));
+    }
+  };
+  const checkAuth = async () => {
+    setLoading(true);
+    try {
+      const value = await ctx.rest("/readiness", { method: "POST", body: { provider: "codex" }, timeoutMs: 3e4 });
+      safe(() => setAuth(value.provider));
+    } catch (e) {
+      fail(e);
+    } finally {
+      safe(() => setLoading(false));
+    }
+  };
+  const release = async () => {
+    const id = owner.current;
+    owner.current = null;
+    try {
+      if (id) await ctx.rest("/setup/test", { method: "POST", body: { owner: id, action: "release" } });
+    } catch {
+    } finally {
+      restore.current?.();
+      restore.current = null;
+    }
+  };
+  useEffect3(() => {
+    alive.current = true;
+    void load();
+    void checkAuth();
+    return () => {
+      alive.current = false;
+      cancel.current?.abort();
+      void release();
+    };
+  }, [scopeKey, local]);
+  useEffect3(() => {
+    ctx.storage.set(`setup:${scopeKey}`, { mode, step });
+    if (step === 2) void checkAuth();
+  }, [step, mode]);
+  useEffect3(() => {
+    if (!local) return;
+    const timer = setInterval(async () => {
+      if (polling.current) return;
+      polling.current = true;
+      try {
+        if (preparingModel(data?.assets)) {
+          const value = await ctx.rest("/setup", { timeoutMs: 3e4 });
+          safe(() => setData(value));
+        }
+        if (["starting", "waiting"].includes(login.state)) {
+          const value = await ctx.rest("/setup/login");
+          if (!alive.current) return;
+          safe(() => setLogin(value));
+          if (value.url && value.url !== openedLogin.current) {
+            openedLogin.current = value.url;
+            await ctx.os?.openExternal(value.url);
+          }
+          if (value.state === "complete") await checkAuth();
+        }
+      } catch (e) {
+        fail(e);
+      } finally {
+        polling.current = false;
+      }
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [data?.assets.progress?.state, login.state, local]);
+  const action = async (fn) => {
+    setError("");
+    setNote("");
+    setLoading(true);
+    try {
+      await fn();
+    } catch (e) {
+      fail(e);
+    } finally {
+      safe(() => setLoading(false));
+    }
+  };
+  const model = () => action(async () => {
+    await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
+    await load();
+  });
+  const saveDevice = () => action(async () => {
+    const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
+    if (!alive.current) return;
+    const value = await ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 });
+    if (!alive.current) return;
+    const next2 = { ...devices, input: choice.deviceId };
+    ctx.storage.set("audio-devices", next2);
+    setDevices(next2);
+    setData(value);
+    setNote(c("setupSaved"));
+  });
+  const permission = () => action(async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    stream.getTracks().forEach((t2) => t2.stop());
+    await load();
+  });
+  const capture = async (kind) => {
+    if (active()) {
+      setError(c("busy"));
+      return;
+    }
+    const abort = new AbortController();
+    cancel.current = abort;
+    setTesting(true);
+    setNote("");
+    setError("");
+    try {
+      restore.current = await hold();
+      if (abort.signal.aborted) return;
+      if (kind === "mic") {
+        const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
+        const audio = new AudioEngine(() => {
+        }, { ...devices, input: choice.deviceId });
+        let received = false;
+        try {
+          await audio.open(16e3, abort.signal, (_data, rms) => {
+            if (rms > 5e-3) received = true;
+            safe(() => setLevel(rms));
+          });
+          for (let i = 0; i < 80 && !received && !abort.signal.aborted; i++) await new Promise((r) => setTimeout(r, 100));
+        } finally {
+          audio.close();
+        }
+        if (abort.signal.aborted) return;
+        if (!received) {
+          setNote(c("silent"));
+          return;
+        }
+      }
+      const id = crypto.randomUUID();
+      owner.current = id;
+      let result = await ctx.rest("/setup/test", { method: "POST", body: { owner: id, action: "arm" }, timeoutMs: 3e4 });
+      const deadline = Date.now() + 35e3;
+      while (!abort.signal.aborted && Date.now() < deadline) {
+        const diag = result.diagnostics;
+        if (diag.model_error) throw new Error("HL_SETUP:modelStartFailed");
+        safe(() => {
+          setLevel(Math.min(1, (diag.peak ?? 0) / 12e3));
+          setNote(!diag.model_ready ? c("preparing") : kind === "wake" && diag.segments ? c("notMatched") : c("silent"));
+        });
+        if (kind === "mic" && diag.model_ready && (diag.peak ?? 0) > 160) {
+          ctx.storage.set(`setup-mic:${device}`, true);
+          safe(() => setNote(c("micGood")));
+          return;
+        }
+        if (kind === "wake" && result.eventId) {
+          ctx.storage.set(`setup-wake:${device}`, true);
+          safe(() => setNote(c("recognized") + ": " + (result.selection?.display_name ?? result.target)));
+          void playWakeCue(devices.output, volume);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+        if (abort.signal.aborted) break;
+        result = await ctx.rest("/setup/test", { method: "POST", body: { owner: id, action: "heartbeat" }, timeoutMs: 1e4 });
+      }
+      safe(() => setNote(c("testExpired")));
+    } catch (e) {
+      if (!abort.signal.aborted) fail(e);
+    } finally {
+      await release();
+      cancel.current = null;
+      safe(() => {
+        setTesting(false);
+        setLevel(0);
+      });
+    }
+  };
+  const block = suspended || loading || testing || active() || !["idle", "error"].includes(currentCall);
+  const selected = targets.find((t2) => t2.target === target);
+  const progress = data?.assets.progress;
+  const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
+  const complete = mode === "call" ? Boolean(devices) : basicReady(data) && targets.length > 0 && Boolean(auth?.available) && Boolean(data?.legacy || data?.assets.prepared) && Boolean(data?.legacy || ctx.storage.get(`setup-mic:${device}`, false));
+  const canNext = step === 1 ? targets.length > 0 : step === 2 ? Boolean(auth?.available) || mode === "call" : step === 3 ? Boolean(data?.assets.prepared) : step === 4 ? mode === "call" || Boolean(data?.device === device && ctx.storage.get(`setup-mic:${device}`, false)) : true;
+  const next = () => setStep(steps[Math.min(steps.indexOf(step) + 1, steps.length - 1)]);
+  const panel = { display: "grid", gap: 16 };
+  return /* @__PURE__ */ jsxs4("div", { style: { ...panel, maxWidth: 760, padding: "24px 16px", margin: "0 auto", color: "var(--dt-foreground)" }, children: [
+    /* @__PURE__ */ jsxs4("header", { children: [
+      /* @__PURE__ */ jsx4("h2", { style: { fontSize: 22, margin: "0 0 8px" }, children: c("title") }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("intro") })
+    ] }),
+    /* @__PURE__ */ jsx4("nav", { "aria-label": c("title"), style: { display: "flex", gap: 6, flexWrap: "wrap", borderBottom: divider, paddingBottom: 12 }, children: steps.map((n) => /* @__PURE__ */ jsx4(Button3, { size: "sm", variant: step === n ? "secondary" : "ghost", "aria-current": step === n ? "step" : void 0, disabled: testing, onClick: () => setStep(n), children: c(labels[n]) }, n)) }),
+    !local && /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+      c("localOnly"),
+      " ",
+      /* @__PURE__ */ jsx4(Button3, { onClick: callSettings, children: c("callSettings") })
+    ] }),
+    step === 0 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsxs4("label", { children: [
+        /* @__PURE__ */ jsx4("input", { type: "radio", name: "live-setup-mode", checked: mode === "wake", onChange: () => setMode("wake") }),
+        " ",
+        c("wakeMode"),
+        /* @__PURE__ */ jsx4("p", { style: hint, children: c("wakeHint") })
+      ] }),
+      /* @__PURE__ */ jsxs4("label", { children: [
+        /* @__PURE__ */ jsx4("input", { type: "radio", name: "live-setup-mode", checked: mode === "call", onChange: () => setMode("call") }),
+        " ",
+        c("manualMode"),
+        /* @__PURE__ */ jsx4("p", { style: hint, children: c("manualHint") })
+      ] }),
+      mode === "wake" && data && !data.assets.supported && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("localOnly") })
+    ] }),
+    step === 1 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("selectBots") }),
+      host2.pluginDecisions?.get()["hermes-bots"] === false && /* @__PURE__ */ jsxs4("p", { style: hint, children: [
+        c("botsDisabled"),
+        " ",
+        /* @__PURE__ */ jsx4(Button3, { size: "sm", onClick: () => host2.navigate("/capabilities?tab=plugins"), children: c("manage") })
+      ] }),
+      /* @__PURE__ */ jsx4(WakeSettings, { rest: ctx.rest, local, changed: () => void load() }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => host2.revealPane?.("hermes-bots:pane"), children: c("botsView") })
+    ] }),
+    step === 2 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("authHint") }),
+      auth?.available ? /* @__PURE__ */ jsx4("p", { role: "status", children: c("signedIn") }) : /* @__PURE__ */ jsxs4(Fragment, { children: [
+        auth?.reason && /* @__PURE__ */ jsx4("p", { role: "status", children: localizeError(t, auth.reason) }),
+        auth?.authState === "cli_missing" ? /* @__PURE__ */ jsx4(Button3, { onClick: () => void ctx.os?.openExternal("https://developers.openai.com/codex/cli/"), children: c("installCodex") }) : /* @__PURE__ */ jsx4(Button3, { disabled: loading || ["starting", "waiting"].includes(login.state), onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "POST" }))), children: c("login") }),
+        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx4("p", { role: "status", children: c("waitingLogin") }),
+        login.url && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void ctx.os?.openExternal(login.url), children: c("openLogin") }),
+        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "DELETE" }))), children: c("cancel") }),
+        ["error", "expired", "cancelled"].includes(login.state) && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("loginFailed") }),
+        /* @__PURE__ */ jsxs4("details", { children: [
+          /* @__PURE__ */ jsx4("summary", { children: c("loginCli") }),
+          /* @__PURE__ */ jsx4("p", { children: /* @__PURE__ */ jsx4("code", { children: "codex login" }) }),
+          /* @__PURE__ */ jsx4("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", children: "Codex" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: loading, onClick: () => void checkAuth(), children: c("refresh") }),
+      mode === "call" && /* @__PURE__ */ jsx4(Button3, { onClick: callSettings, children: c("callSettings") })
+    ] }),
+    step === 3 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("modelHint") }),
+      /* @__PURE__ */ jsxs4("strong", { children: [
+        "Whisper ",
+        data?.assets.model ?? "Small",
+        " \xB7 ",
+        Math.ceil((data?.assets.bytes ?? 487601967) / 1e6),
+        " MB"
+      ] }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c(data?.assets.source === "existing" ? "existing" : "managed") }),
+      data?.assets.prepared ? /* @__PURE__ */ jsx4("p", { role: "status", children: c("modelReady") }) : preparingModel(data?.assets) ? /* @__PURE__ */ jsxs4(Fragment, { children: [
+        /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+          c(progress?.state),
+          progress?.state === "downloading" && ` \xB7 ${Math.floor((progress.received ?? 0) / 1e6)} / ${Math.ceil((progress.total ?? 0) / 1e6)} MB`
+        ] }),
+        progress?.state === "downloading" && /* @__PURE__ */ jsx4("progress", { "aria-label": c("downloading"), max: progress.total, value: progress.received, style: { width: "100%" } }),
+        /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void action(async () => {
+          await ctx.rest("/setup/model", { method: "DELETE" });
+          await load();
+        }), children: c("cancelDownload") })
+      ] }) : /* @__PURE__ */ jsx4(Button3, { disabled: loading || !data?.assets.supported || !data.assets.engine, onClick: () => void model(), children: c(data?.assets.installed ? "recheckModel" : "download") }),
+      data?.assets.supported && !data.assets.engine && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("engineMissing") }),
+      errorText && /* @__PURE__ */ jsx4("p", { role: "alert", children: errorText }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c(data?.assets.installed ? "prepareHint" : "downloadHint") })
+    ] }),
+    step === 4 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("audioHint") }),
+      mode === "call" ? /* @__PURE__ */ jsx4(DeviceSettings, { value: devices, active: block, onChange: (value) => {
+        setDevices(value);
+        ctx.storage.set("audio-devices", value);
+      } }) : /* @__PURE__ */ jsxs4(Fragment, { children: [
+        /* @__PURE__ */ jsx4(Button3, { disabled: block, onClick: () => void permission(), children: c("grantMic") }),
+        data?.audio.error && /* @__PURE__ */ jsx4("p", { role: "alert", children: setupError(locale, "HL_SETUP:" + data.audio.error) }),
+        /* @__PURE__ */ jsx4(FieldSelect, { label: c("audio"), value: device, disabled: block, options: (data?.audio.devices ?? []).filter((n) => !data?.audio.duplicates.includes(n)).map((n) => ({ value: n, label: n })), onChange: (n) => {
+          setDevice(n);
+          setNote("");
+        } }),
+        /* @__PURE__ */ jsx4(Button3, { disabled: block || !device || !data?.assets.installed, onClick: () => void saveDevice(), children: c("saveMic") }),
+        /* @__PURE__ */ jsx4(Button3, { disabled: block || data?.device !== device || !data?.enabled, onClick: () => {
+          captureTask.current = capture("mic");
+        }, children: c("testMic") }),
+        /* @__PURE__ */ jsx4("progress", { "aria-label": c("audio"), max: 1, value: level, style: { width: "100%" } }),
+        /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void ctx.os?.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"), children: c("permission") })
+      ] }),
+      /* @__PURE__ */ jsxs4("label", { children: [
+        c("cueVolume"),
+        " ",
+        /* @__PURE__ */ jsx4("input", { "aria-label": c("cueVolume"), type: "range", min: "0", max: "1", step: "0.1", value: volume, onChange: (e) => {
+          const n = Number(e.target.value);
+          setVolume(n);
+          ctx.storage.set("wake-cue-volume", n);
+        } })
+      ] }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void playWakeCue(devices.output, volume), children: c("cue") })
+    ] }),
+    step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
+      /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),
+      /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => {
+        captureTask.current = capture("wake");
+      }, children: c("testWake") }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("trialHint") }),
+      /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => void action(() => trial(target)), children: c("trial") }),
+      /* @__PURE__ */ jsx4("p", { role: "status", children: c(ctx.storage.get(`setup-trial:${target}`, "") === "ended" ? "verified" : "unverified") })
+    ] }),
+    step === 6 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
+      !complete && mode === "wake" && /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+        c("intro"),
+        " ",
+        /* @__PURE__ */ jsx4(Button3, { onClick: () => setStep(!targets.length ? 1 : !auth?.available ? 2 : !data?.assets.installed ? 3 : 4), children: c("next") })
+      ] }),
+      /* @__PURE__ */ jsx4("p", { children: c("readyHint") }),
+      mode === "wake" ? /* @__PURE__ */ jsxs4("p", { children: [
+        targets.map((t2) => t2.display_name).join(", ") || "\u2014",
+        " \xB7 ",
+        data?.device || "\u2014"
+      ] }) : /* @__PURE__ */ jsx4("p", { role: "status", children: c("manualReady") }),
+      mode === "wake" && /* @__PURE__ */ jsxs4(Fragment, { children: [
+        /* @__PURE__ */ jsx4("p", { children: targets.map((t2) => t2.phrases[0] + " / Bye " + t2.display_name).join(" \xB7 ") }),
+        /* @__PURE__ */ jsx4("p", { role: "status", children: targets.map((t2) => `${t2.display_name}: ${c(ctx.storage.get(`setup-trial:${t2.target}`, "") === "ended" ? "verified" : "unverified")}`).join(" \xB7 ") }),
+        /* @__PURE__ */ jsxs4("label", { children: [
+          /* @__PURE__ */ jsx4("input", { type: "checkbox", checked: auto, onChange: (e) => {
+            setAuto(e.target.checked);
+            ctx.storage.set("hands-free-enabled", e.target.checked);
+          } }),
+          " ",
+          c("autoStart")
+        ] }),
+        /* @__PURE__ */ jsx4("p", { style: hint, children: c("resumeHint") }),
+        /* @__PURE__ */ jsx4(Button3, { disabled: block || !complete || listening(), onClick: () => void action(async () => {
+          if (await standby()) setNote(c("standby"));
+        }), children: c(listening() ? "standby" : "begin") }),
+        listening() && /* @__PURE__ */ jsx4("p", { role: "status", children: c("standby") })
+      ] }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: callSettings, children: c("callSettings") })
+    ] }),
+    testing && /* @__PURE__ */ jsx4(Button3, { variant: "secondary", onClick: () => cancel.current?.abort(), children: c("stopTest") }),
+    !["idle", "error"].includes(currentCall) && /* @__PURE__ */ jsx4(Button3, { onClick: stop, children: c("endCall") }),
+    note && /* @__PURE__ */ jsx4("p", { role: "status", style: hint, children: note }),
+    error && /* @__PURE__ */ jsxs4("div", { role: "alert", children: [
+      /* @__PURE__ */ jsx4("p", { children: error }),
+      /* @__PURE__ */ jsx4(Button3, { size: "sm", variant: "ghost", onClick: () => host2.navigate(settingsHref(host2.state.profile.get() || "default")), children: c("manage") })
+    ] }),
+    /* @__PURE__ */ jsxs4("footer", { style: { display: "flex", gap: 8, flexWrap: "wrap", borderTop: divider, paddingTop: 16 }, children: [
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: testing, onClick: () => host2.navigate("/"), children: c("later") }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: loading, onClick: () => void load(), children: c(loading ? "checking" : "refresh") }),
+      step > 0 && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: block, onClick: () => setStep(steps[Math.max(0, steps.indexOf(step) - 1)]), children: c("back") }),
+      step < 6 && /* @__PURE__ */ jsx4(Button3, { disabled: block || !canNext || mode === "wake" && (!local || !data?.assets.supported), onClick: next, children: c("next") })
+    ] })
+  ] });
+}
+
+// src/voice-pause.ts
+var VoicePause = class {
+  paused;
+  busy = false;
+  failed = false;
+  intent = "pause";
+  deps;
+  constructor(paused, deps) {
+    this.paused = paused;
+    this.deps = deps;
+  }
+  async pause() {
+    if (this.busy) return;
+    this.intent = "pause";
+    this.paused = true;
+    this.busy = true;
+    this.failed = false;
+    this.deps.changed();
+    try {
+      this.deps.stop();
+      this.deps.persist(true);
+      await this.deps.release();
+    } catch (e) {
+      this.failed = true;
+      throw e;
+    } finally {
+      this.busy = false;
+      this.deps.changed();
+    }
+  }
+  async resume() {
+    if (this.busy) return false;
+    this.intent = "resume";
+    this.busy = true;
+    this.failed = false;
+    this.deps.changed();
+    try {
+      if (!await this.deps.resume()) return false;
+      this.paused = false;
+      this.deps.persist(false);
+      return true;
+    } catch (e) {
+      this.paused = true;
+      this.failed = true;
+      this.deps.stop();
+      await this.deps.release().catch(() => {
+      });
+      throw e;
+    } finally {
+      this.busy = false;
+      this.deps.changed();
+    }
+  }
+};
+
+// src/wake.ts
+var WakeCoordinator = class {
+  owner = crypto.randomUUID();
+  enabled = false;
+  state = "off";
+  config = null;
+  error = "";
+  deps;
+  held = false;
+  handling = false;
+  ticking = false;
+  generation = 0;
+  queue = Promise.resolve();
+  seen = /* @__PURE__ */ new Set();
+  due = 0;
+  calling = false;
+  constructor(deps) {
+    this.deps = deps;
+  }
+  set(state) {
+    this.state = state;
+    this.deps.changed();
+  }
+  command(action, eventId) {
+    const result = this.queue.then(() => this.deps.control(this.owner, action, eventId));
+    this.queue = result.then(() => {
+    }, () => {
+    });
+    return result;
+  }
+  async enable(value) {
+    this.enabled = value;
+    ++this.generation;
+    this.deps.changed();
+    if (!value) {
+      const held = this.held;
+      this.held = false;
+      if (held) await this.command("release").catch(() => {
+      });
+      this.set("off");
+      return;
+    }
+    await this.tick();
+  }
+  async tick() {
+    if (!this.enabled || this.handling || this.ticking || Date.now() < this.due) return;
+    if (!this.deps.local()) {
+      this.held = false;
+      this.set("suspended");
+      return;
+    }
+    if (this.calling && !this.held) {
+      this.set("calling");
+      return;
+    }
+    this.ticking = true;
+    const generation = this.generation;
+    try {
+      const config = await this.deps.config();
+      if (!this.enabled || generation !== this.generation) return;
+      this.config = config;
+      this.error = "";
+      if (config.targets?.length === 0) {
+        if (this.held) {
+          await this.command("release");
+          this.held = false;
+        }
+        this.set("empty");
+        return;
+      }
+      const status = await this.command(this.held ? "heartbeat" : "arm");
+      if (!this.enabled || generation !== this.generation) {
+        await this.command("release").catch(() => {
+        });
+        return;
+      }
+      this.held = true;
+      if (this.deps.externalBusy?.()) {
+        await this.command("pause");
+        this.set("blocked");
+        return;
+      }
+      if (this.calling) {
+        if (status.state === "armed") await this.command("pause");
+        this.set("calling");
+        return;
+      }
+      if (status.eventId) await this.detected({ owner: this.owner, eventId: status.eventId, target: status.target ?? config.target });
+      else if (status.state === "paused") {
+        await this.command("resume");
+        this.set("armed");
+      } else this.set(status.state);
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : String(error);
+      if (this.held) await this.command("release").catch(() => {
+      });
+      this.held = false;
+      this.set("suspended");
+    } finally {
+      this.ticking = false;
+    }
+  }
+  async detected(event) {
+    if (!this.enabled || this.handling || this.calling || !this.deps.local() || event.owner !== this.owner || !event.eventId || !(this.config?.targets?.some((t) => t.target === event.target) ?? event.target === this.config?.target) || this.seen.has(event.eventId)) return;
+    this.handling = true;
+    const generation = this.generation;
+    this.seen.add(event.eventId);
+    if (this.seen.size > 128) this.seen.delete(this.seen.values().next().value);
+    const current = () => this.enabled && generation === this.generation && this.deps.local();
+    try {
+      const claimed = await this.command("claim", event.eventId);
+      if (!current()) return;
+      const selected = claimed.selection ?? this.config?.targets?.find((t) => t.target === event.target);
+      if (this.config?.targets && (!selected || selected.target !== event.target)) throw new Error("Stale bot selection");
+      const config = selected ? { ...this.config, target: selected.target, phrase: selected.phrases[0], names: [...selected.names] } : this.config;
+      if (this.deps.busy()) {
+        await this.command("resume");
+        this.set("armed");
+        return;
+      }
+      this.calling = true;
+      this.set("calling");
+      await this.deps.start(config, current);
+    } catch {
+      if (this.held) await this.command("release").catch(() => {
+      });
+      this.calling = false;
+      this.held = false;
+      this.set("suspended");
+    } finally {
+      this.handling = false;
+      if (!this.calling) this.due = Date.now() + 2e3;
+    }
+  }
+  /** Explicit setup trial: same navigation/call path, no synthetic wake event. */
+  async testCall(target) {
+    if (this.handling || this.deps.busy() || !this.deps.local()) throw new Error("HL_ERROR:errBusy");
+    await this.enable(false);
+    this.enabled = true;
+    const generation = ++this.generation;
+    this.handling = true;
+    const current = () => this.enabled && generation === this.generation && this.deps.local();
+    try {
+      const config = await this.deps.config();
+      if (!current()) throw new Error("HL_ERROR:errScope");
+      const selected = config.targets?.find((t) => t.target === target);
+      if (!selected) throw new Error("HL_ERROR:errScope");
+      this.config = config;
+      this.calling = true;
+      this.set("calling");
+      await this.deps.start({ ...config, target, phrase: selected.phrases[0], names: [...selected.names] }, current);
+    } catch (error) {
+      this.calling = false;
+      this.enabled = false;
+      this.set("off");
+      throw error;
+    } finally {
+      this.handling = false;
+    }
+  }
+  /** A completed user call command replaces the old call without a second mic listener. */
+  async handoff(target, closePrevious) {
+    if (!this.enabled || this.handling || !this.deps.local()) return;
+    this.handling = true;
+    const generation = this.generation;
+    let starting = false;
+    const current = () => this.enabled && generation === this.generation && this.deps.local();
+    try {
+      await closePrevious();
+      if (!current()) return;
+      while (this.ticking && current()) await new Promise((r) => setTimeout(r, 25));
+      if (!current()) return;
+      const config = await this.deps.config();
+      if (!current()) return;
+      const selected = config.targets?.find((row) => row.target === target);
+      if (!selected) throw new Error("HL_ERROR:errScope");
+      if (this.deps.busy()) throw new Error("HL_ERROR:errBusy");
+      this.config = config;
+      this.calling = true;
+      this.set("calling");
+      starting = true;
+      await this.deps.start({ ...config, target, phrase: selected.phrases[0], names: [...selected.names] }, current);
+    } catch (error) {
+      if (this.held) await this.command("release").catch(() => {
+      });
+      this.calling = false;
+      this.held = false;
+      this.set(this.enabled ? "suspended" : "off");
+      if (!starting) this.deps.failed?.(error);
+    } finally {
+      this.handling = false;
+      if (!this.calling) this.due = Date.now() + 2e3;
+    }
+  }
+  async releaseForNavigation() {
+    if (this.held) {
+      await this.command("release");
+      this.held = false;
+    }
+  }
+  /** A user pause must confirm release, including an arm already in flight. */
+  async park() {
+    this.enabled = false;
+    this.calling = false;
+    this.due = 0;
+    ++this.generation;
+    this.set("off");
+    try {
+      await this.command("release");
+      this.held = false;
+    } catch (error) {
+      this.error = String(error);
+      this.set("suspended");
+      throw error;
+    }
+  }
+  async suspend() {
+    if (!this.enabled) return;
+    if (this.held) await this.command("pause");
+    this.calling = true;
+    this.set("calling");
+  }
+  ended() {
+    this.calling = false;
+    this.due = Date.now() + 2e3;
+    this.set(this.enabled ? "rearming" : "off");
+  }
+  async dispose() {
+    await this.enable(false);
+  }
+};
+var VoiceActivity = class {
+  values = { native: false, recorder: false };
+  changed;
+  constructor(changed) {
+    this.changed = changed;
+  }
+  get active() {
+    return this.values.native || this.values.recorder;
+  }
+  set(source, value) {
+    const before = this.active;
+    this.values[source] = value;
+    if (before !== this.active) this.changed(this.active);
+  }
+};
+
+// src/auth-settings.tsx
+import { useEffect as useEffect4, useState as useState4 } from "react";
+import { Button as Button4, DisclosureCaret } from "@hermes/plugin-sdk";
+import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+function AuthSettings({ provider, selected, backend, connection, profile, active, loading, configure, recheck }) {
+  const { t } = useLiveI18n();
+  const codex = selected === "codex";
+  const [expanded, setExpanded] = useState4(false);
+  useEffect4(() => {
+    setExpanded(provider?.available === false);
+  }, [selected, provider?.available]);
+  return /* @__PURE__ */ jsxs5("section", { "aria-label": t("authentication"), style: { ...section, borderTop: divider, paddingTop: 16 }, children: [
+    /* @__PURE__ */ jsxs5("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }, children: [
+      /* @__PURE__ */ jsx5("strong", { style: { fontSize: ".8125rem" }, children: t("authentication") }),
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", size: "sm", disabled: active || loading, onClick: recheck, children: loading ? t("checking") : t("refresh") })
+    ] }),
+    /* @__PURE__ */ jsxs5("div", { style: { ...section, gap: 4 }, children: [
+      provider?.available && /* @__PURE__ */ jsx5("p", { role: "status", style: { ...hint, color: "var(--dt-foreground)" }, children: t(codex ? "authSignedIn" : "authConfigured") }),
+      /* @__PURE__ */ jsx5("p", { style: { ...hint, overflowWrap: "anywhere" }, children: t("authTarget", backend || "\u2014", connection, profile) })
+    ] }),
+    codex ? /* @__PURE__ */ jsxs5("div", { style: { display: "grid", gap: expanded ? 12 : 0 }, children: [
+      /* @__PURE__ */ jsxs5(Button4, { variant: "ghost", size: "sm", "aria-expanded": expanded, onClick: () => setExpanded((value) => !value), style: { justifyContent: "flex-start", gap: 6, paddingInline: 0, width: "fit-content" }, children: [
+        /* @__PURE__ */ jsx5(DisclosureCaret, { open: expanded }),
+        t("authSignIn")
+      ] }),
+      expanded && /* @__PURE__ */ jsxs5("div", { style: { ...section, ...hint, gap: 12 }, children: [
+        /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: t("authCodexScope") }),
+        [["authLocal", "codex login"], ["authRemote", "codex login --device-auth"]].map(([key, command]) => /* @__PURE__ */ jsxs5("div", { style: { display: "grid", gap: 6 }, children: [
+          /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: t(key) }),
+          /* @__PURE__ */ jsx5("code", { style: { display: "block", userSelect: "text", padding: "8px 10px", border: divider, borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", color: "var(--dt-foreground)", overflowWrap: "anywhere" }, children: command })
+        ] }, key)),
+        /* @__PURE__ */ jsx5("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", style: { color: "var(--dt-primary)", textDecoration: "underline", textUnderlineOffset: 3 }, children: t("authDocs") })
+      ] })
+    ] }) : /* @__PURE__ */ jsx5(Button4, { variant: "secondary", size: "sm", disabled: active || loading, onClick: configure, style: { justifySelf: "start" }, children: t("authConfigure") })
+  ] });
+}
+
+// dashboard/wake-phrase.mjs
+var normalize = (value) => value.normalize("NFKC").toLowerCase().replace(/[\s,，.!。！]/gu, "");
+function matchesWakePhrase(text2, phrase) {
+  return Boolean(text2.trim()) && normalize(text2) === normalize(phrase);
+}
+function matchWakeTarget(text2, targets) {
+  const ids = new Set(targets.filter((t) => t.phrases.some((p) => matchesWakePhrase(text2, p))).map((t) => t.target));
+  return ids.size === 1 ? [...ids][0] : null;
+}
+
+// src/wake-navigation.ts
+function wakeBotReady(scope, target, connection, previousSession) {
+  return scope.profile === target && scope.connection === connection && Boolean(scope.session) && scope.session !== previousSession;
+}
+async function openWakeBot(deps, target, connection, name, current) {
+  const routes = await deps.routes();
+  if (!current()) throw new Error("HL_ERROR:errScope");
+  const route = routes.find((r) => r.profile === target && r.connectionId === connection && r.mode !== "remote");
+  if (!route) throw new Error("HL_ERROR:errScope");
+  if (!deps.revealPane || !deps.paneVisible) throw new Error("HL_ERROR:errBotsView");
+  deps.revealPane("hermes-bots:pane");
+  if (!current()) throw new Error("HL_ERROR:errScope");
+  if (!deps.paneVisible("hermes-bots:pane")) throw new Error("HL_ERROR:errBotsView");
+  const owner = `bot:${route.connectionId}::${route.profile}`;
+  deps.label?.(owner, name || target);
+  deps.newChat(route, { workspaceMode: "bots", workspaceOwnerKey: owner });
+}
+var ProfileTransition = class {
+  cancelled = false;
+  sealed = false;
+  initial;
+  target;
+  constructor(initial, target) {
+    this.initial = initial;
+    this.target = target;
+  }
+  observe(profile) {
+    if (profile !== this.target && (this.sealed || profile !== this.initial)) this.cancelled = true;
+  }
+  seal() {
+    this.sealed = true;
+  }
+};
+
+// src/hover-controls.tsx
+import { useEffect as useEffect5, useRef as useRef4, useState as useState5 } from "react";
+import { Popover, PopoverContent, PopoverTrigger, Tip } from "@hermes/plugin-sdk";
+import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
+function HoverControls({ primary, children, label, tip, holdOpen }) {
+  const [open, setOpen] = useState5(false);
+  const timer = useRef4(null);
+  const panel = useRef4(null);
+  const anchor = useRef4(null), skipFocus = useRef4(false);
+  const cancel = () => {
+    if (timer.current !== null) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  const show = () => {
+    cancel();
+    setOpen(true);
+  };
+  const hideSoon = () => {
+    cancel();
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      setOpen(false);
+    }, 150);
+  };
+  useEffect5(() => cancel, []);
+  useEffect5(() => {
+    if (!open || holdOpen) return;
+    const move = (event) => {
+      const node = event.target instanceof Node ? event.target : null;
+      if (node && (anchor.current?.contains(node) || panel.current?.contains(node))) cancel();
+      else if (timer.current === null) hideSoon();
+    };
+    document.addEventListener("pointermove", move, true);
+    return () => document.removeEventListener("pointermove", move, true);
+  }, [open, holdOpen]);
+  const escape = () => {
+    cancel();
+    setOpen(false);
+    skipFocus.current = true;
+    anchor.current?.querySelector("button")?.focus();
+    skipFocus.current = false;
+  };
+  return /* @__PURE__ */ jsxs6(Popover, { open: open || holdOpen, onOpenChange: (value) => {
+    if (value) show();
+    else setOpen(false);
+  }, children: [
+    /* @__PURE__ */ jsx6("span", { ref: anchor, style: { display: "inline-flex", position: "relative" }, onPointerEnter: show, onPointerLeave: hideSoon, onFocus: () => {
+      if (!skipFocus.current) show();
+    }, onBlur: (e) => {
+      if (!e.currentTarget.contains(e.relatedTarget)) hideSoon();
+    }, onKeyDown: (e) => {
+      if (e.key === "Escape" && !holdOpen) {
+        e.stopPropagation();
+        escape();
+      } else if (!holdOpen && (e.key === "Tab" && !e.shiftKey || e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        e.preventDefault();
+        show();
+        requestAnimationFrame(() => panel.current?.querySelector("button")?.focus());
+      }
+    }, children: /* @__PURE__ */ jsx6(Tip, { label: tip, placement: "control", children: /* @__PURE__ */ jsx6(PopoverTrigger, { asChild: true, children: primary }) }) }),
+    /* @__PURE__ */ jsx6(PopoverContent, { ref: panel, role: "group", "aria-label": label, side: "top", align: "center", sideOffset: 4, variant: "menu", onPointerEnter: show, onPointerLeave: hideSoon, onFocus: show, onBlur: (e) => {
+      if (!e.currentTarget.contains(e.relatedTarget)) hideSoon();
+    }, onOpenAutoFocus: (e) => e.preventDefault(), onCloseAutoFocus: (e) => e.preventDefault(), onEscapeKeyDown: () => {
+      if (!holdOpen) escape();
+    }, style: { width: "auto", minWidth: 0, padding: 0, border: 0, background: "transparent", boxShadow: "none", backdropFilter: "none", display: "flex", flexDirection: "column-reverse", alignItems: "center", gap: 4 }, children })
+  ] });
+}
+
 // src/usage-settings.tsx
-import { useEffect as useEffect3, useState as useState3 } from "react";
-import { Button as Button3, SegmentedControl } from "@hermes/plugin-sdk";
+import { useEffect as useEffect6, useState as useState6 } from "react";
+import { Button as Button5, SegmentedControl } from "@hermes/plugin-sdk";
 
 // src/usage.ts
 var PRICING_DATE = "2026-10-23";
@@ -2692,9 +4177,9 @@ function geminiUsage(m) {
   return { input: i, output: o, inputAudio: count(m.cachedContentTokenCount) > 0 ? 0 : input.AUDIO, inputText: count(m.cachedContentTokenCount) > 0 ? 0 : input.TEXT, outputAudio: output.AUDIO, outputText: output.TEXT, complete: input.AUDIO + input.TEXT === i && output.AUDIO + output.TEXT === o && count(m.cachedContentTokenCount) === 0 && count(m.toolUsePromptTokenCount) === 0 && count(m.thoughtsTokenCount) === 0 && i + o > 0 };
 }
 function geminiCost(model, u) {
-  const text = model === "gemini-2.5-flash-native-audio-latest" ? [0.5, 2] : ["gemini-3.8-live", "gemini-3.1-flash-live-preview"].includes(model) ? [0.75, 4.5] : null;
-  if (!text) return null;
-  return (u.inputText * text[0] + u.inputAudio * 3 + u.outputText * text[1] + u.outputAudio * 12) / 1e6;
+  const text2 = model === "gemini-2.5-flash-native-audio-latest" ? [0.5, 2] : ["gemini-3.8-live", "gemini-3.1-flash-live-preview"].includes(model) ? [0.75, 4.5] : null;
+  if (!text2) return null;
+  return (u.inputText * text2[0] + u.inputAudio * 3 + u.outputText * text2[1] + u.outputAudio * 12) / 1e6;
 }
 var emptyTotals = () => ({ calls: 0, durationMs: 0, audioMs: 0, input: 0, output: 0, usd: 0, unpriced: 0 });
 var emptyUsage = () => ({ since: Date.now(), records: [], archived: { gemini: emptyTotals(), grok: emptyTotals(), codex: emptyTotals(), qwen: emptyTotals() } });
@@ -2765,13 +4250,13 @@ var UsageLedger = class {
 };
 
 // src/usage-settings.tsx
-import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
 var names = { qwen: "Qwen Realtime", gemini: "Gemini Live", grok: "Grok Voice", codex: "Codex \xB7 GPT Live" };
 function UsageSettings({ data, selection, readQuota }) {
   const { t, locale } = useLiveI18n();
   const duration = (ms) => formatDuration(locale, ms), number = (n) => formatNumber(locale, n), dollars = (n) => formatMoney(locale, n);
-  const [provider, setProvider] = useState3(selection.provider), [quota, setQuota] = useState3(null), [error, setError] = useState3(""), [loading, setLoading] = useState3(false), [refresh, setRefresh] = useState3(0);
-  useEffect3(() => {
+  const [provider, setProvider] = useState6(selection.provider), [quota, setQuota] = useState6(null), [error, setError] = useState6(""), [loading, setLoading] = useState6(false), [refresh, setRefresh] = useState6(0);
+  useEffect6(() => {
     let cancelled = false;
     if (provider !== "codex") return;
     setLoading(true);
@@ -2789,102 +4274,102 @@ function UsageSettings({ data, selection, readQuota }) {
     };
   }, [provider, refresh]);
   const total = summarize(data, provider), day = summarize(data, provider, Date.now() - 864e5), five = summarize(data, provider, Date.now() - 5 * 36e5);
-  const tokenTotals = /* @__PURE__ */ jsxs4(Fragment, { children: [
-    /* @__PURE__ */ jsx4("div", { children: t("tokens", number(total.input), number(total.output)) }),
-    /* @__PURE__ */ jsxs4("div", { children: [
+  const tokenTotals = /* @__PURE__ */ jsxs7(Fragment2, { children: [
+    /* @__PURE__ */ jsx7("div", { children: t("tokens", number(total.input), number(total.output)) }),
+    /* @__PURE__ */ jsxs7("div", { children: [
       t("estimated", dollars(total.usd)),
       total.unpriced > 0 ? t("unpriced") : ""
     ] })
   ] });
-  const rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs4(Fragment, { children: [
+  const rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs7(Fragment2, { children: [
     t("audioRates", dollars(audioIn), dollars(audioOut)),
-    /* @__PURE__ */ jsx4("br", {}),
+    /* @__PURE__ */ jsx7("br", {}),
     t("textRates", dollars(textIn), dollars(textOut))
   ] });
-  return /* @__PURE__ */ jsxs4("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
-    /* @__PURE__ */ jsx4("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx4(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
-    /* @__PURE__ */ jsx4("strong", { children: names[provider] }),
-    /* @__PURE__ */ jsxs4("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx4("span", { children: t("last24") }),
-      /* @__PURE__ */ jsxs4("span", { children: [
+  return /* @__PURE__ */ jsxs7("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
+    /* @__PURE__ */ jsx7("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx7(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
+    /* @__PURE__ */ jsx7("strong", { children: names[provider] }),
+    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx7("span", { children: t("last24") }),
+      /* @__PURE__ */ jsxs7("span", { children: [
         duration(day.durationMs),
         " \xB7 ",
         t("calls", number(day.calls))
       ] })
     ] }),
-    /* @__PURE__ */ jsxs4("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx4("span", { children: t("totalCalls") }),
-      /* @__PURE__ */ jsxs4("span", { children: [
+    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx7("span", { children: t("totalCalls") }),
+      /* @__PURE__ */ jsxs7("span", { children: [
         duration(total.durationMs),
         " \xB7 ",
         t("calls", number(total.calls))
       ] })
     ] }),
-    provider === "gemini" && /* @__PURE__ */ jsxs4(Fragment, { children: [
+    provider === "gemini" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsx4("div", { style: hint, children: t("geminiHint") }),
-      /* @__PURE__ */ jsxs4("div", { style: hint, children: [
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("geminiHint") }),
+      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         t("perMillion"),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Gemini 3.8 / 3.1: ",
         rates(3, 12, 0.75, 4.5),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Gemini 2.5: ",
         rates(3, 12, 0.5, 2)
       ] })
     ] }),
-    provider === "qwen" && /* @__PURE__ */ jsxs4(Fragment, { children: [
+    provider === "qwen" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsxs4("div", { style: hint, children: [
+      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         t("qwenHint"),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         t("perMillion"),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Singapore: ",
         rates(0.93, 1.87, 0.23, 0.7),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Beijing: ",
         rates(0.848, 1.696, 0.212, 0.636)
       ] })
     ] }),
-    provider === "grok" && /* @__PURE__ */ jsxs4(Fragment, { children: [
-      /* @__PURE__ */ jsx4("div", { children: t("estimated", dollars(total.usd)) }),
-      /* @__PURE__ */ jsx4("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
+    provider === "grok" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+      /* @__PURE__ */ jsx7("div", { children: t("estimated", dollars(total.usd)) }),
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
     ] }),
-    provider === "codex" && /* @__PURE__ */ jsxs4(Fragment, { children: [
-      /* @__PURE__ */ jsxs4("div", { children: [
+    provider === "codex" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+      /* @__PURE__ */ jsxs7("div", { children: [
         t("last5"),
         " ",
         duration(five.durationMs)
       ] }),
-      /* @__PURE__ */ jsx4("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
-      /* @__PURE__ */ jsxs4("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
-        /* @__PURE__ */ jsx4("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
-        /* @__PURE__ */ jsx4(Button3, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: loading ? t("refreshing") : t("refresh") })
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
+      /* @__PURE__ */ jsxs7("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
+        /* @__PURE__ */ jsx7("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
+        /* @__PURE__ */ jsx7(Button5, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: loading ? t("refreshing") : t("refresh") })
       ] }),
-      error && /* @__PURE__ */ jsx4("div", { role: "alert", style: hint, children: localizeError(t, error) }),
-      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs4("div", { children: [
-        /* @__PURE__ */ jsxs4("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
-          /* @__PURE__ */ jsx4("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
-          /* @__PURE__ */ jsx4("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
+      error && /* @__PURE__ */ jsx7("div", { role: "alert", style: hint, children: localizeError(t, error) }),
+      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs7("div", { children: [
+        /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
+          /* @__PURE__ */ jsx7("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
+          /* @__PURE__ */ jsx7("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
         ] }),
-        /* @__PURE__ */ jsx4("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
-        w.resetsAt && /* @__PURE__ */ jsx4("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
+        /* @__PURE__ */ jsx7("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
+        w.resetsAt && /* @__PURE__ */ jsx7("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
       ] }, i)),
-      quota && /* @__PURE__ */ jsxs4("div", { style: hint, children: [
+      quota && /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         quota.windows.length ? t("officialQuota") : t("noQuota"),
         " ",
         t("checked", formatDate(locale, quota.checkedAt * 1e3, true)),
-        /* @__PURE__ */ jsx4("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         t("quotaHint")
       ] })
     ] }),
-    /* @__PURE__ */ jsx4("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
-    /* @__PURE__ */ jsxs4("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
+    /* @__PURE__ */ jsx7("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
+    /* @__PURE__ */ jsxs7("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
       provider === "codex" ? t("quotaPage") : t("pricingPage"),
       " \u2197"
     ] }),
-    provider !== "codex" && /* @__PURE__ */ jsx4("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
+    provider !== "codex" && /* @__PURE__ */ jsx7("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
   ] });
 }
 
@@ -2897,11 +4382,11 @@ function seedHistory(rows) {
   let budget = 6e3;
   for (const row of [...rows].reverse()) {
     if (row.hidden || row.display_kind === "hidden" || !["user", "assistant"].includes(row.role)) continue;
-    const text = (row.text ?? "").replace(/\s+/g, " ").trim().slice(0, 1200);
-    if (!text) continue;
-    if (out.length >= 24 || text.length > budget) break;
-    budget -= text.length;
-    out.unshift({ role: row.role, text });
+    const text2 = (row.text ?? "").replace(/\s+/g, " ").trim().slice(0, 1200);
+    if (!text2) continue;
+    if (out.length >= 24 || text2.length > budget) break;
+    budget -= text2.length;
+    out.unshift({ role: row.role, text: text2 });
   }
   return out;
 }
@@ -2922,24 +4407,32 @@ function spokenDelegation(request, fragments, now = Date.now()) {
   const context = [...lines, task].join("\n").slice(-6e3);
   return { prompt: prompt.slice(0, 16e3), context };
 }
-function draftVoicePrompt(text, context) {
-  return `${text}
+function draftVoicePrompt(text2, context) {
+  return `${text2}
 
 [Live voice context \u2014 conversation history follows]
 ${context}
 [/Live voice context]`;
 }
-function voiceSubmission(session, text, context, submissionId) {
-  return { session_id: session, submission_id: submissionId, text, surface: "voice-live", voice_context: context.slice(-6e3), queued: true };
+function voiceSubmission(session, text2, context, submissionId) {
+  return { session_id: session, submission_id: submissionId, text: text2, surface: "voice-live", voice_context: context.slice(-6e3), queued: true };
 }
 
 // src/plugin.tsx
-import { useEffect as useEffect4, useRef as useRef2, useState as useState4, useSyncExternalStore } from "react";
-import { Button as Button4, Popover, PopoverContent, PopoverTrigger, Tip, COMPOSER_AREAS, host, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+import { useEffect as useEffect7, useRef as useRef5, useState as useState7, useSyncExternalStore as useSyncExternalStore2 } from "react";
+import { Button as Button6, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+
+// src/goodbye.ts
+function isGoodbye(text2, names2 = ["\uB8E8\uBBF8", "Lumi"]) {
+  const normalize2 = (value2) => value2.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
+  const value = normalize2(text2.replace(/^(?:(?:음|어|um|uh)[\s,.…]+)+/iu, ""));
+  return names2.some((name) => ["Bye", "\uBC14\uC774"].some((prefix) => normalize2(prefix + name) === value));
+}
 
 // src/controller.ts
 var CallController = class {
   snapshot = { status: "idle", selection: null, muted: false, level: 0, startedAt: 0, error: "", transcript: [] };
+  completedUserTurns = /* @__PURE__ */ new Set();
   deps;
   generation = 0;
   abort = null;
@@ -2967,6 +4460,7 @@ var CallController = class {
     this.cancelled.clear();
     this.busy = false;
     this.spoken = [];
+    this.completedUserTurns.clear();
     this.set({ status: "connecting", selection: { ...selection }, error: "", muted: false, transcript: [], startedAt: 0, level: 0 });
     const current = () => this.generation === generation && !abort.signal.aborted;
     try {
@@ -2976,7 +4470,7 @@ var CallController = class {
         if (current() && this.snapshot.status !== "connecting") this.set({ status: this.busy ? "thinking" : speaking ? "speaking" : "listening" });
       }, selection);
       this.audio = audio;
-      await audio.open(selection.provider === "gemini" ? 16e3 : ["codex", "qwen"].includes(selection.provider) ? 48e3 : 24e3, abort.signal, (data, level) => {
+      const opening = audio.open(selection.provider === "gemini" ? 16e3 : ["codex", "qwen"].includes(selection.provider) ? 48e3 : 24e3, abort.signal, (data, level) => {
         if (!current()) return;
         this.transport?.audio(data);
         if (Date.now() - this.lastMeter > 80) {
@@ -2984,11 +4478,7 @@ var CallController = class {
           this.set({ level });
         }
       });
-      if (!current()) {
-        audio.close();
-        return;
-      }
-      const config = await this.deps.token(selection);
+      const [, config] = await Promise.all([opening, this.deps.token(selection)]);
       if (!current()) {
         audio.close();
         return;
@@ -3030,6 +4520,16 @@ var CallController = class {
         event.ids.forEach((id) => this.cancelled.add(id));
         return;
       }
+      if (event.type === "userTurnEnd") {
+        if (event.id && this.completedUserTurns.has(event.id)) return;
+        if (event.id) {
+          this.completedUserTurns.add(event.id);
+          if (this.completedUserTurns.size > 128) this.completedUserTurns.delete(this.completedUserTurns.values().next().value);
+        }
+        if (this.deps.voiceControl?.(event.text)) return;
+        if (this.deps.goodbye?.() && isGoodbye(event.text, this.deps.goodbyeNames?.())) this.stop();
+        return;
+      }
       if (event.type === "transcript") {
         this.spoken.push({ speaker: event.speaker, text: event.text.slice(-6e3), at: Date.now() });
         this.spoken = this.spoken.slice(-80);
@@ -3041,6 +4541,10 @@ var CallController = class {
         return;
       }
       if (event.type !== "tool" || this.seen.has(event.id)) return;
+      if (this.deps.isVoiceControl?.(event.request) || this.deps.goodbye?.() && isGoodbye(event.request, this.deps.goodbyeNames?.())) {
+        this.transport?.toolResult(event.id, "Voice controls are handled locally.");
+        return;
+      }
       this.seen.add(event.id);
       if (event.name !== "ask_hermes" || !event.request.trim()) {
         this.transport?.toolResult(event.id, "The task request is unsupported or empty.");
@@ -3073,16 +4577,25 @@ var CallController = class {
     this.set({ status: "error", error: message });
   }
   stop() {
-    this.deps.ended?.();
+    const wasActive = Boolean(this.abort);
     ++this.generation;
     this.abort?.abort();
     this.abort = null;
-    this.transport?.close();
+    const transport = this.transport, audio = this.audio;
     this.transport = null;
-    this.audio?.close();
     this.audio = null;
+    try {
+      transport?.close();
+    } catch {
+    } finally {
+      try {
+        audio?.close();
+      } catch {
+      }
+    }
     this.busy = false;
     this.set({ status: "idle", selection: null, muted: false, level: 0, startedAt: 0, error: "" });
+    if (wasActive) this.deps.ended?.();
   }
 };
 
@@ -3096,16 +4609,22 @@ function decodeCodexEvent(message) {
   if (message.type === "delegation.created") {
     const item = message.item;
     if (typeof item?.id !== "string" || item.target !== "client") return [];
-    const text = (Array.isArray(item.content) ? item.content : []).filter((c) => c.type === "input_text" && typeof c.text === "string").map((c) => c.text).join("\n");
-    return [{ type: "tool", id: item.id, name: "ask_hermes", request: text }];
+    const text2 = (Array.isArray(item.content) ? item.content : []).filter((c) => c.type === "input_text" && typeof c.text === "string").map((c) => c.text).join("\n");
+    return [{ type: "tool", id: item.id, name: "ask_hermes", request: text2 }];
   }
   if (message.type === "delegation.cancelled" && typeof message.delegation_item_id === "string") return [{ type: "cancelTools", ids: [message.delegation_item_id] }];
-  if (message.type === "turn.done") return [{ type: "turnEnd" }];
+  if (message.type === "turn.done") {
+    if (message.turn?.role === "user" && typeof message.turn.transcript === "string") return [{ type: "userTurnEnd", text: message.turn.transcript, ...typeof message.turn.id === "string" ? { id: message.turn.id } : {} }];
+    return [{ type: "turnEnd" }];
+  }
   return [];
 }
 var hermesCapabilities = "Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.";
 function codexContext(history = []) {
   return { type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities + historyNote(history) }] };
+}
+function codexGreeting(greeting) {
+  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly Korean greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools.` }] };
 }
 function codexToolResult(id, result) {
   return { type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text: result }] };
@@ -3266,6 +4785,7 @@ var CodexRTC = class {
           if (!seeded) {
             seeded = true;
             channel.send(JSON.stringify(codexContext(this.config.history)));
+            if (this.config.wakeGreeting) channel.send(JSON.stringify(codexGreeting(this.config.wakeGreeting)));
           }
           clearTimeout(this.readyTimer);
           this.rejectReady = null;
@@ -3782,9 +5302,9 @@ var HermesBridge = class {
   constructor(deps) {
     this.deps = deps;
   }
-  async run(text, signal, context = "") {
-    text = text.trim();
-    if (!text) throw new Error("HL_ERROR:errRequest");
+  async run(text2, signal, context = "") {
+    text2 = text2.trim();
+    if (!text2) throw new Error("HL_ERROR:errRequest");
     if (this.running || this.deps.busy(this.deps.current().session)) throw new Error("HL_ERROR:errBusy");
     this.running = true;
     const owner = { ...this.deps.current() };
@@ -3792,9 +5312,9 @@ var HermesBridge = class {
       const before = owner.session ? await this.deps.history(owner) : [];
       const ids = new Set(before.map((x) => x.row_id));
       if (signal.aborted || !sameScope(owner, this.deps.current())) throw new Error("HL_ERROR:errScope");
-      const submitted = await this.deps.submit(owner.session, text, context);
+      const submitted = await this.deps.submit(owner.session, text2, context);
       if (!submitted) throw new Error("HL_ERROR:errBackend");
-      if (typeof submitted === "string") text = submitted;
+      if (typeof submitted === "string") text2 = submitted;
       const deadline = Date.now() + 18e4;
       let userRow;
       while (Date.now() < deadline) {
@@ -3808,7 +5328,7 @@ var HermesBridge = class {
         if (!owner.session) continue;
         const rows = await this.deps.history(owner);
         if (signal.aborted || !sameScope(owner, this.deps.current())) throw new Error("HL_ERROR:errScope");
-        if (userRow === void 0) userRow = rows.find((x) => x.role === "user" && x.text === text && x.row_id !== void 0 && !ids.has(x.row_id))?.row_id;
+        if (userRow === void 0) userRow = rows.find((x) => x.role === "user" && x.text === text2 && x.row_id !== void 0 && !ids.has(x.row_id))?.row_id;
         if (userRow !== void 0 && !this.deps.busy(owner.session)) {
           const result = resultAfter(rows, userRow);
           if (result) return result;
@@ -3822,13 +5342,18 @@ var HermesBridge = class {
 };
 
 // src/plugin.tsx
-import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 function Icon({ name, size = 16 }) {
-  const paths = { live: /* @__PURE__ */ jsx5(Fragment2, { children: /* @__PURE__ */ jsx5("path", { d: "M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4" }) }), mic: /* @__PURE__ */ jsxs5(Fragment2, { children: [
-    /* @__PURE__ */ jsx5("rect", { x: "9", y: "2", width: "6", height: "12", rx: "3" }),
-    /* @__PURE__ */ jsx5("path", { d: "M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" })
-  ] }), muted: /* @__PURE__ */ jsx5(Fragment2, { children: /* @__PURE__ */ jsx5("path", { d: "m3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 0v4M5 10v2a7 7 0 0 0 12 5M12 19v3m-4 0h8" }) }), end: /* @__PURE__ */ jsx5("path", { d: "M4 15c-1 0-2-1-2-2v-2c5-6 15-6 20 0v2c0 1-1 2-2 2l-4-2v-3a14 14 0 0 0-8 0v3z" }), close: /* @__PURE__ */ jsx5("path", { d: "m6 6 12 12M6 18 18 6" }) };
-  return /* @__PURE__ */ jsx5("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
+  const paths = { wake: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "M6 9a6 6 0 0 1 12 0c0 4-4 4-4 7a4 4 0 0 1-8 0M10 9a2 2 0 0 1 4 0c0 2-3 2-3 5" }) }), settings: /* @__PURE__ */ jsxs8(Fragment3, { children: [
+    /* @__PURE__ */ jsx8("path", { d: "M4 6h16M4 12h16M4 18h16" }),
+    /* @__PURE__ */ jsx8("circle", { cx: "9", cy: "6", r: "2", fill: "currentColor" }),
+    /* @__PURE__ */ jsx8("circle", { cx: "15", cy: "12", r: "2", fill: "currentColor" }),
+    /* @__PURE__ */ jsx8("circle", { cx: "8", cy: "18", r: "2", fill: "currentColor" })
+  ] }), live: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4" }) }), mic: /* @__PURE__ */ jsxs8(Fragment3, { children: [
+    /* @__PURE__ */ jsx8("rect", { x: "9", y: "2", width: "6", height: "12", rx: "3" }),
+    /* @__PURE__ */ jsx8("path", { d: "M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" })
+  ] }), muted: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "m3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 0v4M5 10v2a7 7 0 0 0 12 5M12 19v3m-4 0h8" }) }), end: /* @__PURE__ */ jsx8("path", { d: "M4 15c-1 0-2-1-2-2v-2c5-6 15-6 20 0v2c0 1-1 2-2 2l-4-2v-3a14 14 0 0 0-8 0v3z" }), close: /* @__PURE__ */ jsx8("path", { d: "m6 6 12 12M6 18 18 6" }) };
+  return /* @__PURE__ */ jsx8("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
 }
 var mutedStyle = hint;
 var controlSize = "var(--composer-control-size, 24px)";
@@ -3838,26 +5363,36 @@ var providerNames = { qwen: "Alibaba Qwen Realtime", gemini: "Google Gemini Live
 function CallWave({ state }) {
   const speaking = state.status === "speaking";
   const level = state.muted ? 0 : Math.max(0, Math.min(1, state.level));
-  return /* @__PURE__ */ jsxs5("span", { "aria-hidden": "true", style: { display: "flex", height: 12, alignItems: "center", gap: 2 }, children: [
-    /* @__PURE__ */ jsx5("style", { children: "@keyframes hermes-live-wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}@media(prefers-reduced-motion:reduce){.hermes-live-wave{animation:none!important}}" }),
-    [0.55, 0.85, 1, 0.85, 0.55].map((weight, i) => /* @__PURE__ */ jsx5("span", { className: "hermes-live-wave", style: { width: 2, borderRadius: 2, background: "currentColor", height: speaking ? 12 : (0.3 + Math.min(0.7, level * weight)) * 12, transition: "height 100ms ease", animation: speaking ? `hermes-live-wave ${0.55 + i * 0.07}s ease-in-out ${i * -0.12}s infinite` : void 0 } }, i))
+  return /* @__PURE__ */ jsxs8("span", { "aria-hidden": "true", style: { display: "flex", height: 12, alignItems: "center", gap: 2 }, children: [
+    /* @__PURE__ */ jsx8("style", { children: "@keyframes hermes-live-wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}@media(prefers-reduced-motion:reduce){.hermes-live-wave{animation:none!important}}" }),
+    [0.55, 0.85, 1, 0.85, 0.55].map((weight, i) => /* @__PURE__ */ jsx8("span", { className: "hermes-live-wave", style: { width: 2, borderRadius: 2, background: "currentColor", height: speaking ? 12 : (0.3 + Math.min(0.7, level * weight)) * 12, transition: "height 100ms ease", animation: speaking ? `hermes-live-wave ${0.55 + i * 0.07}s ease-in-out ${i * -0.12}s infinite` : void 0 } }, i))
   ] });
 }
 function currentScope() {
-  return ownedScope(host.state.focusedSessionOwner.get(), host.state.focusedSessionId.get());
+  return ownedScope(host3.state.focusedSessionOwner.get(), host3.state.focusedSessionId.get());
 }
 function apiScopeMatches(scope) {
-  return scope.connection === (host.state.connectionId.get() || "local") && scope.profile === (host.state.profile.get() || "default");
+  return scope.connection === (host3.state.connectionId.get() || "local") && scope.profile === (host3.state.profile.get() || "default");
 }
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.9.1",
+  version: "0.11.1",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: false,
   register(ctx) {
     ctx.i18n.register(bundles);
     const t = ctx.i18n.t;
+    let trialProfile = null;
+    let trialConnected = false;
+    let wake;
+    let wakeCall = false;
+    let wakeNames = [];
+    let wakeGreeting;
+    const activity = new VoiceActivity((active) => {
+      if (active && !["idle", "error"].includes(controller.snapshot.status)) stop();
+      void wake?.tick();
+    });
     const listeners = /* @__PURE__ */ new Set();
     let callOwner = null;
     let allowSessionAdopt = false;
@@ -3869,20 +5404,20 @@ var plugin_default = {
     const devices = () => ctx.storage.get("audio-devices", defaultDevices);
     const bridge = new HermesBridge({
       current: currentScope,
-      busy: (id) => id ? Boolean(host.state.busyBySession.get()[id]) : host.state.busy.get(),
+      busy: (id) => id ? Boolean(host3.state.busyBySession.get()[id]) : host3.state.busy.get(),
       history: async (scope) => {
         if (!route || route.connectionId !== scope.connection || route.profile !== scope.profile) throw new Error("HL_ERROR:errScope");
-        const result = await host.requestProfile(route, "session.history", historyParams(scope.session));
+        const result = await host3.requestProfile(route, "session.history", historyParams(scope.session));
         return result.messages;
       },
-      submit: async (session, text, voiceContext) => {
+      submit: async (session, text2, voiceContext) => {
         const owner = currentScope();
         if (!route || route.connectionId !== owner.connection || route.profile !== owner.profile || session !== owner.session) throw new Error("HL_ERROR:errScope");
         if (!session) {
-          const prompt = draftVoicePrompt(text, voiceContext);
-          return host.composer.submit(null, prompt) ? prompt : false;
+          const prompt = draftVoicePrompt(text2, voiceContext);
+          return host3.composer.submit(null, prompt) ? prompt : false;
         }
-        await host.requestProfile(route, "prompt.submit", voiceSubmission(session, text, voiceContext, crypto.randomUUID()));
+        await host3.requestProfile(route, "prompt.submit", voiceSubmission(session, text2, voiceContext, crypto.randomUUID()));
         return true;
       },
       adopt: (scope) => {
@@ -3890,10 +5425,31 @@ var plugin_default = {
       }
     });
     const controller = new CallController({
+      goodbye: () => wakeCall,
+      goodbyeNames: () => wakeNames,
+      voiceControl: (text2) => {
+        if (!wake.enabled) return false;
+        const target = matchWakeTarget(text2, wake.config?.targets ?? []);
+        if (!target) return false;
+        if (target === callOwner?.profile) return true;
+        const previous = callOwner && { ...callOwner }, previousRoute = route;
+        void wake.handoff(target, async () => {
+          stop();
+          if (previous?.session && previousRoute && host3.state.busyBySession.get()[previous.session]) {
+            await host3.requestProfile(previousRoute, "session.interrupt", { session_id: previous.session });
+            const deadline = Date.now() + 3e3;
+            while (host3.state.busyBySession.get()[previous.session] && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
+          }
+        });
+        return true;
+      },
+      isVoiceControl: (text2) => Boolean(wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? [])),
       prepare: async (signal, selection) => {
+        await wake?.suspend();
+        if (signal.aborted) return;
         const owner = callOwner && { ...callOwner };
         if (!owner || !apiScopeMatches(owner) || !sameScope(owner, currentScope())) throw new Error("HL_ERROR:errScope");
-        const routes = await host.profileRoutes();
+        const routes = await host3.profileRoutes();
         if (signal.aborted) return;
         if (!callOwner || !sameScope(owner, callOwner) || !sameScope(owner, currentScope())) throw new Error("HL_ERROR:errScope");
         route = routes.find((r) => r.connectionId === owner.connection && r.profile === owner.profile) ?? null;
@@ -3908,10 +5464,10 @@ var plugin_default = {
         if (!callOwner || !apiScopeMatches(callOwner) || !sameScope(callOwner, currentScope())) throw new Error("HL_ERROR:errScope");
         const owner = { ...callOwner };
         if (!route) throw new Error("HL_ERROR:errScope");
-        const rows = owner.session ? await host.requestProfile(route, "session.history", historyParams(owner.session)) : { messages: [] };
+        const rows = owner.session ? await host3.requestProfile(route, "session.history", historyParams(owner.session)) : { messages: [] };
         if (!sameScope(owner, currentScope()) || !callOwner || !sameScope(owner, callOwner)) throw new Error("HL_ERROR:errScope");
         const history = seedHistory(rows.messages);
-        if (["codex", "qwen"].includes(selection.provider)) return { ...selection, token: "", sampleRate: 48e3, history };
+        if (["codex", "qwen"].includes(selection.provider)) return { ...selection, token: "", sampleRate: 48e3, history, ...wakeGreeting ? { wakeGreeting } : {} };
         const result = await ctx.rest("/connect", { method: "POST", body: selection, timeoutMs: 4e4 });
         if (!callOwner || !apiScopeMatches(callOwner) || !sameScope(callOwner, currentScope())) throw new Error("HL_ERROR:errScope");
         return { ...result, history };
@@ -3925,15 +5481,19 @@ var plugin_default = {
           return ctx.rest(path, { method: "POST", body, timeoutMs });
         }, emit);
       },
-      delegate: async (text, signal, voiceContext) => {
+      delegate: async (text2, signal, voiceContext) => {
         allowSessionAdopt = true;
         try {
-          return await bridge.run(text, signal, voiceContext);
+          return await bridge.run(text2, signal, voiceContext);
         } finally {
           allowSessionAdopt = false;
         }
       },
       connected: (selection) => {
+        if (trialProfile && trialProfile === callOwner?.profile) {
+          trialConnected = true;
+          ctx.storage.set(`setup-trial:${trialProfile}`, "connected");
+        }
         ledgerKey = usageKey(callOwner);
         const key = ledgerKey;
         ledger = new UsageLedger(ctx.storage.get(key, emptyUsage()), (data) => {
@@ -3942,7 +5502,7 @@ var plugin_default = {
           } catch {
             if (!storageErrorShown) {
               storageErrorShown = true;
-              host.notify({ kind: "error", message: t("storageError") });
+              host3.notify({ kind: "error", message: t("storageError") });
             }
           }
         });
@@ -3953,8 +5513,20 @@ var plugin_default = {
         if (event.type === "audioUsage") ledger?.audio(event.audioMs);
       },
       ended: () => {
+        if (trialProfile && trialConnected) ctx.storage.set(`setup-trial:${trialProfile}`, "ended");
+        trialProfile = null;
+        trialConnected = false;
+        callOwner = null;
+        route = null;
+        allowSessionAdopt = false;
         ledger?.end();
         ledger = null;
+        const wasWake = wakeCall;
+        wakeCall = false;
+        wakeNames = [];
+        wakeGreeting = void 0;
+        wake?.ended();
+        if (wasWake) chime(440);
       },
       changed: () => listeners.forEach((fn) => fn())
     });
@@ -3964,6 +5536,112 @@ var plugin_default = {
       allowSessionAdopt = false;
       route = null;
     };
+    function chime(hz) {
+      const ac = new AudioContext();
+      const tone = ac.createOscillator();
+      const gain = ac.createGain();
+      tone.frequency.value = hz;
+      gain.gain.value = 0.035;
+      tone.connect(gain);
+      gain.connect(ac.destination);
+      tone.start();
+      gain.gain.exponentialRampToValueAtTime(1e-3, ac.currentTime + 0.16);
+      tone.stop(ac.currentTime + 0.18);
+      tone.onended = () => void ac.close();
+      void ac.resume().catch(() => void ac.close());
+    }
+    async function startWake(config, current) {
+      if (voiceMode.paused) throw new Error("HL_ERROR:errBusy");
+      const initial = host3.state.profile.get();
+      const transition = new ProfileTransition(initial, config.target);
+      const unsubscribe = host3.state.profile.subscribe((profile) => {
+        transition.observe(profile);
+      });
+      const valid = () => current() && !transition.cancelled;
+      try {
+        const selected = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), config.input_device);
+        if (!valid() || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
+        void playWakeCue(devices().output, ctx.storage.get("wake-cue-volume", 1));
+        ctx.storage.set("audio-devices", { ...devices(), input: selected.deviceId });
+        const selectionKey = `selection:${host3.state.connectionId.get() || "local"}:${config.target}`;
+        const saved = ctx.storage.get(selectionKey, null);
+        const selection = { provider: "codex", model: "gpt-live-1-codex", voice: saved?.provider === "codex" && saved.voice ? saved.voice : "cove" };
+        ctx.storage.set(selectionKey, selection);
+        if (activity.active) throw new Error("HL_ERROR:errBusy");
+        if ((host3.state.profile.get() || "default") !== config.target) await wake.releaseForNavigation();
+        const previousSession = currentScope().session;
+        const targetConnection = host3.state.connectionId.get() || "local";
+        await openWakeBot(
+          {
+            routes: () => host3.profileRoutes(),
+            revealPane: host3.revealPane,
+            paneVisible: host3.paneVisibility ? (id) => host3.paneVisibility(id).get() : void 0,
+            label: host3.setWorkspaceOwnerLabel,
+            newChat: (route2, options) => host3.newChat(route2, options)
+          },
+          config.target,
+          targetConnection,
+          config.names?.[0] || config.target,
+          valid
+        );
+        if (valid()) host3.navigate("/");
+        const deadline = Date.now() + 1e4;
+        const ready = (scope2) => wakeBotReady(scope2, config.target, targetConnection, previousSession);
+        while (valid() && Date.now() < deadline) {
+          if (ready(currentScope())) break;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        const scope = currentScope();
+        if (!valid() || !ready(scope)) throw new Error("HL_ERROR:errScope");
+        await host3.ensureAgent(null, config.target);
+        transition.seal();
+        if (!valid() || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        if (activity.active) throw new Error("HL_ERROR:errBusy");
+        callOwner = scope;
+        wakeNames = [...config.names ?? []];
+        wakeCall = true;
+        wakeGreeting = { name: config.names?.[0] || config.target, phrase: config.phrase };
+        await controller.start(selection);
+        if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
+      } catch (error) {
+        stop();
+        host3.notify({ kind: "error", message: localizeError(t, error instanceof Error ? error.message : "HL_ERROR:errGeneric") });
+        throw error;
+      } finally {
+        unsubscribe();
+      }
+    }
+    wake = new WakeCoordinator({
+      config: () => ctx.rest("/wake/config"),
+      control: (owner, action, eventId) => ctx.rest("/wake/control", { method: "POST", body: { owner, action, ...eventId ? { eventId } : {} }, timeoutMs: 2e4 }),
+      local: () => !host3.state.connectionId.get() || host3.state.connectionId.get() === "local",
+      externalBusy: () => activity.active,
+      busy: () => activity.active || !["idle", "error"].includes(controller.snapshot.status) || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean),
+      failed: (error) => host3.notify({ kind: "error", message: localizeError(t, error instanceof Error ? error.message : "HL_ERROR:errGeneric") }),
+      start: startWake,
+      changed: () => listeners.forEach((fn) => fn())
+    });
+    ctx.onEvent("plugin.hermes-live.wake", (event) => {
+      if (event.payload) void wake.detected(event.payload);
+    });
+    ctx.onEvent("voice.status", (event) => {
+      const value = event.payload;
+      activity.set("recorder", Boolean(value?.enabled) || Boolean(value?.state) && !["idle", "off", "stopped"].includes(value.state));
+    });
+    ctx.setInterval(() => void wake.tick(), 1e3);
+    let warming = false;
+    const prewarm = async () => {
+      if (warming || !wake.enabled || host3.state.connectionId.get() && host3.state.connectionId.get() !== "local") return;
+      warming = true;
+      try {
+        await ctx.rest("/wake/prewarm", { method: "POST", timeoutMs: 5e3 });
+      } catch {
+      } finally {
+        warming = false;
+      }
+    };
+    ctx.setInterval(() => void prewarm(), 1e4);
+    ctx.onDispose(() => void wake.dispose());
     ctx.onDispose(stop);
     ctx.setInterval(() => ledger?.flush(), 5e3);
     ctx.setInterval(() => {
@@ -3972,40 +5650,183 @@ var plugin_default = {
       if (allowSessionAdopt && !callOwner.session && now.session && callOwner.connection === now.connection && callOwner.profile === now.profile) callOwner = now;
       if (!sameScope(callOwner, now) || !apiScopeMatches(callOwner)) {
         stop();
-        host.notify({ kind: "info", message: t("scopeEnded") });
+        host3.notify({ kind: "info", message: t("scopeEnded") });
       }
     }, 250);
+    const setupHref = "/settings?tab=plugins&plugin=hermes-live:setup";
+    const openSetup = () => host3.navigate(setupHref);
+    let openCallSettings = null;
+    let booted = false;
+    let stopSetupTest = null;
+    const voiceMode = new VoicePause(ctx.storage.get("live-voice-paused", false), {
+      persist: (paused) => ctx.storage.set("live-voice-paused", paused),
+      stop,
+      release: async () => {
+        await stopSetupTest?.();
+        await wake.park();
+      },
+      resume: async () => {
+        const scope = currentScope();
+        if (!apiScopeMatches(scope)) await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
+        const ready = await ctx.rest("/setup", { timeoutMs: 3e4 });
+        if (!basicReady(ready)) {
+          openSetup();
+          return true;
+        }
+        await wake.enable(true);
+        if (wake.state === "suspended") throw new Error(wake.error || "HL_SETUP:failed");
+        return true;
+      },
+      changed: () => listeners.forEach((fn) => fn())
+    });
+    const changeVoiceMode = async () => {
+      try {
+        if (voiceMode.failed ? voiceMode.intent === "resume" : voiceMode.paused) await voiceMode.resume();
+        else await voiceMode.pause();
+      } catch {
+        listeners.forEach((fn) => fn());
+      }
+    };
+    function VoiceModeControls() {
+      const { locale } = useLiveI18n();
+      const c = setupCopy(locale);
+      useSyncExternalStore2((fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      }, () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
+      return /* @__PURE__ */ jsxs8("div", { style: { display: "grid", gap: 8 }, children: [
+        /* @__PURE__ */ jsx8(Button6, { variant: "secondary", disabled: voiceMode.busy, onClick: () => void changeVoiceMode(), children: c(voiceMode.busy ? voiceMode.intent === "pause" ? "pausingVoice" : "resumingVoice" : voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice") }),
+        /* @__PURE__ */ jsx8("p", { role: "status", style: { ...hint, margin: 0 }, children: c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : voiceMode.paused && !voiceMode.busy ? "pausedHelp" : "pauseHelp") })
+      ] });
+    }
+    function SetupPage() {
+      const profile = useSyncExternalStore2((fn) => host3.state.profile.subscribe(fn), () => host3.state.profile.get());
+      const connection = useSyncExternalStore2((fn) => host3.state.connectionId.subscribe(fn), () => host3.state.connectionId.get());
+      useSyncExternalStore2((fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      }, () => `${voiceMode.paused}:${voiceMode.busy}`);
+      return /* @__PURE__ */ jsxs8(Fragment3, { children: [
+        /* @__PURE__ */ jsx8("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: /* @__PURE__ */ jsx8(VoiceModeControls, {}) }),
+        /* @__PURE__ */ jsx8(
+          Setup,
+          {
+            suspended: voiceMode.paused || voiceMode.busy,
+            registerStopTest: (fn) => {
+              stopSetupTest = fn;
+              return () => {
+                if (stopSetupTest === fn) stopSetupTest = null;
+              };
+            },
+            ctx,
+            scopeKey: `${connection || "local"}:${profile}`,
+            local: !connection || connection === "local",
+            subscribe: (fn) => {
+              listeners.add(fn);
+              return () => {
+                listeners.delete(fn);
+              };
+            },
+            callState: () => controller.snapshot.status,
+            active: () => voiceMode.paused || voiceMode.busy || activity.active || !["idle", "error"].includes(controller.snapshot.status) || host3.state.busy.get(),
+            hold: async () => {
+              const enabled = wake.enabled;
+              await wake.enable(false);
+              return () => {
+                if (enabled && !voiceMode.paused && !voiceMode.busy && ["idle", "error"].includes(controller.snapshot.status)) void wake.enable(true);
+              };
+            },
+            listening: () => wake.enabled && wake.state === "armed",
+            standby: async () => {
+              if (voiceMode.paused || voiceMode.busy) return false;
+              await wake.enable(true);
+              const deadline = Date.now() + 9e4;
+              while (wake.enabled && wake.state === "warming" && Date.now() < deadline) {
+                await new Promise((r) => setTimeout(r, 500));
+                await wake.tick();
+              }
+              if (voiceMode.paused) return false;
+              if (wake.state !== "armed") throw new Error(wake.error || "HL_SETUP:modelStartFailed");
+              return true;
+            },
+            trial: async (target) => {
+              if (voiceMode.paused || voiceMode.busy) throw new Error("HL_ERROR:errBusy");
+              trialProfile = target;
+              trialConnected = false;
+              try {
+                await wake.testCall(target);
+              } catch (e) {
+                trialProfile = null;
+                throw e;
+              }
+            },
+            stop,
+            callSettings: () => {
+              host3.navigate("/");
+              queueMicrotask(() => openCallSettings?.());
+            }
+          },
+          `${connection}:${profile}`
+        )
+      ] });
+    }
+    ctx.registerSettingsPage?.({ id: "setup", title: "Hermes Live", icon: "unmute", render: () => /* @__PURE__ */ jsx8(SetupPage, {}) });
     function LiveButton() {
       const { t: t2, locale } = useLiveI18n();
+      const c = setupCopy(locale);
+      useSyncExternalStore2((fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      }, () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
+      useEffect7(() => {
+        if (booted) return;
+        booted = true;
+        if (!voiceMode.paused && ctx.storage.get("hands-free-enabled", false)) void wake.enable(true).then(prewarm);
+      }, []);
       const providerName = (id) => id === "codex" ? t2("codexProvider") : providerNames[id];
-      const state = useSyncExternalStore((fn) => {
+      const wakeState = useSyncExternalStore2((fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      }, () => `${wake.enabled}:${wake.state}`);
+      const state = useSyncExternalStore2((fn) => {
         listeners.add(fn);
         return () => listeners.delete(fn);
       }, () => controller.snapshot);
-      const focusedOwner = useSyncExternalStore((fn) => host.state.focusedSessionOwner.subscribe(fn), () => host.state.focusedSessionOwner.get());
+      const focusedOwner = useSyncExternalStore2((fn) => host3.state.focusedSessionOwner.subscribe(fn), () => host3.state.focusedSessionOwner.get());
       const scopeKey = `selection:${focusedOwner?.connectionId ?? ""}:${focusedOwner?.profile ?? ""}`;
       const savedSelection = () => ctx.storage.get(scopeKey, defaults);
-      const [tab, setTab] = useState4("call");
-      const [deviceChoice, setDevices] = useState4(devices);
-      const [backend, setBackend] = useState4("");
-      const [open, setOpen] = useState4(false);
-      const [catalog, setCatalog] = useState4([]);
-      const [loading, setLoading] = useState4(false);
-      const [error, setError] = useState4("");
-      const [draftSelection, setSelection] = useState4(savedSelection);
+      const [tab, setTab] = useState7("call");
+      const [deviceChoice, setDevices] = useState7(devices);
+      const [backend, setBackend] = useState7("");
+      const [open, setOpen] = useState7(false);
+      const [catalog, setCatalog] = useState7([]);
+      const [loading, setLoading] = useState7(false);
+      const [error, setError] = useState7("");
+      const [draftSelection, setSelection] = useState7(savedSelection);
       const selection = state.selection ?? draftSelection;
-      const [now, setNow] = useState4(Date.now());
-      const scroll = useRef2(null);
-      const mounted = useRef2(true);
-      const loadId = useRef2(0);
-      useEffect4(() => {
+      const [now, setNow] = useState7(Date.now());
+      const scroll = useRef5(null);
+      const mounted = useRef5(true);
+      const loadId = useRef5(0);
+      useEffect7(() => {
         mounted.current = true;
         return () => {
           mounted.current = false;
         };
       }, []);
       const active = !["idle", "error"].includes(state.status);
-      useEffect4(() => {
+      useEffect7(() => {
+        const show = () => {
+          setTab("call");
+          setOpen(true);
+          void load();
+        };
+        openCallSettings = show;
+        return () => {
+          if (openCallSettings === show) openCallSettings = null;
+        };
+      }, [scopeKey]);
+      useEffect7(() => {
         ++loadId.current;
         setSelection(savedSelection());
         setCatalog([]);
@@ -4014,18 +5835,18 @@ var plugin_default = {
         setLoading(false);
         setOpen(false);
       }, [scopeKey]);
-      useEffect4(() => {
+      useEffect7(() => {
         if (state.status === "error") {
           setOpen(true);
           void load();
         }
       }, [state.status]);
-      useEffect4(() => {
+      useEffect7(() => {
         if (!active) return;
         const timer = setInterval(() => setNow(Date.now()), 1e3);
         return () => clearInterval(timer);
       }, [active]);
-      useEffect4(() => {
+      useEffect7(() => {
         if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
       }, [state.transcript]);
       const load = async () => {
@@ -4034,7 +5855,11 @@ var plugin_default = {
         setError("");
         const scope = currentScope();
         try {
-          if (!apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+          if (!apiScopeMatches(scope)) {
+            if (!["idle", "error"].includes(controller.snapshot.status) || activity.active || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
+            await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
+          }
+          if (!mounted.current || id !== loadId.current || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) return;
           const value = await ctx.rest("/catalog", { timeoutMs: 3e4 });
           if (!mounted.current || id !== loadId.current || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) return;
           setBackend(value.backend);
@@ -4046,6 +5871,27 @@ var plugin_default = {
           if (mounted.current && id === loadId.current) setError("HL_ERROR:errBackend");
         } finally {
           if (mounted.current && id === loadId.current) setLoading(false);
+        }
+      };
+      const updateDevices = async (value) => {
+        const before = devices();
+        setError("");
+        try {
+          if (value.input !== before.input && (!host3.state.connectionId.get() || host3.state.connectionId.get() === "local")) {
+            const setup = await ctx.rest("/setup", { timeoutMs: 3e4 });
+            if (setup.enabled) {
+              const rows = await navigator.mediaDevices.enumerateDevices();
+              const chosen = rows.find((d) => d.kind === "audioinput" && d.deviceId === (value.input || "default"));
+              const normalized = canonicalMicrophoneLabel;
+              const matches = chosen ? setup.audio.devices.filter((name) => normalized(name) === normalized(chosen.label)) : [];
+              if (matches.length !== 1) throw new Error("HL_ERROR:errMicMissing");
+              await ctx.rest("/setup", { method: "PUT", body: { device: matches[0] } });
+            }
+          }
+          setDevices(value);
+          ctx.storage.set("audio-devices", value);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "HL_ERROR:errAudio");
         }
       };
       const change = (next) => {
@@ -4061,10 +5907,10 @@ var plugin_default = {
           return;
         }
         setOpen(false);
-        host.navigate(settingsHref(scope.profile));
+        host3.navigate(settingsHref(scope.profile));
       };
       const start = async () => {
-        if (!["idle", "error"].includes(controller.snapshot.status)) return;
+        if (voiceMode.paused || voiceMode.busy || !["idle", "error"].includes(controller.snapshot.status)) return;
         setError("");
         setOpen(false);
         callOwner = currentScope();
@@ -4082,72 +5928,111 @@ var plugin_default = {
         return value;
       };
       const label = state.muted && state.status === "listening" ? t2("muted") : { idle: t2("idle"), connecting: t2("preparing"), listening: t2("listening"), speaking: t2("speaking"), thinking: t2("thinking"), error: t2("errorStatus") }[state.status];
-      return /* @__PURE__ */ jsxs5("span", { role: "group", "aria-label": t2("call"), style: { order: 1, display: "inline-flex", alignItems: "center", flexShrink: 0, gap: 4 }, children: [
-        active && /* @__PURE__ */ jsx5(Tip, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx5(Button4, { type: "button", variant: "ghost", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: { height: controlSize, width: controlSize, padding: 0 }, children: /* @__PURE__ */ jsx5(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
-        /* @__PURE__ */ jsxs5("span", { style: { display: "inline-flex", alignItems: "center" }, children: [
-          /* @__PURE__ */ jsx5(Tip, { label: active ? t2("actionTip", label, state.status === "connecting" ? t2("cancel") : t2("end")) : t2("startTip", providerName(selection.provider), selection.voice), placement: "control", children: /* @__PURE__ */ jsx5(Button4, { type: "button", variant: "default", size: active ? "sm" : "icon", "aria-label": active ? state.status === "connecting" ? t2("cancelConnection") : t2("endCall") : t2("start"), "aria-pressed": active, "aria-busy": state.status === "connecting", onClick: () => active ? stop() : void start(), style: { height: active ? controlSize : primarySize, width: active ? void 0 : primarySize, padding: active ? "0 12px" : 0, gap: 6, borderRadius: 999 }, children: active ? /* @__PURE__ */ jsxs5(Fragment2, { children: [
-            /* @__PURE__ */ jsx5(CallWave, { state }),
-            /* @__PURE__ */ jsx5("span", { children: state.status === "connecting" ? t2("preparing") : t2("end") })
-          ] }) : /* @__PURE__ */ jsx5(icons.AudioLines, { className: icons.iconSize.sm }) }) }),
-          /* @__PURE__ */ jsxs5(Popover, { open, onOpenChange: (v) => {
+      const wakeLabel = voiceMode.paused ? c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : "pausedVoice") : !wake.enabled ? t2("wakeOff") : wake.state === "armed" ? t2("wakeArmed", wake.config?.phrase ?? "\u2026") : t2(wake.state === "empty" ? "wakeEmpty" : wake.state === "warming" ? "wakeWarming" : wake.state === "calling" ? "wakeCalling" : wake.state === "rearming" ? "wakeRearming" : "wakeSuspended");
+      const discStyle = { height: primarySize, width: primarySize, padding: 0, borderRadius: 999, boxShadow: "0 2px 8px #0003" };
+      return /* @__PURE__ */ jsxs8("span", { role: "group", "aria-label": t2("call"), style: { order: 1, display: "inline-flex", alignItems: "center", flexShrink: 0 }, children: [
+        /* @__PURE__ */ jsxs8(HoverControls, { label: t2("callSettings"), holdOpen: open, tip: active ? t2("actionTip", label, state.status === "connecting" ? t2("cancel") : t2("end")) : wakeLabel, primary: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: active ? "default" : "ghost", size: active ? "sm" : "icon", "aria-label": active ? state.status === "connecting" ? t2("cancelConnection") : t2("endCall") : t2("wakeToggle"), "aria-pressed": active || wake.enabled, "aria-busy": state.status === "connecting", disabled: voiceMode.busy, onClick: () => {
+          if (active) stop();
+          else if (voiceMode.paused) void changeVoiceMode();
+          else if (wake.enabled) {
+            ctx.storage.set("hands-free-enabled", false);
+            void wake.enable(false);
+          } else void (async () => {
+            try {
+              const scope = currentScope();
+              if (!apiScopeMatches(scope)) await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
+              const ready = await ctx.rest("/setup", { timeoutMs: 3e4 });
+              if (!basicReady(ready)) {
+                openSetup();
+                return;
+              }
+              ctx.storage.set("hands-free-enabled", true);
+              await wake.enable(true);
+              if (wake.state === "suspended") openSetup();
+            } catch {
+              openSetup();
+            }
+          })();
+        }, style: { height: active ? primarySize : controlSize, width: active ? void 0 : controlSize, padding: active ? "0 12px" : 0, gap: 6, borderRadius: 999, color: !active && wake.enabled ? "var(--dt-primary-solid)" : void 0 }, children: active ? /* @__PURE__ */ jsxs8(Fragment3, { children: [
+          /* @__PURE__ */ jsx8(CallWave, { state }),
+          /* @__PURE__ */ jsx8("span", { children: state.status === "connecting" ? t2("preparing") : t2("end") })
+        ] }) : /* @__PURE__ */ jsx8(Icon, { name: "wake" }) }), children: [
+          !active && /* @__PURE__ */ jsx8(Tip2, { label: t2("startTip", providerName(selection.provider), selection.voice), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "default", size: "icon", "aria-label": t2("start"), disabled: voiceMode.paused || voiceMode.busy, onClick: () => void start(), style: discStyle, children: /* @__PURE__ */ jsx8(icons.AudioLines, { className: icons.iconSize.sm }) }) }),
+          /* @__PURE__ */ jsx8(Tip2, { label: c(voiceMode.paused ? "resumeVoice" : "pauseVoice"), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "secondary", size: "icon", disabled: voiceMode.busy, "aria-label": c(voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice"), onClick: () => void changeVoiceMode(), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: voiceMode.paused ? "wake" : "muted" }) }) }),
+          active && /* @__PURE__ */ jsx8(Tip2, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: state.muted ? "default" : "secondary", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
+          /* @__PURE__ */ jsxs8(Popover2, { open, onOpenChange: (v) => {
             setOpen(v);
             if (v) void load();
           }, children: [
-            /* @__PURE__ */ jsx5(Tip, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx5(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx5(Button4, { type: "button", variant: "ghost", size: "icon", "aria-label": t2("callSettings"), style: { height: controlSize, width: 20, padding: 0, borderRadius: 4 }, children: /* @__PURE__ */ jsx5(icons.ChevronDown, { className: icons.iconSize.xs }) }) }) }),
-            /* @__PURE__ */ jsxs5(PopoverContent, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
-              /* @__PURE__ */ jsxs5("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
-                /* @__PURE__ */ jsxs5("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
-                  /* @__PURE__ */ jsx5("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
-                  /* @__PURE__ */ jsx5(Button4, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(false), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx5(Icon, { name: "close" }) })
+            /* @__PURE__ */ jsx8(Tip2, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx8(PopoverTrigger2, { asChild: true, children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "secondary", size: "icon", "aria-label": t2("callSettings"), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: "settings" }) }) }) }),
+            /* @__PURE__ */ jsxs8(PopoverContent2, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
+              /* @__PURE__ */ jsxs8("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
+                /* @__PURE__ */ jsxs8("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
+                  /* @__PURE__ */ jsx8("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
+                  /* @__PURE__ */ jsx8(Button6, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(false), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx8(Icon, { name: "close" }) })
                 ] }),
-                /* @__PURE__ */ jsx5("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx5(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "usage"].map((id) => ({ id, label: t2(id) })) }) })
+                /* @__PURE__ */ jsx8(VoiceModeControls, {}),
+                /* @__PURE__ */ jsx8("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx8(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "wake", "usage"].map((id) => ({ id, label: t2(id) })) }) })
               ] }),
-              /* @__PURE__ */ jsxs5("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
-                tab === "audio" && /* @__PURE__ */ jsx5(DeviceSettings, { value: deviceChoice, active, onChange: (value) => {
-                  setDevices(value);
-                  ctx.storage.set("audio-devices", value);
-                } }),
-                tab === "usage" && /* @__PURE__ */ jsx5(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
-                tab === "call" && /* @__PURE__ */ jsxs5(Fragment2, { children: [
-                  /* @__PURE__ */ jsxs5("div", { style: { display: "grid", gap: 12 }, children: [
-                    /* @__PURE__ */ jsx5(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: true }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
+              /* @__PURE__ */ jsxs8("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
+                tab === "audio" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
+                  error && /* @__PURE__ */ jsx8("p", { role: "alert", children: setupError(locale, error) || localizeError(t2, error) }),
+                  /* @__PURE__ */ jsx8(DeviceSettings, { value: deviceChoice, active: active || voiceMode.paused || voiceMode.busy, onChange: (value) => void updateDevices(value) })
+                ] }),
+                tab === "wake" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
+                  /* @__PURE__ */ jsx8(Button6, { onClick: () => {
+                    setOpen(false);
+                    openSetup();
+                  }, children: setupCopy(locale)("title") }),
+                  wake.error && /* @__PURE__ */ jsx8("p", { role: "alert", children: setupError(locale, wake.error) || localizeError(t2, wake.error) }),
+                  /* @__PURE__ */ jsx8("p", { role: "status", style: { ...hint, margin: 0 }, children: wakeLabel }),
+                  /* @__PURE__ */ jsx8(WakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, scopeKey)
+                ] }),
+                tab === "usage" && /* @__PURE__ */ jsx8(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
+                tab === "call" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
+                  /* @__PURE__ */ jsx8(Button6, { variant: "ghost", onClick: () => {
+                    setOpen(false);
+                    openSetup();
+                  }, children: setupCopy(locale)("title") }),
+                  /* @__PURE__ */ jsxs8("div", { style: { display: "grid", gap: 12 }, children: [
+                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: true }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
                       const p = catalog.find((p2) => p2.id === value);
                       if (p) change({ provider: p.id, model: p.models[0].id, voice: p.voices[0] });
                     } }),
-                    /* @__PURE__ */ jsx5(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
-                    /* @__PURE__ */ jsx5(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
+                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
+                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
                   ] }),
-                  /* @__PURE__ */ jsxs5("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
+                  /* @__PURE__ */ jsxs8("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
                     loading ? t2("checking") : provider && !provider.available && !active ? t2("setupNeeded") : label,
-                    state.startedAt > 0 && /* @__PURE__ */ jsx5("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs5("bdi", { children: [
+                    state.startedAt > 0 && /* @__PURE__ */ jsx8("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs8("bdi", { children: [
                       formatNumber(locale, Math.floor(seconds / 60)),
                       ":",
                       new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds % 60)
                     ] }) })
                   ] }),
-                  (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs5("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
+                  (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs8("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
                     localizeError(t2, error || state.error || provider?.reason),
-                    error && /* @__PURE__ */ jsx5(Button4, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
+                    error && /* @__PURE__ */ jsx8(Button6, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
                   ] }),
-                  /* @__PURE__ */ jsx5(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
-                  state.transcript.length > 0 && /* @__PURE__ */ jsx5("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs5("p", { style: { margin: "0 0 8px" }, children: [
-                    /* @__PURE__ */ jsx5("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
+                  /* @__PURE__ */ jsx8(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
+                  state.transcript.length > 0 && /* @__PURE__ */ jsx8("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs8("p", { style: { margin: "0 0 8px" }, children: [
+                    /* @__PURE__ */ jsx8("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
                     fragment.text
                   ] }, i)) })
                 ] })
               ] }),
-              tab === "call" && /* @__PURE__ */ jsxs5("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
+              tab === "call" && /* @__PURE__ */ jsxs8("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
                 selection.provider === "codex" ? t2("subscriptionNotice") : t2("apiNotice"),
-                /* @__PURE__ */ jsx5("br", {}),
+                /* @__PURE__ */ jsx8("br", {}),
                 t2("endExisting")
               ] })
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx5("span", { role: "status", className: "sr-only", children: active ? label : localizeError(t2, state.error) })
+        /* @__PURE__ */ jsx8("span", { role: "status", className: "sr-only", children: active ? label : state.error ? localizeError(t2, state.error) : wakeLabel })
       ] });
     }
-    ctx.register({ id: "call", area: COMPOSER_AREAS.actions, order: 20, render: () => /* @__PURE__ */ jsx5(LiveButton, {}) });
+    ctx.register({ id: "call", area: COMPOSER_AREAS.actions, order: 20, render: () => /* @__PURE__ */ jsx8(LiveButton, {}) });
   }
 };
 export {

@@ -15,7 +15,10 @@ export function decodeCodexEvent(message:any):LiveEvent[] {
   return [{type:'tool',id:item.id,name:'ask_hermes',request:text}];
  }
  if(message.type==='delegation.cancelled'&&typeof message.delegation_item_id==='string')return [{type:'cancelTools',ids:[message.delegation_item_id]}];
- if(message.type==='turn.done')return [{type:'turnEnd'}];
+ if(message.type==='turn.done'){
+  if(message.turn?.role==='user'&&typeof message.turn.transcript==='string')return [{type:'userTurnEnd',text:message.turn.transcript,...(typeof message.turn.id==='string'?{id:message.turn.id}:{})}];
+  return [{type:'turnEnd'}];
+ }
  return [];
 }
 // The subscription voice model does not infer Hermes capabilities from the
@@ -23,6 +26,10 @@ export function decodeCodexEvent(message:any):LiveEvent[] {
 // chat, before the user speaks. This also works with already-loaded brokers.
 const hermesCapabilities='Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.';
 export function codexContext(history:readonly ChatTurn[]=[]){return {type:'session.context.append',content:[{type:'input_text',text:hermesCapabilities+historyNote(history)}]}}
+
+export function codexGreeting(greeting:NonNullable<Connection['wakeGreeting']>){
+ return {type:'session.context.append',content:[{type:'input_text',text:`The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly Korean greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools.`}]};
+}
 
 export function codexToolResult(id:string,result:string){return {type:'delegation.context.append',delegation_item_id:id,content:[{type:'input_text',text:result}]}}
 
@@ -89,7 +96,7 @@ export class CodexRTC implements Transport {
   let seeded=false;
   const ready=new Promise<void>((resolve,reject)=>{
    this.rejectReady=reject;this.readyTimer=setTimeout(()=>this.fail("HL_ERROR:errTimeout"),90000);
-   const check=()=>{if(this.closed)return;if(pc.connectionState==='failed'){this.fail("HL_ERROR:errConnection");return}if(pc.connectionState==='connected'&&channel.readyState==='open'){if(!seeded){seeded=true;channel.send(JSON.stringify(codexContext(this.config.history)))}clearTimeout(this.readyTimer);this.rejectReady=null;resolve()}};
+   const check=()=>{if(this.closed)return;if(pc.connectionState==='failed'){this.fail("HL_ERROR:errConnection");return}if(pc.connectionState==='connected'&&channel.readyState==='open'){if(!seeded){seeded=true;channel.send(JSON.stringify(codexContext(this.config.history)));if(this.config.wakeGreeting)channel.send(JSON.stringify(codexGreeting(this.config.wakeGreeting)))}clearTimeout(this.readyTimer);this.rejectReady=null;resolve()}};
    channel.onopen=check;pc.onconnectionstatechange=check;
   });
   // Attach immediately so cancellation during HTTP negotiation cannot cause an unhandled rejection.

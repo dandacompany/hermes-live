@@ -252,6 +252,13 @@ class CodexCallRequest(BaseModel):
     callId: UUID
 
 
+@router.post('/codex/prewarm')
+def codex_prewarm(response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    wake_config()  # Only explicitly configured local hands-free profiles.
+    return codex.sessions.prewarm()
+
+
 @router.post('/codex/session')
 def codex_session(body: CodexSessionRequest, response: Response):
     response.headers['Cache-Control'] = 'no-store'
@@ -287,3 +294,239 @@ def codex_usage(response: Response):
     except Exception:
         # Never relay provider errors (which may include account identity or credentials).
         raise HTTPException(503, 'Codex 구독 사용량을 조회하지 못했습니다. 로그인 상태를 확인한 뒤 다시 시도하세요.') from None
+
+# Shared across profile-scoped copies in the host multiplexer. The detector itself
+# enforces machine-wide ownership; events never enter the built-in voice path.
+_wake_name = '_hermes_live_wake_v1'
+if _wake_name not in sys.modules:
+    _wake_spec = importlib.util.spec_from_file_location(_wake_name, Path(__file__).with_name('wake_service.py'))
+    _wake_module = importlib.util.module_from_spec(_wake_spec)
+    sys.modules[_wake_name] = _wake_module
+    _wake_spec.loader.exec_module(_wake_module)
+wake = sys.modules[_wake_name]
+
+_registry_spec = importlib.util.spec_from_file_location(__name__+'_wake_registry',Path(__file__).with_name('wake_registry.py'))
+registry_module = importlib.util.module_from_spec(_registry_spec)
+_registry_spec.loader.exec_module(registry_module)
+
+
+_assets_spec = importlib.util.spec_from_file_location(__name__+'_assets',Path(__file__).with_name('wake_assets.py'))
+assets_module = importlib.util.module_from_spec(_assets_spec)
+_assets_spec.loader.exec_module(assets_module)
+
+
+def setup_path():
+    from hermes_constants import get_default_hermes_root
+    return get_default_hermes_root()/'state/hermes-live/setup.json'
+
+
+def wake_settings():
+    # Only non-secret wake configuration is inherited from the local primary profile.
+    from hermes_constants import get_default_hermes_root
+    from hermes_cli.config import read_user_config_raw
+    raw=read_user_config_raw(get_default_hermes_root()/'config.yaml')
+    primary=raw.get('plugins',{}).get('entries',{}).get('hermes-live',{}).get('settings',{})
+    return {**{k:v for k,v in primary.items() if k.startswith('wake_')},
+            **{k:v for k,v in settings().items() if k.startswith('wake_')},
+            **assets_module.read_json(setup_path()).get('wake',{})}
+
+
+def bot_registry():
+    cfg=wake_settings()
+    return registry_module.registry({'target':cfg.get('wake_target',''),'phrase':cfg.get('wake_phrase','헤이 루미')})
+
+class WakeBotEntry(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    profile: str = Field(min_length=1,max_length=64)
+    enabled: bool
+    aliases: list[str] = Field(default_factory=list,max_length=3)
+
+class WakeBotsRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    revision: str = Field(min_length=1,max_length=64)
+    bots: list[WakeBotEntry] = Field(max_length=100)
+
+@router.get('/wake/bots')
+def wake_bots(response: Response):
+    response.headers['Cache-Control']='no-store'
+    return bot_registry().read()
+
+@router.put('/wake/bots')
+def save_wake_bots(body: WakeBotsRequest,response: Response):
+    response.headers['Cache-Control']='no-store'
+    try:
+        return bot_registry().save(body.revision,[b.model_dump() for b in body.bots])
+    except registry_module.RegistryConflict:
+        raise HTTPException(409,'HL_ERROR:errWakeChanged') from None
+    except registry_module.RegistryError:
+        raise HTTPException(400,'HL_ERROR:errWakeRegistry') from None
+
+class WakeRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    owner: UUID
+    action: str = Field(pattern=r'^(arm|heartbeat|claim|pause|resume|release)$')
+    eventId: UUID | None = None
+
+
+def wake_config(*, preparing=False):
+    cfg = wake_settings()
+    if not preparing and not cfg.get('wake_enabled', False):
+        raise HTTPException(403, 'Hands-free calling is not configured for this profile')
+    device = str(cfg.get('wake_input_device','')).strip()
+    if not device:
+        raise HTTPException(400,'Hands-free microphone is required')
+    targets=bot_registry().read()['targets']
+    provider=cfg.get('wake_provider','whisper')
+    first=targets[0] if targets else {'target':'','phrases':[]}
+    result={'target':first['target'],'phrase':', '.join(t['phrases'][0] for t in targets),
+            'targets':targets,'input_device':device[:200],'provider':provider}
+    if provider == 'whisper':
+        # New installs use the bundled engine. Explicit working legacy paths are preserved.
+        legacy = not cfg.get('wake_managed',False) and all(str(cfg.get('wake_whisper_'+k) or '').strip() for k in ('node','module','models','engine'))
+        if not legacy:
+            try: result['whisper_native'] = assets_module.assets().resolve(cfg)
+            except assets_module.SetupError as exc: raise HTTPException(503,'HL_SETUP:'+str(exc)) from None
+        else:
+            for key in ('node','module','models','engine'):
+                path = Path(str(cfg.get('wake_whisper_'+key,'')).strip()).expanduser()
+                if not path.is_absolute() or not path.exists():
+                    raise HTTPException(503, 'HL_SETUP:legacyMissing')
+                result['whisper_'+key] = str(path)
+            model = str(cfg.get('wake_whisper_model','small'))
+            if model not in assets_module.MODELS or not (Path(result['whisper_models'])/f'ggml-{model}.bin').is_file():
+                raise HTTPException(503, 'HL_SETUP:modelMissing')
+            result['whisper_model'] = model
+        return result
+    if provider == 'sherpa' and len(targets)>1:
+        raise HTTPException(400,'Multiple bot names require the local Whisper provider')
+    if provider != 'sherpa':
+        raise HTTPException(400, 'Unsupported local wake provider')
+    from hermes_constants import get_default_hermes_root
+    model_dir = get_default_hermes_root() / 'cache/wakewords/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01'
+    if not (model_dir / 'tokens.txt').is_file():
+        raise HTTPException(503, 'Install the local sherpa wake model before enabling hands-free calling')
+    return {**result,'model_dir':str(model_dir)}
+
+
+@router.get('/wake/config')
+def get_wake_config(response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    return wake_config()
+
+
+@router.post('/wake/control')
+def wake_control(payload: WakeRequest, response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    cfg = {} if payload.action=='release' else wake_config()
+    try:
+        return wake.runtime().control(str(payload.owner),payload.action,cfg,str(payload.eventId) if payload.eventId else None)
+    except wake.WakeConflict:
+        raise HTTPException(409, 'Hands-free listener is busy, expired or disconnected') from None
+    except Exception:
+        raise HTTPException(503, 'Could not open the local wake microphone; check the device and wake dependencies') from None
+
+
+@router.get('/wake/status')
+def get_wake_status(response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    wake_config()
+    return wake.runtime().diagnostics()
+
+
+_prewarm_spec = importlib.util.spec_from_file_location(__name__+'_prewarm',Path(__file__).with_name('wake_prewarm.py'))
+prewarm = importlib.util.module_from_spec(_prewarm_spec)
+_prewarm_spec.loader.exec_module(prewarm)
+
+
+@router.post('/wake/prewarm')
+def wake_prewarm(response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    from hermes_cli.profiles import list_profiles
+    selected={target['target'] for target in wake_config()['targets']}
+    homes=[profile.path for profile in list_profiles(lazy_skill_count=True) if profile.name in selected]
+    prewarm.targets.refresh(homes)
+    return {'scheduled':len(homes)}
+
+# Setup remains readable before wake is enabled. The host scopes these routes to
+# the selected backend/profile; the Desktop only offers wake setup on local routes.
+def setup_devices():
+    try:
+        import sounddevice as sd
+        import numpy
+        names=[d['name'] for d in sd.query_devices() if d['max_input_channels']>0]
+        return {'devices':list(dict.fromkeys(names)), 'duplicates':[n for n in set(names) if names.count(n)>1], 'error':''}
+    except ImportError: return {'devices':[],'duplicates':[],'error':'audioDependencies'}
+    except Exception: return {'devices':[],'duplicates':[],'error':'audioDevices'}
+
+@router.get('/setup')
+def get_setup(response: Response):
+    response.headers['Cache-Control']='no-store'
+    cfg=wake_settings()
+    try: model=assets_module.assets().status(cfg)
+    except assets_module.SetupError as exc:
+        model={'error':str(exc),'supported':assets_module.assets().supported,
+               'engine':bool(assets_module.assets().engine()),'installed':False,'prepared':False,
+               'model':str(cfg.get('wake_whisper_model') or 'small'),'bytes':0,'source':'managed','progress':{}}
+    return {'assets':model,'audio':setup_devices(),'device':cfg.get('wake_input_device',''),
+            'enabled':bool(cfg.get('wake_enabled',False)), 'legacy':all(cfg.get('wake_whisper_'+k) for k in ('node','module','models','engine')) and not cfg.get('wake_managed'),
+            'configured':assets_module.read_json(setup_path()).get('configured',False)}
+
+class SetupRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    device: str = Field(min_length=1,max_length=200)
+
+@router.put('/setup')
+def save_setup(body:SetupRequest,response:Response):
+    response.headers['Cache-Control']='no-store'
+    devices=setup_devices()
+    if body.device not in devices['devices'] or body.device in devices['duplicates']:
+        raise HTTPException(400,'HL_SETUP:audioDevices')
+    try: assets_module.assets().resolve(wake_settings())
+    except assets_module.SetupError as exc: raise HTTPException(503,'HL_SETUP:'+str(exc)) from None
+    # Preserve unrelated settings, models, bot opt-ins, and profile voice choices.
+    value=assets_module.read_json(setup_path())
+    value['wake']={'wake_enabled':True,'wake_provider':'whisper','wake_input_device':body.device, 'wake_managed':True}
+    value['configured']=True
+    assets_module.atomic_json(setup_path(),value)
+    return get_setup(response)
+
+@router.post('/setup/model')
+def prepare_model(response:Response):
+    response.headers['Cache-Control']='no-store'
+    try:return assets_module.assets().start(wake_settings())
+    except assets_module.SetupError as exc:raise HTTPException(503,'HL_SETUP:'+str(exc)) from None
+
+@router.delete('/setup/model')
+def cancel_model(response:Response):
+    response.headers['Cache-Control']='no-store'
+    assets_module.assets().cancel()
+    return {'cancelled':True}
+
+@router.post('/setup/test')
+def setup_test(body:WakeRequest,response:Response):
+    response.headers['Cache-Control']='no-store'
+    if body.action not in ('arm','heartbeat','release'):raise HTTPException(400,'HL_SETUP:testAction')
+    try:
+        cfg={} if body.action=='release' else wake_config(preparing=True)
+        status=wake.runtime().control(str(body.owner),body.action,cfg)
+        return {**status, 'diagnostics':wake.runtime().diagnostics()}
+    except wake.WakeConflict:raise HTTPException(409,'HL_SETUP:microphoneBusy') from None
+    except HTTPException:raise
+    except Exception:raise HTTPException(503,'HL_SETUP:microphoneFailed') from None
+
+@router.get('/setup/login')
+def setup_login_status(response:Response):
+    response.headers['Cache-Control']='no-store'
+    return codex.login_flow.status()
+
+@router.post('/setup/login')
+def setup_login_start(response:Response):
+    response.headers['Cache-Control']='no-store'
+    if not codex.binary():raise HTTPException(503,'HL_ERROR:errCodexMissing')
+    if codex.sessions.calls:raise HTTPException(409,'HL_ERROR:errBusy')
+    return codex.login_flow.start()
+
+@router.delete('/setup/login')
+def setup_login_cancel(response:Response):
+    response.headers['Cache-Control']='no-store'
+    return codex.login_flow.cancel()

@@ -1,3 +1,5 @@
+> **Apple Silicon beta 0.11.1** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
+
 # hermes-live
 
 **Live voice calls with Gemini, Grok, Qwen, and a Codex subscription in Hermes Desktop.**
@@ -5,6 +7,34 @@
 Korean documentation: [README.ko.md](./README.ko.md)
 
 A plugin that adds a Live call button next to the Hermes Desktop composer without modifying or rebuilding the official app. Its dedicated call panel supports Gemini Live, Grok Voice, Qwen Realtime, and GPT Live through a Codex subscription, with model and voice selection, transcripts, microphone muting, and call controls.
+
+Hover or focus the ear icon to reveal call and settings controls. Calling a selected name opens that bot in the Bots tab before starting the call. Enable Bots in Desktop; existing Sessions tabs are preserved.
+
+## First-use setup
+
+In **Capabilities → Plugins**, rescan and search **Hermes Live** (with a space), then enable its switch. After enabling the backend and Desktop parts, open **Settings → Plugins → Hermes Live**. The ear button opens setup if required configuration is missing. Setup follows these steps:
+
+1. Choose **Call bots by name** or **Start calls with a button**. Button calls do not require a local wake model.
+2. Select local bots. Enable Hermes Live on a missing bot through its official plugin settings; existing selections and voices are preserved.
+3. Check Codex on the backend and sign in with ChatGPT. An existing login is reused. The sign-in button opens official Codex browser authentication; install instructions and CLI fallback are available if the installed Codex does not support that flow. Account detection does not guarantee available voice quota.
+4. Prepare the wake model. Setup checks configured/shared model caches, validates existing files, or downloads Whisper Small (about 488 MB). It verifies the file and starts the bundled engine before reporting ready. Download progress, cancellation, interrupted-download retry, and errors are visible. Closing setup does not cancel a backend download; stopping the backend interrupts it.
+5. Allow the microphone, choose the same physical device for listening and calls, and check input. The browser and backend capture paths are checked sequentially. Adjust or disable the confirmation sound.
+6. Test the wake phrase locally, then optionally start a real test call. A local recognition test never opens a cloud call. A real call uses the selected account and its usage limits. Untested calls remain labeled unverified.
+7. Start listening explicitly. Listening on the next app launch is a separate preference, off for new users.
+
+Name calling supports **Apple Silicon macOS with Hermes 0.23.0+**. The plugin ships an authenticated whisper.cpp engine and a Python stdlib adapter; new users do not need BotIn, Node.js, build tools, model paths, or paid transcription APIs. Audio capture dependencies are declared for Hermes package management. Existing explicit legacy adapter settings continue working until the user saves the managed microphone setup.
+
+The new setup page supports Korean and English; other interface languages currently use English for this page. Existing call/audio/usage translations remain available.
+
+## Call a bot by name
+
+Select bots in setup or **Live call settings → Wake**. Each selected bot uses its current Bots title in `헤이 {name}` / `Hey {name}` with up to three spoken aliases. Duplicate enabled names are rejected; newly discovered bots remain off. Say `Bye {name}` / `바이 {name}` to end and return to standby. Calling another selected name during a call switches bots. The current call keeps its name snapshot even if settings change.
+
+After setup, use the small ear icon to toggle listening and hover/focus to reveal Live/settings controls. A match plays the chosen local cue, opens the matching bot in Bots, and starts its Codex subscription call with a short first greeting. Preparing, connected, and listening are distinct states.
+
+Hermes Desktop must remain open and its backend connected. This does not wake a sleeping Mac or open a closed app. Remote wake recognition is unsupported. Wake audio stays local and is not saved; voice-call audio goes to the voice provider. No API-provider fallback is used for Codex calls.
+
+Model cache: `~/.hermes/cache/hermes-live/whisper`. Bot selections: `~/.hermes/state/hermes-live/wake-bots.json`. Managed device settings: `~/.hermes/state/hermes-live/setup.json`. Existing shared models in `~/.local/share/whisper/models` are reused after verification, not copied or removed. Cancelling or retrying installation does not delete externally managed models.
 
 ## Preview
 
@@ -26,7 +56,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 
 ## Requirements
 
-- Hermes Desktop and backend **v0.22.5 or newer**. macOS is verified; Windows and Linux are not yet verified.
+- Hermes Desktop and backend **v0.23.0 or newer**. macOS is verified; Windows and Linux are not yet verified.
 - An API key for at least one API provider, or Codex CLI with a ChatGPT subscription login on the backend computer.
 - Microphone permission. Node.js 24 is needed only to rebuild the plugin.
 
@@ -35,7 +65,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.11.1-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -44,11 +74,9 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-```sh
-hermes plugins install dandacompany/hermes-live
-```
+For the beta, use the exact commit-pinned install command in the [v0.11.1-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.1-beta.1). An unpinned repository install follows the default branch and may install a different version.
 
-This is a direct repository install. Catalog admission is pending; installation by the bare catalog name is not yet advertised.
+This is a direct repository install. This beta is not the version supplied by the catalog. Use the pinned beta command, not the bare catalog name.
 
 ### Verify and enable
 
@@ -97,13 +125,13 @@ Existing secrets can come from Hermes's supported secret sources, including its 
 
 Select **Codex subscription · GPT Live**. The panel detects the Codex CLI login on the **backend computer**, distinguishes missing CLI, signed out, API-key login, and a failed check, and shows **Sign-in instructions** with the official guide. Install Codex CLI if needed, run `codex login` in that computer's terminal, and sign in with ChatGPT. On a remote or headless backend, run `codex login --device-auth` there. Return and press **Refresh**. Login does not start a call automatically.
 
-This is a guided CLI login, not an embedded OAuth flow. The plugin never asks you to paste a subscription token. The Hermes app's own ChatGPT login and the Codex CLI account can differ; this voice path uses the latter for both calls and quota. Profiles sharing an OS user and `CODEX_HOME` may share that account.
+The new setup page can start Codex’s official browser login; CLI instructions remain available as a fallback. The plugin never asks you to paste a subscription token. The Hermes app's own ChatGPT login and the Codex CLI account can differ; this voice path uses the latter for both calls and quota. Profiles sharing an OS user and `CODEX_HOME` may share that account.
 
 With a remote Hermes connection, install and enable the backend plugin on that server and configure credentials there. Local Desktop login is not copied to the server. Audio devices remain on the Desktop computer. Routing follows the selected connection/profile and checks for changes before starting. Remote routing is implemented and scope guards are tested; full remote voice-call operation has not yet been verified end to end.
 
 ## Usage
 
-**Click the circular Primary-colored button beside the built-in GPT Live controls to start a call immediately with your saved settings.** The adjacent **down arrow** opens provider, live model, and voice settings. During a call, the composer shows a waveform, an **End** button, and a microphone mute control. Before the connection is ready, the button shows **Preparing**; clicking it cancels the connection attempt. Once connected, it changes to **End**. Allow microphone access when macOS asks. Opening or closing the settings panel does not interrupt the call. End the call before changing the provider, model, or voice. Control names below refer to the English interface.
+**Hover or focus the ear icon, then select Live to start a call with your saved settings.** Select settings in the same menu to choose the provider, live model, and voice. During a call, the composer shows a waveform, an **End** button, and a microphone mute control. Before the connection is ready, the button shows **Preparing**; clicking it cancels the connection attempt. Once connected, it changes to **End**. Allow microphone access when macOS asks. Opening or closing the settings panel does not interrupt the call. End the call before changing the provider, model, or voice. Control names below refer to the English interface.
 
 - End any existing GPT Live call before starting. The two call engines are independent.
 - API usage is billed to the selected provider account.
@@ -187,7 +215,7 @@ The plugin stores device choices, provider selections, and usage totals in Deskt
 
 If Hermes pauses a delegated task to ask the user a question, voice may keep waiting until the task finishes or times out. Answer in the chat. This is a known limitation of the current task bridge.
 
-Catalog admission is not yet confirmed. The API-key path uses official Hermes secret resolution; the Codex app-server authentication and quota path still needs catalog-maintainer policy review or a separately verified migration to Hermes-owned subscription authentication.
+This is a direct-install beta, not an official catalog release. The bundled authenticated Whisper engine includes its source build recipe, license, and checksum, but does not yet have a public GitHub Actions build attestation. Hermes internal APIs are still used for profiles and wake routing; future Hermes updates may require plugin updates. This beta has not been submitted for catalog review. The API-key path uses official Hermes secret resolution; the Codex app-server authentication and quota path still needs catalog-maintainer policy review or a separately verified migration to Hermes-owned subscription authentication.
 
 Authentication update verification: 53 Node tests, 26 Python tests, Hermes request-contract checks, TypeScript checks, and all 16 plugin validation checks pass. The installed Desktop app was checked for subscription detection and navigation to the official masked API-key form. Missing-login states use test fixtures; no existing account was signed out.
 
@@ -205,3 +233,7 @@ Version 0.9.1 adds a versioned, voice-only integration for [Hermes Consult](http
 
 ---
 Built by [Dante Labs](https://dante-labs.com) · [YouTube @dante-labs](https://youtube.com/@dante-labs) · [Email](mailto:dante@dante-labs.com) · [Discord](https://discord.com/invite/rXyy5e9ujs) · [Support](https://buymeacoffee.com/dante.labs)
+
+Local 0.10.3: the resting control is a hands-free ear toggle; hover or keyboard focus reveals Live start and settings. Bots wake navigation accepts the newly created runtime session instead of waiting for an ID-less draft. Real microphone retest is pending.
+
+Local 0.10.4: cross-bot navigation mounts the target Bot chat before activating its gateway and tolerates only source/target restoration during that transition. With hands-free enabled, a completed user utterance matching another enabled bot’s wake phrase ends the current call and starts that bot; calling the current name keeps the call. Target selection is revalidated, assistant/partial/tool text cannot trigger a switch, and any running task in the previous call is interrupted on its own route before switching.

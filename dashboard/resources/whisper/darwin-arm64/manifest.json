@@ -1,0 +1,10 @@
+{
+  "version": "1.9.5",
+  "platform": "darwin",
+  "arch": "arm64",
+  "sourceSha256": "ff1a9053feb509ff9d7729703355541ae9690073a6b1c40eb692c962e0dc1720",
+  "sha256": "324086695d8316e06eeb65e590404da046c43556bf7789017f70e4d209f1b1a9",
+  "bytes": 8408000,
+  "patch": "botin-auth-inference-only-v1",
+  "signedIdentity": "Developer ID Application: Jiho Kwak (YXPA46F4SJ)"
+}
