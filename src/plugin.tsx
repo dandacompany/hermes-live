@@ -53,7 +53,7 @@ function currentScope():Scope{
 function apiScopeMatches(scope:Scope){return scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default')}
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.11.1',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
+ id:'hermes-live',name:'Hermes Live',version:'0.11.2',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
@@ -150,8 +150,8 @@ export default {
   }
   async function startWake(config:WakeConfig,current:()=>boolean){
    if(voiceMode.paused)throw new Error('HL_ERROR:errBusy');
-   const initial=host.state.profile.get();const transition=new ProfileTransition(initial,config.target);
-   const unsubscribe=host.state.profile.subscribe(profile=>{transition.observe(profile)});
+   const initial=host.state.profile.get();const transition=new ProfileTransition(initial,config.target,host.state.connectionId.get()||'local');
+   const unsubscribe=host.state.profile.subscribe(profile=>{transition.observe(profile,currentScope())});
    const valid=()=>current()&&!transition.cancelled;
    try{
     // Resolve the physical device before switching the active gateway.

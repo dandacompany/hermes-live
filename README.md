@@ -1,4 +1,4 @@
-> **Apple Silicon beta 0.11.1** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
+> **Apple Silicon beta 0.11.2** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
 
 # hermes-live
 
@@ -25,6 +25,14 @@ In **Capabilities → Plugins**, rescan and search **Hermes Live** (with a space
 Name calling supports **Apple Silicon macOS with Hermes 0.23.0+**. The plugin ships an authenticated whisper.cpp engine and a Python stdlib adapter; new users do not need BotIn, Node.js, build tools, model paths, or paid transcription APIs. Audio capture dependencies are declared for Hermes package management. Existing explicit legacy adapter settings continue working until the user saves the managed microphone setup.
 
 The new setup page supports Korean and English; other interface languages currently use English for this page. Existing call/audio/usage translations remain available.
+
+## Beta setup limitations
+
+Configure a valid main chat model for each selected bot in **Hermes Settings → Model** before testing calls. Codex voice login alone does not configure that bot’s main model. A blank model can currently surface as `storage_unavailable` while Hermes creates the chat; after configuring the model, reload Desktop and retry. Setup does not yet detect this prerequisite automatically.
+
+Whisper may spell a spoken name differently: for example, `테스트봇` can become `Testbot` or `테스트보트`. Add the spelling as an explicit spoken alias in **Choose bots**, save, and retest. This beta does not yet show the recognized text in the local test, so alias discovery may require adjustment. Say the full `헤이` / `Hey` plus name and leave a short pause; a name without the greeting does not start a call.
+
+Version 0.11.2 fixes repeated calls being cancelled when Hermes briefly restores its default backend while mounting the selected bot’s new chat. Changes to another chat owner or connection are still rejected.
 
 ## Call a bot by name
 
@@ -65,7 +73,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone --branch v0.11.1-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.11.2-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -74,7 +82,7 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-For the beta, use the exact commit-pinned install command in the [v0.11.1-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.1-beta.1). An unpinned repository install follows the default branch and may install a different version.
+For the beta, use the exact commit-pinned install command in the [v0.11.2-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.2-beta.1). An unpinned repository install follows the default branch and may install a different version.
 
 This is a direct repository install. This beta is not the version supplied by the catalog. Use the pinned beta command, not the bare catalog name.
 

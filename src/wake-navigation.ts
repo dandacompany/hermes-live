@@ -28,8 +28,13 @@ export async function openWakeBot(deps:Navigation,target:string,connection:strin
 
 /** The host can restore the departing profile while the requested Bot tab mounts. */
 export class ProfileTransition {
- cancelled=false;private sealed=false;private initial:string;private target:string;
- constructor(initial:string,target:string){this.initial=initial;this.target=target}
- observe(profile:string){if(profile!==this.target&&(this.sealed||profile!==this.initial))this.cancelled=true}
+ cancelled=false;private sealed=false;private initial:string;private target:string;private connection:string;
+ constructor(initial:string,target:string,connection='local'){this.initial=initial;this.target=target;this.connection=connection}
+ observe(profile:string,scope?:Scope){
+  // newChat briefly restores the default backend while the target-owned draft has no ID.
+  // Do not extend this exception to another owner, connection, or a settled session.
+  const mountingDefault=!this.sealed&&profile==='default'&&scope?.profile===this.target&&scope.connection===this.connection&&scope.session===null;
+  if(profile!==this.target&&(this.sealed||profile!==this.initial)&&!mountingDefault)this.cancelled=true;
+ }
  seal(){this.sealed=true}
 }

@@ -4053,12 +4053,15 @@ var ProfileTransition = class {
   sealed = false;
   initial;
   target;
-  constructor(initial, target) {
+  connection;
+  constructor(initial, target, connection = "local") {
     this.initial = initial;
     this.target = target;
+    this.connection = connection;
   }
-  observe(profile) {
-    if (profile !== this.target && (this.sealed || profile !== this.initial)) this.cancelled = true;
+  observe(profile, scope) {
+    const mountingDefault = !this.sealed && profile === "default" && scope?.profile === this.target && scope.connection === this.connection && scope.session === null;
+    if (profile !== this.target && (this.sealed || profile !== this.initial) && !mountingDefault) this.cancelled = true;
   }
   seal() {
     this.sealed = true;
@@ -5377,7 +5380,7 @@ function apiScopeMatches(scope) {
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.11.1",
+  version: "0.11.2",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: false,
   register(ctx) {
@@ -5553,9 +5556,9 @@ var plugin_default = {
     async function startWake(config, current) {
       if (voiceMode.paused) throw new Error("HL_ERROR:errBusy");
       const initial = host3.state.profile.get();
-      const transition = new ProfileTransition(initial, config.target);
+      const transition = new ProfileTransition(initial, config.target, host3.state.connectionId.get() || "local");
       const unsubscribe = host3.state.profile.subscribe((profile) => {
-        transition.observe(profile);
+        transition.observe(profile, currentScope());
       });
       const valid = () => current() && !transition.cancelled;
       try {

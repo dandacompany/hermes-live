@@ -1,6 +1,6 @@
 {
   "name": "hermes-live",
   "title": "Hermes Live",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "api": "plugin_api.py"
 }
