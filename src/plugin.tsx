@@ -53,7 +53,7 @@ function currentScope():Scope{
 function apiScopeMatches(scope:Scope){return scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default')}
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.11.3',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
+ id:'hermes-live',name:'Hermes Live',version:'0.11.4',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
@@ -165,15 +165,16 @@ export default {
     ctx.storage.set(selectionKey,selection);
     if(activity.active)throw new Error('HL_ERROR:errBusy');
     if((host.state.profile.get()||'default')!==config.target)await wake.releaseForNavigation();
-    const previousSession=currentScope().session;const targetConnection=host.state.connectionId.get()||'local';
-    await openWakeBot({routes:()=>host.profileRoutes(),revealPane:host.revealPane,
+    // Settings hides the workspace; close it before the SDK takes a Bot Chat ownership token.
+    host.navigate('/');await new Promise(r=>setTimeout(r,0));
+    const targetConnection=host.state.connectionId.get()||'local';
+    if(!host.state.focusedStoredSessionId)throw new Error('HL_ERROR:errBotsView');
+    const stored=await openWakeBot({routes:()=>host.profileRoutes(),activate:route=>host.ensureAgent(null,route.profile),isSelected:(stored,route)=>{const scope=currentScope();return scope.profile===route.profile&&scope.connection===route.connectionId&&host.state.focusedStoredSessionId!.get()===stored},request:(route,method,params)=>host.requestProfile(route,method,params),revealPane:host.revealPane,
      paneVisible:host.paneVisibility?id=>host.paneVisibility!(id).get():undefined,
-     label:host.setWorkspaceOwnerLabel,newChat:(route,options)=>host.newChat(route,options)},
+     label:host.setWorkspaceOwnerLabel,openSession:host.openSession},
      config.target,targetConnection,config.names?.[0]||config.target,valid);
-    // Bot-mode newChat does not close the host settings route.
-    if(valid())host.navigate('/');
     const deadline=Date.now()+10000;
-    const ready=(scope:Scope)=>wakeBotReady(scope,config.target,targetConnection,previousSession);
+    const ready=(scope:Scope)=>wakeBotReady(scope,config.target,targetConnection,stored,host.state.focusedStoredSessionId!.get());
     while(valid()&&Date.now()<deadline){if(ready(currentScope()))break;await new Promise(r=>setTimeout(r,50))}
     const scope=currentScope();if(!valid()||!ready(scope))throw new Error('HL_ERROR:errScope');
     await host.ensureAgent(null,config.target);

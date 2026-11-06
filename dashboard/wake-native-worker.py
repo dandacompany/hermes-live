@@ -20,6 +20,14 @@ import re
 def normalized(text):
     return re.sub(r'[\s,，.!。！]', '', unicodedata.normalize('NFKC', text).lower())
 
+def matches_phrase(text, phrase):
+    value, command = normalized(text), normalized(phrase)
+    return bool(value and command) and len(value)%len(command)==0 and command*(len(value)//len(command))==value
+
+def match_target(text, targets):
+    matches = {t['target'] for t in targets if any(matches_phrase(text,p) for p in t['phrases'])}
+    return next(iter(matches)) if len(matches)==1 else None
+
 def send(value): print(json.dumps(value), flush=True)
 
 def main():
@@ -80,9 +88,8 @@ def main():
                 if not 6400<=len(pcm)<=192000 or len(pcm)%2: raise ValueError('PCM')
                 started=time.monotonic()
                 try:
-                    text=normalized(transcribe(pcm))
-                    matches=[t['target'] for t in cfg['targets'] if text in [normalized(p) for p in t['phrases']]]
-                    send({'id':item['id'],'target':matches[0] if len(matches)==1 else None,'elapsedMs':round((time.monotonic()-started)*1000)})
+                    target=match_target(transcribe(pcm),cfg['targets'])
+                    send({'id':item['id'],'target':target,'elapsedMs':round((time.monotonic()-started)*1000)})
                 except Exception: send({'id':item['id'],'error':'local_transcription_failed'})
         finally:
             if child and child.poll() is None:
