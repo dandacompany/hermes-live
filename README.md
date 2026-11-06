@@ -1,4 +1,4 @@
-> **Apple Silicon beta 0.11.2** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
+> **Apple Silicon beta 0.11.3** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
 
 # hermes-live
 
@@ -32,7 +32,9 @@ Configure a valid main chat model for each selected bot in **Hermes Settings →
 
 Whisper may spell a spoken name differently: for example, `테스트봇` can become `Testbot` or `테스트보트`. Add the spelling as an explicit spoken alias in **Choose bots**, save, and retest. This beta does not yet show the recognized text in the local test, so alias discovery may require adjustment. Say the full `헤이` / `Hey` plus name and leave a short pause; a name without the greeting does not start a call.
 
-Version 0.11.2 fixes repeated calls being cancelled when Hermes briefly restores its default backend while mounting the selected bot’s new chat. Changes to another chat owner or connection are still rejected.
+Version 0.11.3 fixes cross-bot calls being cancelled while Hermes temporarily restores its default backend and the departing chat owner is still visible. The exception applies only while a new chat has no session ID; unrelated owners, connections and settled sessions remain protected. Standalone Korean Bye commands also accept the observed transcription variants `바일` and `파일`, only when followed by the current bot’s exact name or alias. Longer file requests, questions and quoted phrases do not end calls.
+
+If upgrading from a manually configured wake engine, open **Wake model**, recheck the existing model, then select and save the microphone to use the bundled engine. The existing model can be reused; old development engine paths may be incompatible with this beta.
 
 ## Call a bot by name
 
@@ -73,7 +75,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone --branch v0.11.2-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.11.3-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -82,7 +84,7 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-For the beta, use the exact commit-pinned install command in the [v0.11.2-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.2-beta.1). An unpinned repository install follows the default branch and may install a different version.
+For the beta, use the exact commit-pinned install command in the [v0.11.3-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.3-beta.1). An unpinned repository install follows the default branch and may install a different version.
 
 This is a direct repository install. This beta is not the version supplied by the catalog. Use the pinned beta command, not the bare catalog name.
 

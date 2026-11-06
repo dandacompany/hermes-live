@@ -53,7 +53,7 @@ function currentScope():Scope{
 function apiScopeMatches(scope:Scope){return scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default')}
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.11.2',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
+ id:'hermes-live',name:'Hermes Live',version:'0.11.3',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;

@@ -4060,7 +4060,7 @@ var ProfileTransition = class {
     this.connection = connection;
   }
   observe(profile, scope) {
-    const mountingDefault = !this.sealed && profile === "default" && scope?.profile === this.target && scope.connection === this.connection && scope.session === null;
+    const mountingDefault = !this.sealed && profile === "default" && scope !== void 0 && (scope.profile === this.target || scope.profile === this.initial) && scope.connection === this.connection && scope.session === null;
     if (profile !== this.target && (this.sealed || profile !== this.initial) && !mountingDefault) this.cancelled = true;
   }
   seal() {
@@ -4429,7 +4429,7 @@ import { Button as Button6, Popover as Popover2, PopoverContent as PopoverConten
 function isGoodbye(text2, names2 = ["\uB8E8\uBBF8", "Lumi"]) {
   const normalize2 = (value2) => value2.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
   const value = normalize2(text2.replace(/^(?:(?:음|어|um|uh)[\s,.…]+)+/iu, ""));
-  return names2.some((name) => ["Bye", "\uBC14\uC774"].some((prefix) => normalize2(prefix + name) === value));
+  return names2.some((name) => ["Bye", "\uBC14\uC774", "\uBC14\uC77C", "\uD30C\uC77C"].some((prefix) => normalize2(prefix + name) === value));
 }
 
 // src/controller.ts
@@ -5380,7 +5380,7 @@ function apiScopeMatches(scope) {
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.11.2",
+  version: "0.11.3",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: false,
   register(ctx) {

@@ -31,9 +31,9 @@ export class ProfileTransition {
  cancelled=false;private sealed=false;private initial:string;private target:string;private connection:string;
  constructor(initial:string,target:string,connection='local'){this.initial=initial;this.target=target;this.connection=connection}
  observe(profile:string,scope?:Scope){
-  // newChat briefly restores the default backend while the target-owned draft has no ID.
+  // newChat briefly restores the default backend before the draft owner catches up.
   // Do not extend this exception to another owner, connection, or a settled session.
-  const mountingDefault=!this.sealed&&profile==='default'&&scope?.profile===this.target&&scope.connection===this.connection&&scope.session===null;
+  const mountingDefault=!this.sealed&&profile==='default'&&scope!==undefined&&(scope.profile===this.target||scope.profile===this.initial)&&scope.connection===this.connection&&scope.session===null;
   if(profile!==this.target&&(this.sealed||profile!==this.initial)&&!mountingDefault)this.cancelled=true;
  }
  seal(){this.sealed=true}
