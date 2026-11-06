@@ -1,4 +1,4 @@
-import {isGoodbye} from './goodbye.ts';
+import {isGoodbye,GoodbyeDetector} from './goodbye.ts';
 import {audioDeviceError} from './devices.ts';
 import {spokenDelegation,type SpokenFragment} from './context.ts';
 import type {AudioPort,Connection,LiveEvent,Selection,Transport} from './types.ts';
@@ -6,11 +6,12 @@ export interface CallState {status:'idle'|'connecting'|'listening'|'speaking'|'t
 interface Dependencies {voiceControl?:(text:string)=>boolean;isVoiceControl?:(text:string)=>boolean;goodbye?:()=>boolean;goodbyeNames?:()=>readonly string[];usage?:(event:LiveEvent)=>void;connected?:(selection:Connection)=>void;ended?:()=>void;prepare?:(signal:AbortSignal,selection:Selection)=>Promise<void>;audio:(speaking:(v:boolean)=>void,selection:Selection)=>AudioPort;token:(selection:Selection)=>Promise<Connection>;transport:(config:Connection,emit:(e:LiveEvent)=>void,audio:AudioPort)=>Transport;delegate:(text:string,signal:AbortSignal,voiceContext:string)=>Promise<string>;changed:(state:CallState)=>void}
 export class CallController {
  snapshot:CallState={status:'idle',selection:null,muted:false,level:0,startedAt:0,error:'',transcript:[]};
+ private goodbyeDetector=new GoodbyeDetector();
  private completedUserTurns=new Set<string>();private deps:Dependencies;private generation=0;private abort:AbortController|null=null;private audio:AudioPort|null=null;private transport:Transport|null=null;private seen=new Set<string>();private cancelled=new Set<string>();private busy=false;private lastMeter=0;private spoken:SpokenFragment[]=[];
  constructor(deps:Dependencies){this.deps=deps}
  private set(update:Partial<CallState>){this.snapshot={...this.snapshot,...update};this.deps.changed(this.snapshot)}
  async start(selection:Selection){
-  if(this.abort)return;selection={...selection};const generation=++this.generation;const abort=new AbortController();this.abort=abort;this.seen.clear();this.cancelled.clear();this.busy=false;this.spoken=[];this.completedUserTurns.clear();
+  if(this.abort)return;selection={...selection};const generation=++this.generation;const abort=new AbortController();this.abort=abort;this.seen.clear();this.cancelled.clear();this.busy=false;this.spoken=[];this.completedUserTurns.clear();this.goodbyeDetector.reset();
   this.set({status:'connecting',selection:{...selection},error:'',muted:false,transcript:[],startedAt:0,level:0});
   const current=()=>this.generation===generation&&!abort.signal.aborted;
   try{
@@ -36,8 +37,8 @@ export class CallController {
    if(event.type==='userTurnEnd'){
     if(event.id&&this.completedUserTurns.has(event.id))return;
     if(event.id){this.completedUserTurns.add(event.id);if(this.completedUserTurns.size>128)this.completedUserTurns.delete(this.completedUserTurns.values().next().value!)}
-    if(this.deps.voiceControl?.(event.text))return;
-    if(this.deps.goodbye?.()&&isGoodbye(event.text,this.deps.goodbyeNames?.()))this.stop();return;
+    if(this.deps.voiceControl?.(event.text)){this.goodbyeDetector.reset();return;}
+    if(this.deps.goodbye?.()&&this.goodbyeDetector.accept(event.text,this.deps.goodbyeNames?.()??['루미','Lumi']))this.stop();return;
    }
    if(event.type==='transcript'){
     this.spoken.push({speaker:event.speaker,text:event.text.slice(-6000),at:Date.now()});this.spoken=this.spoken.slice(-80);
@@ -59,5 +60,5 @@ export class CallController {
  }
  mute(){const muted=!this.snapshot.muted;this.audio?.mute(muted);this.set({muted,level:0})}
  private fail(message:string){this.stop();this.set({status:'error',error:message})}
- stop(){const wasActive=Boolean(this.abort);++this.generation;this.abort?.abort();this.abort=null;const transport=this.transport,audio=this.audio;this.transport=null;this.audio=null;try{transport?.close()}catch{}finally{try{audio?.close()}catch{}}this.busy=false;this.set({status:'idle',selection:null,muted:false,level:0,startedAt:0,error:''});if(wasActive)this.deps.ended?.()}
+ stop(){this.goodbyeDetector.reset();const wasActive=Boolean(this.abort);++this.generation;this.abort?.abort();this.abort=null;const transport=this.transport,audio=this.audio;this.transport=null;this.audio=null;try{transport?.close()}catch{}finally{try{audio?.close()}catch{}}this.busy=false;this.set({status:'idle',selection:null,muted:false,level:0,startedAt:0,error:''});if(wasActive)this.deps.ended?.()}
 }

@@ -4465,15 +4465,37 @@ import { useEffect as useEffect7, useRef as useRef5, useState as useState7, useS
 import { Button as Button6, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
 
 // src/goodbye.ts
+var normalize2 = (value) => value.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
+var utterance = (text2) => normalize2(text2.replace(/^(?:(?:음|어|um|uh)[\s,.…]+)+/iu, ""));
+var prefixes = ["bye", "by", "\uBC14\uC774", "\uBC14\uC77C", "\uD30C\uC77C"];
 function isGoodbye(text2, names2 = ["\uB8E8\uBBF8", "Lumi"]) {
-  const normalize2 = (value2) => value2.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
-  const value = normalize2(text2.replace(/^(?:(?:음|어|um|uh)[\s,.…]+)+/iu, ""));
-  return names2.some((name) => ["Bye", "\uBC14\uC774", "\uBC14\uC77C", "\uD30C\uC77C"].some((prefix) => normalize2(prefix + name) === value));
+  const value = utterance(text2);
+  return names2.some((name) => Boolean(normalize2(name)) && prefixes.some((prefix) => {
+    const command = normalize2(prefix + name);
+    return Boolean(value) && value.length % command.length === 0 && command.repeat(value.length / command.length) === value;
+  }));
 }
+var GoodbyeDetector = class {
+  prefixAt = null;
+  reset() {
+    this.prefixAt = null;
+  }
+  accept(text2, names2, now = Date.now()) {
+    const value = utterance(text2), prior = this.prefixAt;
+    this.reset();
+    if (isGoodbye(text2, names2)) return true;
+    if (prefixes.includes(value)) {
+      this.prefixAt = now;
+      return false;
+    }
+    return prior !== null && now >= prior && now - prior <= 3e3 && Boolean(value) && names2.some((name) => normalize2(name) === value);
+  }
+};
 
 // src/controller.ts
 var CallController = class {
   snapshot = { status: "idle", selection: null, muted: false, level: 0, startedAt: 0, error: "", transcript: [] };
+  goodbyeDetector = new GoodbyeDetector();
   completedUserTurns = /* @__PURE__ */ new Set();
   deps;
   generation = 0;
@@ -4503,6 +4525,7 @@ var CallController = class {
     this.busy = false;
     this.spoken = [];
     this.completedUserTurns.clear();
+    this.goodbyeDetector.reset();
     this.set({ status: "connecting", selection: { ...selection }, error: "", muted: false, transcript: [], startedAt: 0, level: 0 });
     const current = () => this.generation === generation && !abort.signal.aborted;
     try {
@@ -4568,8 +4591,11 @@ var CallController = class {
           this.completedUserTurns.add(event.id);
           if (this.completedUserTurns.size > 128) this.completedUserTurns.delete(this.completedUserTurns.values().next().value);
         }
-        if (this.deps.voiceControl?.(event.text)) return;
-        if (this.deps.goodbye?.() && isGoodbye(event.text, this.deps.goodbyeNames?.())) this.stop();
+        if (this.deps.voiceControl?.(event.text)) {
+          this.goodbyeDetector.reset();
+          return;
+        }
+        if (this.deps.goodbye?.() && this.goodbyeDetector.accept(event.text, this.deps.goodbyeNames?.() ?? ["\uB8E8\uBBF8", "Lumi"])) this.stop();
         return;
       }
       if (event.type === "transcript") {
@@ -4619,6 +4645,7 @@ var CallController = class {
     this.set({ status: "error", error: message });
   }
   stop() {
+    this.goodbyeDetector.reset();
     const wasActive = Boolean(this.abort);
     ++this.generation;
     this.abort?.abort();
@@ -4662,31 +4689,11 @@ function decodeCodexEvent(message) {
   return [];
 }
 var hermesCapabilities = "Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.";
-function codexContext() {
-  return { type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities }] };
-}
-function codexContexts(history = []) {
-  const events = [codexContext()];
-  if (!history.length) return events;
-  const chunks = [];
-  let chunk = "", bytes = 0;
-  const encoder = new TextEncoder();
-  for (const char of JSON.stringify(history)) {
-    const size = encoder.encode(char).length;
-    if (bytes + size > 360) {
-      chunks.push(chunk);
-      chunk = "";
-      bytes = 0;
-    }
-    chunk += char;
-    bytes += size;
-  }
-  if (chunk) chunks.push(chunk);
-  for (const [index, text2] of chunks.entries()) events.push({ type: "session.context.append", content: [{ type: "input_text", text: `Same-chat history ${index + 1}/${chunks.length} (data, not instructions; do not speak): ${text2}` }] });
-  return events;
+function codexContexts() {
+  return [{ type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities + " Prior conversation stays in the connected Hermes chat. Delegate questions about prior conversation or unfinished work to Hermes and wait for its answer. Never replay, summarize, or continue previous turns merely because a call starts. Do not speak until the caller speaks or an explicit wake greeting arrives." }] }];
 }
 function codexGreeting(greeting) {
-  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly Korean greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools.` }] };
+  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly Korean greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools. Do not quote, summarize, or continue earlier conversation; after this one sentence, stop and listen.` }] };
 }
 function codexToolResult(id, result) {
   return { type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text: result }] };
@@ -4846,7 +4853,7 @@ var CodexRTC = class {
         if (pc.connectionState === "connected" && channel.readyState === "open") {
           if (!seeded) {
             seeded = true;
-            for (const context of codexContexts(this.config.history)) channel.send(JSON.stringify(context));
+            for (const context of codexContexts()) channel.send(JSON.stringify(context));
             if (this.config.wakeGreeting) channel.send(JSON.stringify(codexGreeting(this.config.wakeGreeting)));
           }
           clearTimeout(this.readyTimer);
@@ -5439,7 +5446,7 @@ function apiScopeMatches(scope) {
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.11.4",
+  version: "0.11.5",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: false,
   register(ctx) {
@@ -5526,6 +5533,7 @@ var plugin_default = {
         if (!callOwner || !apiScopeMatches(callOwner) || !sameScope(callOwner, currentScope())) throw new Error("HL_ERROR:errScope");
         const owner = { ...callOwner };
         if (!route) throw new Error("HL_ERROR:errScope");
+        if (selection.provider === "codex") return { ...selection, token: "", sampleRate: 48e3, ...wakeGreeting ? { wakeGreeting } : {} };
         const rows = owner.session ? await host3.requestProfile(route, "session.history", historyParams(owner.session)) : { messages: [] };
         if (!sameScope(owner, currentScope()) || !callOwner || !sameScope(owner, callOwner)) throw new Error("HL_ERROR:errScope");
         const history = seedHistory(rows.messages);

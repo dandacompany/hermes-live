@@ -1,5 +1,5 @@
 name: hermes-live
-version: 0.11.4
+version: 0.11.5
 requires_hermes: '>=0.23.0'
 python_dependencies:
   - 'numpy>=2,<3; platform_system == "Darwin"'

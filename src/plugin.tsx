@@ -53,7 +53,7 @@ function currentScope():Scope{
 function apiScopeMatches(scope:Scope){return scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default')}
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.11.4',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
+ id:'hermes-live',name:'Hermes Live',version:'0.11.5',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
@@ -117,6 +117,9 @@ export default {
     if(!callOwner||!apiScopeMatches(callOwner)||!sameScope(callOwner,currentScope()))throw new Error("HL_ERROR:errScope");
     const owner={...callOwner};
     if(!route)throw new Error("HL_ERROR:errScope");
+    // Codex history remains in Hermes and is consulted through delegation on demand.
+    // Sending old turns through its active append channel can cause unsolicited playback.
+    if(selection.provider==='codex')return {...selection,token:'',sampleRate:48000,...(wakeGreeting?{wakeGreeting}:{})};
     const rows=owner.session?await host.requestProfile<{messages:Message[]}>(route,'session.history',historyParams(owner.session)):{messages:[]};
     if(!sameScope(owner,currentScope())||!callOwner||!sameScope(owner,callOwner))throw new Error("HL_ERROR:errScope");
     const history=seedHistory(rows.messages);

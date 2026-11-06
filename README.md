@@ -1,4 +1,4 @@
-> **Apple Silicon beta 0.11.4** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
+> **Apple Silicon beta 0.11.5** — hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically. The app-wide DOM observer has been removed; all 16 plugin validation checks pass (backend private-import warnings remain).
 
 # hermes-live
 
@@ -28,13 +28,19 @@ The new setup page supports Korean and English; other interface languages curren
 
 ## Beta setup limitations
 
+An intermittent profile-switch cancellation has been reported. Subsequent tests passed, but its cause is not yet confirmed; this release does not claim to fix every transition failure.
+
+Install and enable Hermes Live separately in each participating profile. Opening the shared setup page on a profile without its backend plugin currently shows a generic connection error rather than a missing-plugin message.
+
 Configure a valid main chat model for each selected bot in **Hermes Settings → Model** before testing calls. Codex voice login alone does not configure that bot’s main model. A blank model can currently surface as `storage_unavailable` while Hermes creates the chat; after configuring the model, reload Desktop and retry. Setup does not yet detect this prerequisite automatically.
 
 Whisper may spell a spoken name differently: for example, `테스트봇` can become `Testbot` or `테스트보트`. Add the spelling as an explicit spoken alias in **Choose bots**, save, and retest. This beta does not yet show the recognized text in the local test, so alias discovery may require adjustment. Say the full `헤이` / `Hey` plus name and leave a short pause; a name without the greeting does not start a call.
 
 Calls now reopen each bot’s existing **Bot Chat** in place, including after hangup or a switch back from another bot. Only the first call to a bot without a Bot Chat creates one. A failed lookup never falls back to a new side conversation. Previously created side conversations are preserved.
 
-Recent chat context is sent in bounded pieces so reopening a populated Bot Chat does not exceed the voice service’s per-message context limit.
+Version 0.11.5 keeps prior conversation in the canonical Hermes chat instead of replaying it into the Codex voice input at startup. Calls give one short greeting and wait; questions about prior conversation are delegated to the same Hermes chat.
+
+Hangup uses the active voice model’s completed user transcript, without another Whisper listener. It accepts the observed `by` spelling and repetitions of a complete goodbye. If a completed Bye prefix is followed within three seconds by only the current bot’s exact name or alias, the two turns are joined. Questions, quotations, another bot, intervening user text, and expired fragments do not hang up.
 
 Version 0.11.4 accepts repetitions of one complete configured wake command in a single utterance, both during a call and in local standby. Extra words, questions, quotations, mixed bot names and ambiguous aliases still do not trigger a switch. If speech recognition spells a bot name differently, add that spelling as an explicit alias in **Choose bots**; names are not guessed automatically.
 
@@ -81,7 +87,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone --branch v0.11.4-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.11.5-beta.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -90,7 +96,7 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-For the beta, use the exact commit-pinned install command in the [v0.11.4-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.4-beta.1). An unpinned repository install follows the default branch and may install a different version.
+For the beta, use the exact commit-pinned install command in the [v0.11.5-beta.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.11.5-beta.1). An unpinned repository install follows the default branch and may install a different version.
 
 This is a direct repository install. This beta is not the version supplied by the catalog. Use the pinned beta command, not the bare catalog name.
 
