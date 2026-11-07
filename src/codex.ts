@@ -22,9 +22,29 @@ export function decodeCodexEvent(message:any):LiveEvent[] {
 // client-managed handoff flag. Supply the actual backend role even for an empty
 // chat, before the user speaks. This also works with already-loaded brokers.
 const hermesCapabilities='Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.';
-export function codexContext(history:readonly ChatTurn[]=[]){return {type:'session.context.append',content:[{type:'input_text',text:hermesCapabilities+historyNote(history)}]}}
+// The realtime server rejects any session.context.append or
+// delegation.context.append whose text exceeds 500 tokens ("Context append
+// text must not exceed 500 tokens."). Over WebRTC these events go straight from
+// this client to the server, so the Codex app-server cannot split them. Split
+// them here the way Codex does on its own transport (CONTEXT_APPEND_MAX_BYTES
+// in codex-rs methods_frameless_bidi.rs): at most 500 UTF-8 bytes per append,
+// on code-point boundaries. A byte budget, unlike a character count, also
+// holds for dense scripts: 1000 Chinese characters (677 tokens) are rejected.
+const appendBytes=500;
+export function appendChunks(text:string,limit=appendBytes):string[]{
+ if(!Number.isInteger(limit)||limit<4)throw new RangeError('appendChunks limit must be an integer of at least 4 bytes (one UTF-8 code point)');
+ const out:string[]=[];let part='';let size=0;
+ for(const char of text){
+  const code=char.codePointAt(0)!;const bytes=code<0x80?1:code<0x800?2:code<0x10000?3:4;
+  if(part&&size+bytes>limit){out.push(part);part='';size=0}
+  part+=char;size+=bytes;
+ }
+ if(part||!out.length)out.push(part);
+ return out;
+}
+export function codexContext(history:readonly ChatTurn[]=[]){return appendChunks(hermesCapabilities+historyNote(history)).map(text=>({type:'session.context.append',content:[{type:'input_text',text}]}))}
 
-export function codexToolResult(id:string,result:string){return {type:'delegation.context.append',delegation_item_id:id,content:[{type:'input_text',text:result}]}}
+export function codexToolResult(id:string,result:string){return appendChunks(result).map(text=>({type:'delegation.context.append',delegation_item_id:id,content:[{type:'input_text',text}]}))}
 
 // WebRTC sends the original mic track and plays a remote media track. No PCM
 // re-encoding, permanent credential, or subscription token reaches this class.
@@ -89,7 +109,7 @@ export class CodexRTC implements Transport {
   let seeded=false;
   const ready=new Promise<void>((resolve,reject)=>{
    this.rejectReady=reject;this.readyTimer=setTimeout(()=>this.fail("HL_ERROR:errTimeout"),90000);
-   const check=()=>{if(this.closed)return;if(pc.connectionState==='failed'){this.fail("HL_ERROR:errConnection");return}if(pc.connectionState==='connected'&&channel.readyState==='open'){if(!seeded){seeded=true;channel.send(JSON.stringify(codexContext(this.config.history)))}clearTimeout(this.readyTimer);this.rejectReady=null;resolve()}};
+   const check=()=>{if(this.closed)return;if(pc.connectionState==='failed'){this.fail("HL_ERROR:errConnection");return}if(pc.connectionState==='connected'&&channel.readyState==='open'){if(!seeded){seeded=true;for(const event of codexContext(this.config.history))channel.send(JSON.stringify(event))}clearTimeout(this.readyTimer);this.rejectReady=null;resolve()}};
    channel.onopen=check;pc.onconnectionstatechange=check;
   });
   // Attach immediately so cancellation during HTTP negotiation cannot cause an unhandled rejection.
@@ -108,7 +128,7 @@ export class CodexRTC implements Transport {
   }catch(error){this.close();throw error}
  }
  audio(){} // Original media tracks, not audio append events.
- toolResult(id:string,result:string){if(!this.closed&&this.channel?.readyState==='open')this.channel.send(JSON.stringify(codexToolResult(id,result)))}
+ toolResult(id:string,result:string){if(!this.closed&&this.channel?.readyState==='open')for(const event of codexToolResult(id,result))this.channel.send(JSON.stringify(event))}
  private fail(message:string){if(this.closed)return;this.emit({type:'error',message});this.close()}
  close(){if(this.closed)return;this.closed=true;clearInterval(this.heartbeat);clearInterval(this.monitor);clearTimeout(this.readyTimer);this.rejectReady?.(new Error("HL_ERROR:errCancelled"));this.rejectReady=null;if(this.channel){this.channel.onmessage=null;this.channel.onclose=null;this.channel.close()}if(this.pc){this.pc.ontrack=null;this.pc.onconnectionstatechange=null;this.pc.close()}void this.request('/codex/stop',{callId:this.callId},8000).catch(()=>{})}
 }
