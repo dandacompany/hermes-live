@@ -3104,11 +3104,30 @@ function decodeCodexEvent(message) {
   return [];
 }
 var hermesCapabilities = "Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.";
+var appendBytes = 500;
+function appendChunks(text, limit = appendBytes) {
+  const out = [];
+  let part = "";
+  let size = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0);
+    const bytes = code < 128 ? 1 : code < 2048 ? 2 : code < 65536 ? 3 : 4;
+    if (part && size + bytes > limit) {
+      out.push(part);
+      part = "";
+      size = 0;
+    }
+    part += char;
+    size += bytes;
+  }
+  if (part || !out.length) out.push(part);
+  return out;
+}
 function codexContext(history = []) {
-  return { type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities + historyNote(history) }] };
+  return appendChunks(hermesCapabilities + historyNote(history)).map((text) => ({ type: "session.context.append", content: [{ type: "input_text", text }] }));
 }
 function codexToolResult(id, result) {
-  return { type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text: result }] };
+  return appendChunks(result).map((text) => ({ type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text }] }));
 }
 var CodexMedia = class {
   stream = null;
@@ -3265,7 +3284,7 @@ var CodexRTC = class {
         if (pc.connectionState === "connected" && channel.readyState === "open") {
           if (!seeded) {
             seeded = true;
-            channel.send(JSON.stringify(codexContext(this.config.history)));
+            for (const event of codexContext(this.config.history)) channel.send(JSON.stringify(event));
           }
           clearTimeout(this.readyTimer);
           this.rejectReady = null;
@@ -3310,7 +3329,7 @@ var CodexRTC = class {
   }
   // Original media tracks, not audio append events.
   toolResult(id, result) {
-    if (!this.closed && this.channel?.readyState === "open") this.channel.send(JSON.stringify(codexToolResult(id, result)));
+    if (!this.closed && this.channel?.readyState === "open") for (const event of codexToolResult(id, result)) this.channel.send(JSON.stringify(event));
   }
   fail(message) {
     if (this.closed) return;
