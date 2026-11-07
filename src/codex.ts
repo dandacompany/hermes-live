@@ -32,6 +32,7 @@ const hermesCapabilities='Session setup only: do not speak or execute work in re
 // holds for dense scripts: 1000 Chinese characters (677 tokens) are rejected.
 const appendBytes=500;
 export function appendChunks(text:string,limit=appendBytes):string[]{
+ if(!Number.isInteger(limit)||limit<4)throw new RangeError('appendChunks limit must be an integer of at least 4 bytes (one UTF-8 code point)');
  const out:string[]=[];let part='';let size=0;
  for(const char of text){
   const code=char.codePointAt(0)!;const bytes=code<0x80?1:code<0x800?2:code<0x10000?3:4;

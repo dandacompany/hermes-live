@@ -3106,6 +3106,7 @@ function decodeCodexEvent(message) {
 var hermesCapabilities = "Session setup only: do not speak or execute work in response to this setup. You are the voice frontend of Hermes Desktop, connected to the active Hermes chat. Backend tools: Hermes is a full agent on the connected computer; it can run commands, inspect disk space, read and edit files, browse and research using its configured tools and permissions. Use your native delegation mechanism to delegate requests to Hermes through the client. For example, if the user asks to check computer storage, delegate that exact request to Hermes, which can determine the operating system and run the appropriate read-only storage query. Do not claim that you cannot access the computer or ask the user to run commands themselves before trying this delegation. Delegate before acknowledging tool-dependent work, then wait for the actual result; never invent facts. Handle greetings and small talk yourself. This setup does not itself request any work. These rules apply to subsequent user speech.";
 var appendBytes = 500;
 function appendChunks(text, limit = appendBytes) {
+  if (!Number.isInteger(limit) || limit < 4) throw new RangeError("appendChunks limit must be an integer of at least 4 bytes (one UTF-8 code point)");
   const out = [];
   let part = "";
   let size = 0;
