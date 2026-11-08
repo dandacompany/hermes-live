@@ -3057,13 +3057,14 @@ function audioDeviceError(error) {
   let name = error?.name;
   return name === "OverconstrainedError" || name === "NotFoundError" ? "HL_ERROR:errMicMissing" : name === "NotAllowedError" ? "HL_ERROR:errMicPermission" : error instanceof Error ? error.message : "HL_ERROR:errAudio";
 }
+var transportSuffix = /\s+\((?:[0-9a-f]{4}:[0-9a-f]{4}|Built-in|Aggregate|AutoAggregate|Virtual|PCI|FireWire|Bluetooth|Bluetooth LE|HDMI|DisplayPort|AirPlay|AVB|Thunderbolt)\)$/i;
 function selectWakeMicrophone(devices, name) {
-  let canonical = (label) => label.trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, ""), concrete = new Map(devices.filter((d) => d.kind === "audioinput" && d.deviceId && !["default", "communications"].includes(d.deviceId)).map((d) => [d.deviceId, d])), virtual = concrete.size === 1 && name === "Apple Virtual Sound Device" && [...concrete.values()][0]?.label === "Microphone (Built-in)", matches = new Map([...concrete].filter(([, d]) => canonical(d.label) === canonical(name) || virtual));
+  let canonical = (label) => label.trim().replace(transportSuffix, ""), concrete = new Map(devices.filter((d) => d.kind === "audioinput" && d.deviceId && !["default", "communications"].includes(d.deviceId)).map((d) => [d.deviceId, d])), virtual = concrete.size === 1 && name === "Apple Virtual Sound Device" && [...concrete.values()][0]?.label === "Microphone (Built-in)", matches = new Map([...concrete].filter(([, d]) => canonical(d.label) === canonical(name) || virtual));
   if (matches.size !== 1) throw new Error("HL_ERROR:errMicMissing");
   return [...matches.values()][0];
 }
 function canonicalMicrophoneLabel(label) {
-  return label.replace(/^(Default|기본값)\s*-\s*/i, "").trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, "");
+  return label.replace(/^(Default|기본값)\s*-\s*/i, "").trim().replace(transportSuffix, "");
 }
 
 // src/pcm.ts
