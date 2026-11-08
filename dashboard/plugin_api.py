@@ -11,7 +11,7 @@ import re
 
 import httpx
 import time
-from fastapi import APIRouter, Body, HTTPException, Response
+from fastapi import APIRouter, Body, HTTPException, Response, Query
 from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 
@@ -596,23 +596,43 @@ class DiagnosticConsent(BaseModel):
     model_config=ConfigDict(extra='forbid')
     seconds: int = Field(ge=0,le=300)
 
-def diagnostic_report(response:Response):
+class DiagnosticControl(BaseModel):
+    model_config=ConfigDict(extra='forbid',strict=True)
+    recording: bool
+
+def diagnostic_status(response:Response):
     response.headers['Cache-Control']='no-store'
-    return diag.journal().snapshot()
+    return diag.journal().status()
+
+def diagnostic_control(body:DiagnosticControl,response:Response):
+    response.headers['Cache-Control']='no-store'
+    return diag.journal().control(body.recording)
+
+def diagnostic_tail(response:Response,after:str=Query(default='',max_length=80),limit:int=Query(default=200,ge=1,le=500),include_text:bool=False):
+    response.headers['Cache-Control']='no-store'
+    return diag.journal().snapshot(limit=limit,after=after,include_text=include_text)
+
+def diagnostic_report(response:Response,include_text:bool=False):
+    response.headers['Cache-Control']='no-store'
+    return diag.journal().snapshot(include_text=include_text)
 
 def diagnostic_events(body:DiagnosticBatch,response:Response):
     response.headers['Cache-Control']='no-store'
     journal=diag.journal()
-    for e in body.events:journal.emit(e.event,e.fields,text=e.text,at=e.at,detail_id=e.detailId)
-    return {'accepted':len(body.events),'writeError':journal.write_error}
+    accepted=sum(bool(journal.emit(e.event,e.fields,text=e.text,at=e.at,detail_id=e.detailId)) for e in body.events)
+    return {'accepted':accepted,'ignored':len(body.events)-accepted,'recording':journal.recording_state()['enabled'],'writeError':journal.write_error}
 
 def diagnostic_detail(body:DiagnosticConsent,response:Response):
     response.headers['Cache-Control']='no-store'
-    diag.journal().detail(body.seconds)
-    return diag.journal().snapshot()
+    try:diag.journal().detail(body.seconds)
+    except ValueError:raise HTTPException(409,detail='recording_disabled')
+    return diag.journal().snapshot(include_text=False)
 
 # Never mount diagnostic APIs in ordinary distribution installs.
 if diag.enabled():
+    router.add_api_route('/diagnostics/status',diagnostic_status,methods=['GET'])
+    router.add_api_route('/diagnostics/control',diagnostic_control,methods=['POST'])
+    router.add_api_route('/diagnostics/tail',diagnostic_tail,methods=['GET'])
     router.add_api_route('/diagnostics',diagnostic_report,methods=['GET'])
     router.add_api_route('/diagnostics/events',diagnostic_events,methods=['POST'])
     router.add_api_route('/diagnostics/detail',diagnostic_detail,methods=['POST'])
