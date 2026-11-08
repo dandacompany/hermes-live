@@ -3031,8 +3031,9 @@ function audioDeviceError(error) {
   if (name === "NotAllowedError") return "HL_ERROR:errMicPermission";
   return error instanceof Error ? error.message : "HL_ERROR:errAudio";
 }
+var transportSuffix = /\s+\((?:[0-9a-f]{4}:[0-9a-f]{4}|Built-in|Aggregate|AutoAggregate|Virtual|PCI|FireWire|Bluetooth|Bluetooth LE|HDMI|DisplayPort|AirPlay|AVB|Thunderbolt)\)$/i;
 function selectWakeMicrophone(devices, name) {
-  const canonical = (label) => label.trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, "");
+  const canonical = (label) => label.trim().replace(transportSuffix, "");
   const concrete = new Map(devices.filter((d) => d.kind === "audioinput" && d.deviceId && !["default", "communications"].includes(d.deviceId)).map((d) => [d.deviceId, d]));
   const virtual = concrete.size === 1 && name === "Apple Virtual Sound Device" && [...concrete.values()][0]?.label === "Microphone (Built-in)";
   const matches = new Map([...concrete].filter(([, d]) => canonical(d.label) === canonical(name) || virtual));
@@ -3040,7 +3041,7 @@ function selectWakeMicrophone(devices, name) {
   return [...matches.values()][0];
 }
 function canonicalMicrophoneLabel(label) {
-  return label.replace(/^(Default|기본값)\s*-\s*/i, "").trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, "");
+  return label.replace(/^(Default|기본값)\s*-\s*/i, "").trim().replace(transportSuffix, "");
 }
 
 // src/pcm.ts
