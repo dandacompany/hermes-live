@@ -19,6 +19,12 @@ def valid_name(value):
     return (isinstance(value,str) and 0<len(value.strip())<=40 and
             all(c.isalnum() or c in ' -_' for c in value.strip()) and bool(normalized(value)))
 
+GREETINGS=('Hey','헤이')
+
+def greeting_order(value):
+    first=value if value in GREETINGS else GREETINGS[0]
+    return tuple(g+' ' for g in (first,*(g for g in GREETINGS if g!=first)))
+
 class WakeRegistry:
     def __init__(self, path, roster, legacy):
         self.path,self.roster,self.legacy=Path(path),roster,legacy
@@ -46,7 +52,7 @@ class WakeRegistry:
             name=str(row.get('display_name') or '').strip()
             aliases=entry.get('aliases',[])
             names=list(dict.fromkeys(([name] if name else [])+aliases))
-            bot={**row,'enabled':bool(entry.get('enabled',False)),'aliases':aliases,'phrases':[prefix+n for prefix in ('헤이 ','Hey ') for n in names],'error':''}
+            bot={**row,'enabled':bool(entry.get('enabled',False)),'aliases':aliases,'phrases':[prefix+n for prefix in greeting_order(self.legacy.get('greeting')) for n in names],'error':''}
             if bot['enabled']:
                 if not names or not all(valid_name(n) for n in names):bot['error']='name'
                 elif not bot.get('ready'):bot['error']='setup'

@@ -72,13 +72,14 @@ class WhisperEngine:
         native = cfg.get('whisper_native')
         if native:
             command = [sys.executable, str(Path(__file__).with_name('wake-native-worker.py')),
-                       json.dumps({**native, 'targets':self.targets})]
+                       json.dumps({**native, 'targets':self.targets, 'language':cfg.get('whisper_language','en')})]
             env = {'HOME':str(Path.home()),'PATH':'/usr/bin:/bin'}
         else:
             worker = Path(__file__).with_name('wake-whisper-worker.mjs')
             node = cfg['whisper_node']
             options = {'module':cfg['whisper_module'],'models':cfg['whisper_models'],
-                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets}
+                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets,
+                       'language':cfg.get('whisper_language','en')}
             command = [node,str(worker),json.dumps(options)]
             env = {'HOME':str(Path.home()),'PATH':str(Path(node).parent)+':/usr/bin:/bin'}
         self.proc = subprocess.Popen(command,stdin=subprocess.PIPE,

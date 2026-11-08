@@ -157,6 +157,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
+   <FieldSelect label={c('greeting')} value={data?.greeting??'Hey'} options={[{value:'Hey',label:'Hey'},{value:'헤이',label:'헤이'}]} disabled={block} onChange={(g:string)=>void action(async()=>{await ctx.rest('/setup/greeting',{method:'PUT',body:{greeting:g}});await load()})}/>
+   <p style={hint}>{c('greetingHint')}</p>
    <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
    <p style={hint}>{c('trialHint')}</p>

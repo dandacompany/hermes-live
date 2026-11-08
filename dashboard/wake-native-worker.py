@@ -47,7 +47,7 @@ def main():
             # Ignore proxy env vars for loopback audio, and never forward user secrets.
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             child = subprocess.Popen([cfg['engine'], '--host','127.0.0.1','--port',str(port),
-                    '-m',cfg['model_file'],'-l','ko','--tmp-dir',work], cwd=work,
+                    '-m',cfg['model_file'],'-l',cfg.get('language','en'),'--tmp-dir',work], cwd=work,
                     env={'PATH':'/usr/bin:/bin','HOME':work,'BOTIN_WHISPER_TOKEN':token},
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             def request(path, data=None, content_type=None):
@@ -70,7 +70,7 @@ def main():
                 with wave.open(wav,'wb') as f:
                     f.setnchannels(1);f.setsampwidth(2);f.setframerate(16000);f.writeframes(pcm)
                 boundary=secrets.token_hex(16)
-                fields={'response_format':'json','language':'ko','temperature':'0.0',
+                fields={'response_format':'json','language':cfg.get('language','en'),'temperature':'0.0',
                         'prompt':', '.join(dict.fromkeys(n for t in cfg['targets'] for n in t['names']))[:400]}
                 body=b''
                 for name,value in fields.items():
