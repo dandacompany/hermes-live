@@ -111,6 +111,7 @@ export default {
      }
     },context);return true;
    },
+   fallbackWakeTarget:text=>{const target=wake.enabled&&matchWakeTarget(text,wake.config?.targets??[]);return target&&callOwner&&callOwner.connection==='local'&&target!==callOwner.profile&&apiScopeMatches(callOwner)&&sameScope(callOwner,currentScope())?target:null;},
    isVoiceControl:text=>Boolean(wake.enabled&&matchWakeTarget(text,wake.config?.targets??[])),
    prepare:async (signal,selection)=>{
     await wake?.suspend();if(signal.aborted)return;
@@ -431,6 +432,7 @@ export default {
       <FieldSelect label={t('voice')} value={selection.voice} disabled={active||loading} options={(provider?.voices??[selection.voice]).map(value=>({value,label:value}))} onChange={voice=>change({...selection,voice})}/>
      </div>
      <div role="status" style={{...mutedStyle,display:'flex',alignItems:'center',gap:8}}>{loading?t('checking'):provider&&!provider.available&&!active?t('setupNeeded'):label}{state.startedAt>0&&<span style={{marginInlineStart:8,fontVariantNumeric:'tabular-nums'}}><bdi>{formatNumber(locale,Math.floor(seconds/60))}:{new Intl.NumberFormat(locale,{minimumIntegerDigits:2}).format(seconds%60)}</bdi></span>}</div>
+     {active&&state.wakeCheck&&<div role="status" style={mutedStyle}>{t(state.wakeCheck==='checking'?'wakeConfirming':state.wakeCheck==='retry'?'wakeConfirmRetry':'wakeConfirmUnavailable')}</div>}
      {(error||state.error||provider?.reason)&&<div role="alert" style={{...mutedStyle,padding:'8px 10px',borderRadius:'var(--radius-sm)',background:'var(--ui-bg-tertiary)',border:divider}}>{localizeError(t,error||state.error||provider?.reason)}{error&&<Button variant="ghost" size="sm" onClick={()=>void load()}>{t('retry')}</Button>}</div>}
      <AuthSettings provider={provider} selected={selection.provider} backend={backend} connection={currentScope().connection} profile={currentScope().profile} active={active} loading={loading} configure={configure} recheck={()=>void load()}/>
      {state.transcript.length>0&&<div ref={scroll} style={{maxHeight:150,overflowY:'auto',fontSize:12,lineHeight:1.65,borderTop:divider,paddingTop:12}} aria-label={t('transcripts')}>{state.transcript.map((fragment,i)=><p key={i} style={{margin:'0 0 8px'}}><span style={{...mutedStyle,marginInlineEnd:6}}>{fragment.speaker==='user'?t('you'):'Live'}</span>{fragment.text}</p>)}</div>}

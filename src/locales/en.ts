@@ -1,4 +1,8 @@
 export const en = {
+  wakeConfirming: "Confirming the requested bot…",
+  wakeConfirmRetry: "Could not confirm the call. Please say the bot name again.",
+  wakeConfirmUnavailable: "Local confirmation is unavailable. Final transcript controls still work.",
+
  errBotsView:'Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.',
  wake:"Wake",
  wakeEmpty:"Choose a bot in Wake settings",

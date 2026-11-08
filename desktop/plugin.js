@@ -32,6 +32,9 @@ function useLiveI18n() {
 
 // src/locales/en.ts
 var en = {
+  wakeConfirming: "Confirming the requested bot\u2026",
+  wakeConfirmRetry: "Could not confirm the call. Please say the bot name again.",
+  wakeConfirmUnavailable: "Local confirmation is unavailable. Final transcript controls still work.",
   errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
   wake: "Wake",
   wakeEmpty: "Choose a bot in Wake settings",
@@ -340,7 +343,10 @@ var translations_default = {
     wakeSave: "\uD638\uCD9C\uD560 \uBD07 \uC800\uC7A5",
     errWakeChanged: "\uBD07 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68 \uD6C4 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.",
     errWakeRegistry: "\uBCC4\uCE6D \uC218(\uCD5C\uB300 3\uAC1C), \uC911\uBCF5 \uC774\uB984, \uC120\uD0DD\uD55C \uBD07\uC758 \uC124\uC815\uC744 \uD655\uC778\uD558\uC138\uC694.",
-    errBotsView: "\uD638\uCD9C\uD55C \uBD07\uC744 \uC5F4\uB824\uBA74 Hermes Desktop\uC5D0\uC11C Bots\uB97C \uCF1C\uC138\uC694. Bots \uD654\uBA74\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 Desktop\uC744 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694."
+    errBotsView: "\uD638\uCD9C\uD55C \uBD07\uC744 \uC5F4\uB824\uBA74 Hermes Desktop\uC5D0\uC11C Bots\uB97C \uCF1C\uC138\uC694. Bots \uD654\uBA74\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 Desktop\uC744 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694.",
+    wakeConfirming: "\uD638\uCD9C\uD55C \uBD07\uC744 \uD655\uC778\uD558\uACE0 \uC788\uC5B4\uC694\u2026",
+    wakeConfirmRetry: "\uD638\uCD9C\uC744 \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uBD07 \uC774\uB984\uC744 \uB2E4\uC2DC \uBD88\uB7EC \uC8FC\uC138\uC694.",
+    wakeConfirmUnavailable: "\uB85C\uCEEC \uC7AC\uD655\uC778\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC5B4\uC694. \uC644\uB8CC \uC804\uC0AC\uB97C \uD1B5\uD55C \uC81C\uC5B4\uB294 \uC720\uC9C0\uB429\uB2C8\uB2E4."
   },
   ja: {
     call: "\u901A\u8A71",
@@ -494,7 +500,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u547C\u3073\u51FA\u3057\u305F\u30DC\u30C3\u30C8\u3092\u78BA\u8A8D\u3057\u3066\u3044\u307E\u3059\u2026",
+    wakeConfirmRetry: "\u547C\u3073\u51FA\u3057\u3092\u78BA\u8A8D\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u30DC\u30C3\u30C8\u540D\u3092\u3082\u3046\u4E00\u5EA6\u547C\u3093\u3067\u304F\u3060\u3055\u3044\u3002",
+    wakeConfirmUnavailable: "\u30ED\u30FC\u30AB\u30EB\u78BA\u8A8D\u3092\u5229\u7528\u3067\u304D\u307E\u305B\u3093\u3002\u78BA\u5B9A\u3057\u305F\u6587\u5B57\u8D77\u3053\u3057\u306B\u3088\u308B\u64CD\u4F5C\u306F\u5F15\u304D\u7D9A\u304D\u4F7F\u3048\u307E\u3059\u3002"
   },
   zh: {
     call: "\u901A\u8BDD",
@@ -648,7 +657,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u6B63\u5728\u786E\u8BA4\u547C\u53EB\u7684\u673A\u5668\u4EBA\u2026",
+    wakeConfirmRetry: "\u672A\u80FD\u786E\u8BA4\u547C\u53EB\u3002\u8BF7\u518D\u8BF4\u4E00\u6B21\u673A\u5668\u4EBA\u540D\u79F0\u3002",
+    wakeConfirmUnavailable: "\u672C\u5730\u786E\u8BA4\u4E0D\u53EF\u7528\u3002\u6700\u7EC8\u8F6C\u5199\u63A7\u5236\u4ECD\u7136\u6709\u6548\u3002"
   },
   "zh-hant": {
     call: "\u901A\u8A71",
@@ -802,7 +814,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u6B63\u5728\u78BA\u8A8D\u547C\u53EB\u7684\u6A5F\u5668\u4EBA\u2026",
+    wakeConfirmRetry: "\u672A\u80FD\u78BA\u8A8D\u547C\u53EB\u3002\u8ACB\u518D\u8AAA\u4E00\u6B21\u6A5F\u5668\u4EBA\u540D\u7A31\u3002",
+    wakeConfirmUnavailable: "\u672C\u6A5F\u78BA\u8A8D\u7121\u6CD5\u4F7F\u7528\u3002\u6700\u7D42\u8F49\u5BEB\u63A7\u5236\u4ECD\u7136\u6709\u6548\u3002"
   },
   fr: {
     call: "Appel",
@@ -956,7 +971,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Confirmation du bot demand\xE9\u2026",
+    wakeConfirmRetry: "Appel non confirm\xE9. Veuillez redire le nom du bot.",
+    wakeConfirmUnavailable: "La confirmation locale est indisponible. Les commandes de la transcription finale restent actives."
   },
   de: {
     call: "Anruf",
@@ -1110,7 +1128,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Angeforderten Bot best\xE4tigen\u2026",
+    wakeConfirmRetry: "Aufruf nicht best\xE4tigt. Bitte den Bot-Namen erneut sagen.",
+    wakeConfirmUnavailable: "Lokale Best\xE4tigung nicht verf\xFCgbar. Die Steuerung \xFCber das endg\xFCltige Transkript bleibt aktiv."
   },
   es: {
     call: "Llamada",
@@ -1264,7 +1285,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Confirmando el bot solicitado\u2026",
+    wakeConfirmRetry: "No se pudo confirmar la llamada. Repite el nombre del bot.",
+    wakeConfirmUnavailable: "La confirmaci\xF3n local no est\xE1 disponible. Los controles de la transcripci\xF3n final siguen activos."
   },
   it: {
     call: "Chiamata",
@@ -1418,7 +1442,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Conferma del bot richiesto\u2026",
+    wakeConfirmRetry: "Chiamata non confermata. Ripeti il nome del bot.",
+    wakeConfirmUnavailable: "Conferma locale non disponibile. I comandi della trascrizione finale restano attivi."
   },
   pt: {
     call: "Chamada",
@@ -1572,7 +1599,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Confirmando o bot solicitado\u2026",
+    wakeConfirmRetry: "N\xE3o foi poss\xEDvel confirmar a chamada. Diga o nome do bot novamente.",
+    wakeConfirmUnavailable: "A confirma\xE7\xE3o local est\xE1 indispon\xEDvel. Os controles da transcri\xE7\xE3o final continuam ativos."
   },
   ru: {
     call: "\u0417\u0432\u043E\u043D\u043E\u043A",
@@ -1726,7 +1756,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u043C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E \u0431\u043E\u0442\u0430\u2026",
+    wakeConfirmRetry: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044C \u0432\u044B\u0437\u043E\u0432. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0438\u043C\u044F \u0431\u043E\u0442\u0430.",
+    wakeConfirmUnavailable: "\u041B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u0435 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E. \u041A\u043E\u043C\u0430\u043D\u0434\u044B \u0438\u0437 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u043E\u0439 \u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0438 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u044E\u0442 \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C."
   },
   uk: {
     call: "\u0412\u0438\u043A\u043B\u0438\u043A",
@@ -1880,7 +1913,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u041F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0443\u0454\u043C\u043E \u0432\u0438\u0431\u0440\u0430\u043D\u043E\u0433\u043E \u0431\u043E\u0442\u0430\u2026",
+    wakeConfirmRetry: "\u041D\u0435 \u0432\u0434\u0430\u043B\u043E\u0441\u044F \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0438 \u0432\u0438\u043A\u043B\u0438\u043A. \u041F\u043E\u0432\u0442\u043E\u0440\u0456\u0442\u044C \u0456\u043C\u2019\u044F \u0431\u043E\u0442\u0430.",
+    wakeConfirmUnavailable: "\u041B\u043E\u043A\u0430\u043B\u044C\u043D\u0435 \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043D\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0435. \u041A\u043E\u043C\u0430\u043D\u0434\u0438 \u0437 \u043E\u0441\u0442\u0430\u0442\u043E\u0447\u043D\u043E\u0457 \u0440\u043E\u0437\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0438 \u043F\u0440\u043E\u0434\u043E\u0432\u0436\u0443\u044E\u0442\u044C \u043F\u0440\u0430\u0446\u044E\u0432\u0430\u0442\u0438."
   },
   tr: {
     call: "Arama",
@@ -2034,7 +2070,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u0130stenen bot do\u011Frulan\u0131yor\u2026",
+    wakeConfirmRetry: "\xC7a\u011Fr\u0131 do\u011Frulanamad\u0131. L\xFCtfen bot ad\u0131n\u0131 tekrar s\xF6yleyin.",
+    wakeConfirmUnavailable: "Yerel do\u011Frulama kullan\u0131lam\u0131yor. Son d\xF6k\xFCm komutlar\u0131 \xE7al\u0131\u015Fmaya devam eder."
   },
   ar: {
     call: "\u0645\u0643\u0627\u0644\u0645\u0629",
@@ -2188,7 +2227,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "\u062C\u0627\u0631\u064D \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0631\u0648\u0628\u0648\u062A \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u2026",
+    wakeConfirmRetry: "\u062A\u0639\u0630\u0631 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0627\u0633\u062A\u062F\u0639\u0627\u0621. \u064A\u0631\u062C\u0649 \u0642\u0648\u0644 \u0627\u0633\u0645 \u0627\u0644\u0631\u0648\u0628\u0648\u062A \u0645\u0631\u0629 \u0623\u062E\u0631\u0649.",
+    wakeConfirmUnavailable: "\u0627\u0644\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0645\u062D\u0644\u064A \u063A\u064A\u0631 \u0645\u062A\u0627\u062D. \u062A\u0638\u0644 \u0623\u0648\u0627\u0645\u0631 \u0627\u0644\u0646\u0635 \u0627\u0644\u0646\u0647\u0627\u0626\u064A \u0641\u0639\u0627\u0644\u0629."
   },
   af: {
     call: "Oproep",
@@ -2342,7 +2384,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "Bevestig die versoekte bot\u2026",
+    wakeConfirmRetry: "Kon nie die oproep bevestig nie. S\xEA asseblief weer die bot se naam.",
+    wakeConfirmUnavailable: "Plaaslike bevestiging is nie beskikbaar nie. Opdragte uit die finale transkripsie werk steeds."
   },
   hu: {
     call: "H\xEDv\xE1s",
@@ -2496,7 +2541,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "A k\xE9rt bot meger\u0151s\xEDt\xE9se\u2026",
+    wakeConfirmRetry: "A h\xEDv\xE1st nem siker\xFClt meger\u0151s\xEDteni. Mondd ki \xFAjra a bot nev\xE9t.",
+    wakeConfirmUnavailable: "A helyi meger\u0151s\xEDt\xE9s nem \xE9rhet\u0151 el. A v\xE9gleges \xE1tirat parancsai tov\xE1bbra is m\u0171k\xF6dnek."
   },
   ga: {
     call: "Glao",
@@ -2650,7 +2698,10 @@ var translations_default = {
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
     errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
-    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    wakeConfirming: "An bot iarrtha \xE1 dheimhni\xFA\u2026",
+    wakeConfirmRetry: "N\xEDorbh fh\xE9idir an glao a dheimhni\xFA. Abair ainm an bhot ar\xEDs.",
+    wakeConfirmUnavailable: "N\xEDl deimhni\xFA \xE1iti\xFAil ar f\xE1il. T\xE1 orduithe \xF3n tras-scr\xEDbhinn deiridh f\xF3s ag obair."
   }
 };
 
@@ -3665,7 +3716,7 @@ var WakeCoordinator = class {
       this.handling = !1;
     }
   }
-  /** A completed user call command replaces the old call without a second mic listener. */
+  /** A final or independently confirmed user command replaces the old call without a second mic listener. */
   async handoff(target, closePrevious, context = {}) {
     if (!this.enabled || this.handling || !this.deps.local()) {
       this.trace("navigation.error", { target, reason: this.enabled ? this.handling ? "already_handling" : "remote" : "disabled" });
@@ -4256,6 +4307,133 @@ function voiceReport(status, callProfile, last, instance) {
   return { v: 1, instance, status: phase, profile: phase === "connecting" || phase === "in_call" ? callProfile : null, last };
 }
 
+// src/wake-capture.ts
+var wakeCaptureProcessor = `class WakeCapture extends AudioWorkletProcessor {
+ constructor(){super();this.sum=0;this.count=0;this.phase=0;this.samples=[];this.seq=0}
+ process(inputs){const c=inputs[0]?.[0];if(c){for(const n of c){this.sum+=n;this.count++;this.phase+=16000;
+ if(this.phase>=sampleRate){this.phase-=sampleRate;const v=Math.max(-1,Math.min(1,this.sum/this.count));this.samples.push(Math.round(v*(v<0?32768:32767)));this.sum=0;this.count=0;
+ if(this.samples.length===1280){const pcm=new Int16Array(this.samples);this.samples=[];this.port.postMessage({pcm,seq:++this.seq,at:currentTime},[pcm.buffer])}}}}return true}
+}registerProcessor('hermes-live-wake-capture',WakeCapture);`, WakeUtteranceGate = class {
+  pre = [];
+  frames = [];
+  voiced = 0;
+  quiet = 0;
+  noise = 45;
+  discarding = !1;
+  serial = 0;
+  startedAt = 0;
+  start;
+  end;
+  drop;
+  constructor(start, end, drop) {
+    this.start = start, this.end = end, this.drop = drop;
+  }
+  reset() {
+    this.pre = [], this.frames = [], this.voiced = this.quiet = 0, this.discarding = !1, this.noise = 45;
+  }
+  feed(frame, now) {
+    if (frame.length !== 1280) {
+      this.reset(), this.drop("capture_gap");
+      return;
+    }
+    let sum = 0;
+    for (let n of frame) sum += n * n;
+    let rms = Math.sqrt(sum / frame.length), voice = rms > Math.max(160, this.noise * 3);
+    if (voice || (this.noise = 0.98 * this.noise + 0.02 * Math.min(rms, 160)), this.discarding) {
+      this.quiet = voice ? 0 : this.quiet + 1, this.quiet >= 9 && this.reset();
+      return;
+    }
+    if (!this.frames.length) {
+      this.pre.push(frame), this.pre = this.pre.slice(-3), voice && (this.frames = this.pre.slice(), this.voiced = 1, this.startedAt = now - this.frames.length * 80, this.start(++this.serial));
+      return;
+    }
+    if (this.frames.push(frame), this.voiced += Number(voice), this.quiet = voice ? 0 : this.quiet + 1, this.frames.length >= 62) {
+      this.frames = [], this.pre = [], this.discarding = !0, this.drop("long_speech");
+      return;
+    }
+    if (this.quiet >= 9) {
+      if (this.voiced >= 4) {
+        let pcm = new Int16Array(this.frames.length * 1280);
+        this.frames.forEach((f, i) => pcm.set(f, i * 1280)), this.end({ id: this.serial, pcm, startedAt: this.startedAt, endedAt: now });
+      } else this.drop("too_short");
+      this.reset();
+    }
+  }
+};
+
+// src/wake-confirmation.ts
+var WakeConfirmation = class {
+  deps;
+  gate;
+  text = "";
+  segment = 0;
+  utterance = null;
+  lastDelta = 0;
+  lastPcm = -1 / 0;
+  generation = 0;
+  attempt = !1;
+  pending = null;
+  pendingAt = 0;
+  constructor(deps) {
+    this.deps = deps, this.gate = new WakeUtteranceGate((id) => {
+      this.clear("new_speech"), this.segment = id;
+    }, (u) => {
+      this.utterance = u;
+    }, (reason) => this.clear(reason));
+  }
+  now() {
+    return this.deps.now?.() ?? Date.now();
+  }
+  clear(reason) {
+    ++this.generation, this.pending?.abort(), this.pending && this.deps.trace(reason, { length: this.text.length }), this.pending = null, this.utterance = null, this.text = "", this.segment = 0, this.attempt = !1, this.deps.state("");
+  }
+  reset(reason = "cancelled") {
+    this.clear(reason), this.gate.reset(), this.lastPcm = -1 / 0;
+  }
+  final() {
+    this.reset("final_received");
+  }
+  pcm(frame) {
+    let now = this.now();
+    (!frame || now - this.lastPcm > 600) && (this.reset("capture_gap"), !frame) || (this.lastPcm = now, this.gate.feed(frame, now));
+  }
+  delta(text2) {
+    if (!(!text2 || !this.segment) && (this.pending && (this.pending.abort(), this.pending = null, ++this.generation, this.deps.trace("continued_speech", { length: this.text.length }), this.deps.state("")), this.lastDelta = this.now(), this.text += text2, this.text.length > 128)) {
+      this.clear("too_long");
+      return;
+    }
+  }
+  tick() {
+    let now = this.now();
+    if (this.pending && now - this.pendingAt > 7e3) {
+      this.reset("timeout"), this.deps.state("retry");
+      return;
+    }
+    if (this.utterance && now - this.utterance.endedAt > 8e3) {
+      this.reset("expired");
+      return;
+    }
+    if (this.pending || this.attempt || !this.utterance || now - this.lastDelta < 350 || now - this.lastPcm > 400) return;
+    let target = this.deps.target(this.text);
+    if (!target) return;
+    let generation = this.generation, segment = this.segment, text2 = this.text, candidateId = crypto.randomUUID(), abort = new AbortController();
+    this.pending = abort, this.pendingAt = now, this.attempt = !0, this.deps.state("checking"), this.deps.trace("confirming", { traceId: candidateId, target, length: text2.length });
+    let request = { candidateId, target, pcm: this.utterance.pcm };
+    this.deps.verify(request, abort.signal).then((result) => {
+      if (abort.signal.aborted || generation !== this.generation || segment !== this.segment) return;
+      this.pending = null;
+      let current = this.now();
+      if (!this.utterance || current - this.utterance.endedAt > 8e3 || current - this.lastPcm > 400 || this.deps.target(this.text) !== target) {
+        this.reset("stale_result");
+        return;
+      }
+      this.deps.trace(result.reason, { traceId: candidateId, target, elapsedMs: result.elapsedMs ?? 0, length: text2.length }), result.candidateId === candidateId && result.target === target && result.reason === "confirmed" ? (this.reset("consumed"), this.deps.commit(text2, candidateId)) : (this.utterance = null, this.deps.state(result.reason === "model_unavailable" ? "unavailable" : "retry"));
+    }).catch(() => {
+      abort.signal.aborted || generation !== this.generation || (this.pending = null, this.utterance = null, this.deps.trace("verification_failed", { traceId: candidateId, target }), this.deps.state("unavailable"));
+    });
+  }
+};
+
 // src/goodbye.ts
 var normalize2 = (value) => value.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, ""), utterance = (text2) => normalize2(text2.replace(/^(?:(?:음|어|um|uh)[\s,.…]+)+/iu, "")), prefixes = ["bye", "by", "\uBC14\uC774", "\uBC14\uC77C", "\uD30C\uC77C"];
 function isGoodbye(text2, names2 = ["\uB8E8\uBBF8", "Lumi"]) {
@@ -4288,6 +4466,8 @@ var CallController = class {
     } catch {
     }
   }
+  confirmation = null;
+  stopCapture = null;
   goodbyeDetector = new GoodbyeDetector();
   completedUserTurns = /* @__PURE__ */ new Set();
   deps;
@@ -4319,7 +4499,7 @@ var CallController = class {
       }, selection);
       this.audio = audio;
       let opening = audio.open(selection.provider === "gemini" ? 16e3 : ["codex", "qwen"].includes(selection.provider) ? 48e3 : 24e3, abort.signal, (data, level) => {
-        current() && (this.transport?.audio(data), Date.now() - this.lastMeter > 80 && (this.lastMeter = Date.now(), this.set({ level }), Date.now() - this.inputAt >= 1e4 && (this.inputAt = Date.now(), this.trace("audio.sample", { level, muted: this.snapshot.muted, source: "call" }))));
+        current() && (this.transport?.audio(data), this.snapshot.muted || this.confirmation?.tick(), current() && Date.now() - this.lastMeter > 80 && (this.lastMeter = Date.now(), this.set({ level }), Date.now() - this.inputAt >= 1e4 && (this.inputAt = Date.now(), this.trace("audio.sample", { level, muted: this.snapshot.muted, source: "call" }))));
       }), [, config] = await Promise.all([opening, this.deps.token(selection)]);
       if (!current()) {
         audio.close();
@@ -4332,7 +4512,20 @@ var CallController = class {
         transport.close();
         return;
       }
-      this.deps.connected?.(config), this.trace("call.connected", { provider: selection.provider }), this.set({ status: "listening", startedAt: Date.now() });
+      if (this.deps.connected?.(config), this.trace("call.connected", { provider: selection.provider }), this.set({ status: "listening", startedAt: Date.now() }), selection.provider === "codex" && this.deps.fallbackWakeTarget && transport.verifyWake && audio.captureWake) {
+        let confirmation = new WakeConfirmation({ target: (text2) => this.snapshot.muted ? null : this.deps.fallbackWakeTarget?.(text2) ?? null, verify: (request, signal) => transport.verifyWake(request, signal), commit: (text2, candidateId) => {
+          current() && this.deps.voiceControl?.(text2, { callId: this.callId, turnId: candidateId, traceId: candidateId, source: "dual_confirmed" });
+        }, trace: (reason, fields) => this.trace("command.fallback", { reason, ...fields, source: "local" }), state: (wakeCheck) => {
+          current() && this.set({ wakeCheck });
+        } });
+        this.confirmation = confirmation, audio.captureWake((frame) => {
+          current() && !this.snapshot.muted && confirmation.pcm(frame);
+        }).then((stop) => {
+          current() ? this.stopCapture = stop : stop();
+        }).catch(() => {
+          current() && (confirmation.reset("capture_unavailable"), this.set({ wakeCheck: "unavailable" }), this.trace("command.fallback", { reason: "capture_unavailable" }));
+        });
+      }
     } catch (error) {
       current() && this.fail(audioDeviceError(error));
     }
@@ -4364,12 +4557,13 @@ var CallController = class {
         return;
       }
       if (event.type === "userTurnEnd") {
+        this.confirmation?.final();
         let turnId = event.id ?? crypto.randomUUID();
         if (event.id && this.completedUserTurns.has(event.id)) {
           this.trace("transcript.final", { turnId, reason: "duplicate", length: event.text.length });
           return;
         }
-        if (this.trace("transcript.final", { turnId, length: event.text.length }, event.text), event.id && (this.completedUserTurns.add(event.id), this.completedUserTurns.size > 128 && this.completedUserTurns.delete(this.completedUserTurns.values().next().value)), this.deps.voiceControl?.(event.text, { callId: this.callId, turnId })) {
+        if (this.trace("transcript.final", { turnId, length: event.text.length }, event.text), event.id && (this.completedUserTurns.add(event.id), this.completedUserTurns.size > 128 && this.completedUserTurns.delete(this.completedUserTurns.values().next().value)), this.deps.voiceControl?.(event.text, { callId: this.callId, turnId, source: "completed" })) {
           this.goodbyeDetector.reset();
           return;
         }
@@ -4378,7 +4572,7 @@ var CallController = class {
         return;
       }
       if (event.type === "transcript") {
-        event.speaker === "user" && Date.now() - this.partialAt >= 1e3 && (this.partialAt = Date.now(), this.trace("transcript.partial", { length: event.text.length })), this.spoken.push({ speaker: event.speaker, text: event.text.slice(-6e3), at: Date.now() }), this.spoken = this.spoken.slice(-80);
+        event.speaker === "user" && !this.snapshot.muted && this.confirmation?.delta(event.text), event.speaker === "user" && Date.now() - this.partialAt >= 1e3 && (this.partialAt = Date.now(), this.trace("transcript.partial", { length: event.text.length })), this.spoken.push({ speaker: event.speaker, text: event.text.slice(-6e3), at: Date.now() }), this.spoken = this.spoken.slice(-80);
         let transcript = this.snapshot.transcript.map((x) => ({ ...x })), last = transcript.at(-1);
         last?.speaker === event.speaker ? last.text = (last.text + event.text).slice(-6e3) : transcript.push({ speaker: event.speaker, text: event.text }), this.set({ transcript: transcript.slice(-50) });
         return;
@@ -4406,6 +4600,7 @@ var CallController = class {
     }
   }
   mute() {
+    this.confirmation?.reset("muted");
     let muted = !this.snapshot.muted;
     this.audio?.mute(muted), this.set({ muted, level: 0 });
   }
@@ -4413,7 +4608,12 @@ var CallController = class {
     this.trace("call.error", { reason: message.startsWith("HL_ERROR:") ? message : "provider_or_audio_error" }), this.stop(), this.set({ status: "error", error: message });
   }
   stop() {
-    this.goodbyeDetector.reset();
+    this.confirmation?.reset("call_ended"), this.confirmation = null;
+    try {
+      this.stopCapture?.();
+    } catch {
+    }
+    this.stopCapture = null, this.goodbyeDetector.reset();
     let wasActive = !!this.abort;
     wasActive && this.trace("call.end"), ++this.generation, this.abort?.abort(), this.abort = null;
     let transport = this.transport, audio = this.audio;
@@ -4427,7 +4627,7 @@ var CallController = class {
       } catch {
       }
     }
-    this.busy = !1, this.set({ status: "idle", selection: null, muted: !1, level: 0, startedAt: 0, error: "" }), wasActive && this.deps.ended?.();
+    this.busy = !1, this.set({ wakeCheck: "", status: "idle", selection: null, muted: !1, level: 0, startedAt: 0, error: "" }), wasActive && this.deps.ended?.();
   }
 };
 
@@ -4460,6 +4660,7 @@ function codexToolResult(id, result) {
 var CodexMedia = class {
   stream = null;
   playback = null;
+  stopWakeCapture = null;
   context = null;
   sources = [];
   timer;
@@ -4497,6 +4698,31 @@ var CodexMedia = class {
       speaking !== this.speaking && (this.speaking = speaking, this.onSpeaking(speaking));
     }, 100);
   }
+  async captureWake(listener) {
+    let ctx = this.context, stream = this.stream;
+    if (!ctx || !stream || this.closed) throw new Error("capture_closed");
+    let url = URL.createObjectURL(new Blob([wakeCaptureProcessor], { type: "application/javascript" }));
+    try {
+      await ctx.audioWorklet.addModule(url);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    if (this.closed || this.context !== ctx) throw new Error("capture_closed");
+    let node = new AudioWorkletNode(ctx, "hermes-live-wake-capture", { channelCount: 1, channelCountMode: "explicit" }), source = ctx.createMediaStreamSource(stream), zero = ctx.createGain();
+    zero.gain.value = 0;
+    let sequence = 0, stopped = !1, stop = () => {
+      stopped || (stopped = !0, node.port.onmessage = null, node.port.close(), source.disconnect(), node.disconnect(), zero.disconnect());
+    };
+    return this.stopWakeCapture?.(), this.stopWakeCapture = stop, node.port.onmessage = (e) => {
+      if (stopped || this.closed || this.muted) return;
+      let value = e.data;
+      if (!(value?.pcm instanceof Int16Array) || value.pcm.length !== 1280 || !Number.isFinite(value.at) || ctx.currentTime - value.at > 0.6 || value.seq !== sequence + 1) {
+        sequence = value?.seq ?? 0, listener(null);
+        return;
+      }
+      sequence = value.seq, listener(value.pcm);
+    }, source.connect(node), node.connect(zero), zero.connect(ctx.destination), stop;
+  }
   receive(stream) {
     if (this.closed || !this.context) return;
     this.playback?.pause(), this.playback = new Audio(), this.playback.srcObject = stream, this.playback.muted = !0, this.playback.autoplay = !0, this.playback.play().catch(() => {
@@ -4514,7 +4740,7 @@ var CodexMedia = class {
     this.muted = value, this.stream?.getAudioTracks().forEach((t) => t.enabled = !value);
   }
   close() {
-    this.closed || (this.closed = !0, clearInterval(this.timer), this.stream?.getTracks().forEach((t) => t.stop()), this.stream = null, this.sources.forEach((s) => s.disconnect()), this.sources = [], this.remote?.disconnect(), this.remote = null, this.playback && (this.playback.pause(), this.playback.srcObject = null, this.playback = null), this.context?.close().catch(() => {
+    this.closed || (this.closed = !0, this.stopWakeCapture?.(), this.stopWakeCapture = null, clearInterval(this.timer), this.stream?.getTracks().forEach((t) => t.stop()), this.stream = null, this.sources.forEach((s) => s.disconnect()), this.sources = [], this.remote?.disconnect(), this.remote = null, this.playback && (this.playback.pause(), this.playback.srcObject = null, this.playback = null), this.context?.close().catch(() => {
     }), this.context = null, this.onSpeaking(!1));
   }
 }, CodexRTC = class {
@@ -4591,6 +4817,26 @@ var CodexMedia = class {
       }, 1e3);
     } catch (error) {
       throw this.close(), error;
+    }
+  }
+  async verifyWake(request, signal) {
+    if (this.closed || signal.aborted) throw new Error("cancelled");
+    let bytes = new Uint8Array(request.pcm.length * 2), view = new DataView(bytes.buffer);
+    request.pcm.forEach((v, i) => view.setInt16(i * 2, v, !0));
+    let raw = "";
+    for (let b of bytes) raw += String.fromCharCode(b);
+    let rejectAbort = () => {
+    }, aborted = new Promise((_resolve, reject) => {
+      rejectAbort = reject;
+    }), cancel = () => {
+      rejectAbort(new Error("cancelled")), this.request("/wake/confirm/cancel", { callId: this.callId, candidateId: request.candidateId }, 2e3).catch(() => {
+      });
+    };
+    signal.addEventListener("abort", cancel, { once: !0 });
+    try {
+      return await Promise.race([this.request("/wake/confirm", { callId: this.callId, candidateId: request.candidateId, target: request.target, pcm: btoa(raw) }, 8e3), aborted]);
+    } finally {
+      signal.removeEventListener("abort", cancel);
     }
   }
   audio() {
@@ -5037,6 +5283,10 @@ var plugin_default = {
             for (; host3.state.busyBySession.get()[previous.session] && Date.now() < deadline; ) await new Promise((r) => setTimeout(r, 50));
           }
         }, context), !0;
+      },
+      fallbackWakeTarget: (text2) => {
+        let target = wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? []);
+        return target && callOwner && callOwner.connection === "local" && target !== callOwner.profile && apiScopeMatches(callOwner) && sameScope(callOwner, currentScope()) ? target : null;
       },
       isVoiceControl: (text2) => !!(wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? [])),
       prepare: async (signal, selection) => {
@@ -5499,6 +5749,7 @@ var plugin_default = {
                       new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds % 60)
                     ] }) })
                   ] }),
+                  active && state.wakeCheck && /* @__PURE__ */ jsx9("div", { role: "status", style: mutedStyle, children: t2(state.wakeCheck === "checking" ? "wakeConfirming" : state.wakeCheck === "retry" ? "wakeConfirmRetry" : "wakeConfirmUnavailable") }),
                   (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs9("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
                     localizeError(t2, error || state.error || provider?.reason),
                     error && /* @__PURE__ */ jsx9(Button7, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })

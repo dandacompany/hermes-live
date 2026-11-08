@@ -1,3 +1,5 @@
+import {wakeCaptureProcessor} from './wake-capture.ts';
+import type {WakeVerifyRequest,WakeVerification} from './wake-confirmation.ts';
 import {microphoneConstraints,routeOutput,type AudioDevices,defaultDevices} from './devices.ts';
 import type {AudioPort,Connection,LiveEvent,Transport} from './types.ts';
 export type CodexRequest=<T>(path:string,body:unknown,timeoutMs?:number)=>Promise<T>;
@@ -39,6 +41,7 @@ export function codexToolResult(id:string,result:string){return {type:'delegatio
 export class CodexMedia implements AudioPort {
  stream:MediaStream|null=null;
  private playback:HTMLAudioElement|null=null;
+ private stopWakeCapture:(()=>void)|null=null;
  private context:AudioContext|null=null;private sources:MediaStreamAudioSourceNode[]=[];private timer:ReturnType<typeof setInterval>|undefined;
  private closed=false;private muted=false;private speaking=false;private remote:AnalyserNode|null=null;
  private onSpeaking:(value:boolean)=>void;
@@ -64,6 +67,21 @@ export class CodexMedia implements AudioPort {
    if(speaking!==this.speaking){this.speaking=speaking;this.onSpeaking(speaking)}
   },100);
  }
+ async captureWake(listener:(frame:Int16Array|null)=>void){
+  const ctx=this.context,stream=this.stream;if(!ctx||!stream||this.closed)throw new Error('capture_closed');
+  const url=URL.createObjectURL(new Blob([wakeCaptureProcessor],{type:'application/javascript'}));
+  try{await ctx.audioWorklet.addModule(url)}finally{URL.revokeObjectURL(url)}
+  if(this.closed||this.context!==ctx)throw new Error('capture_closed');
+  const node=new AudioWorkletNode(ctx,'hermes-live-wake-capture',{channelCount:1,channelCountMode:'explicit'});
+  const source=ctx.createMediaStreamSource(stream),zero=ctx.createGain();zero.gain.value=0;let sequence=0,stopped=false;
+  const stop=()=>{if(stopped)return;stopped=true;node.port.onmessage=null;node.port.close();source.disconnect();node.disconnect();zero.disconnect()};
+  this.stopWakeCapture?.();this.stopWakeCapture=stop;
+  node.port.onmessage=e=>{if(stopped||this.closed||this.muted)return;const value=e.data;
+   if(!(value?.pcm instanceof Int16Array)||value.pcm.length!==1280||!Number.isFinite(value.at)||ctx.currentTime-value.at>.6||value.seq!==sequence+1){sequence=value?.seq??0;listener(null);return}
+   sequence=value.seq;listener(value.pcm);
+  };
+  source.connect(node);node.connect(zero);zero.connect(ctx.destination);return stop;
+ }
  receive(stream:MediaStream){
   if(this.closed||!this.context)return;
   // Chromium needs an active HTML media playout sink for remote WebRTC audio
@@ -76,7 +94,7 @@ export class CodexMedia implements AudioPort {
  play(){} // Remote track is played by Web Audio; no queued PCM data.
  interrupt(){} // Codex/WebRTC handles native interruption on the remote track.
  mute(value:boolean){this.muted=value;this.stream?.getAudioTracks().forEach(t=>t.enabled=!value)}
- close(){if(this.closed)return;this.closed=true;clearInterval(this.timer);this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;this.sources.forEach(s=>s.disconnect());this.sources=[];this.remote?.disconnect();this.remote=null;if(this.playback){this.playback.pause();this.playback.srcObject=null;this.playback=null}void this.context?.close().catch(()=>{});this.context=null;this.onSpeaking(false)}
+ close(){if(this.closed)return;this.closed=true;this.stopWakeCapture?.();this.stopWakeCapture=null;clearInterval(this.timer);this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;this.sources.forEach(s=>s.disconnect());this.sources=[];this.remote?.disconnect();this.remote=null;if(this.playback){this.playback.pause();this.playback.srcObject=null;this.playback=null}void this.context?.close().catch(()=>{});this.context=null;this.onSpeaking(false)}
 }
 
 export class CodexRTC implements Transport {
@@ -114,6 +132,17 @@ export class CodexRTC implements Transport {
    this.heartbeat=setInterval(()=>{void this.request('/codex/heartbeat',{callId:this.callId},8000).catch(()=>{if(!this.closed)this.fail("HL_ERROR:errConnection")})},10000);
    this.monitor=setInterval(()=>{if(pc.connectionState==='disconnected'){if(!this.disconnectAt)this.disconnectAt=Date.now();if(Date.now()-this.disconnectAt>10000)this.fail("HL_ERROR:errConnection")}else this.disconnectAt=0},1000);
   }catch(error){this.close();throw error}
+ }
+ async verifyWake(request:WakeVerifyRequest,signal:AbortSignal):Promise<WakeVerification>{
+  if(this.closed||signal.aborted)throw new Error('cancelled');
+  const bytes=new Uint8Array(request.pcm.length*2),view=new DataView(bytes.buffer);
+  request.pcm.forEach((v,i)=>view.setInt16(i*2,v,true));let raw='';for(const b of bytes)raw+=String.fromCharCode(b);
+  let rejectAbort:(error:Error)=>void=()=>{};
+  const aborted=new Promise<never>((_resolve,reject)=>{rejectAbort=reject});
+  const cancel=()=>{rejectAbort(new Error('cancelled'));void this.request('/wake/confirm/cancel',{callId:this.callId,candidateId:request.candidateId},2000).catch(()=>{})};
+  signal.addEventListener('abort',cancel,{once:true});
+  try{return await Promise.race([this.request<WakeVerification>('/wake/confirm',{callId:this.callId,candidateId:request.candidateId,target:request.target,pcm:btoa(raw)},8000),aborted])}
+  finally{signal.removeEventListener('abort',cancel)}
  }
  audio(){} // Original media tracks, not audio append events.
  toolResult(id:string,result:string){if(!this.closed&&this.channel?.readyState==='open')this.channel.send(JSON.stringify(codexToolResult(id,result)))}

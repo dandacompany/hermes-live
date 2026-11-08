@@ -270,7 +270,8 @@ class Sessions:
             prepared = self.warm if self.warm and self.warm['ready'] else None
             if prepared:self.warm = None  # An unused thread is transferred to exactly one call.
             server = prepared['server'] if prepared else self.factory()
-            call = {'server':server, 'expires':self.clock()+100, 'thread':prepared['thread'] if prepared else None}
+            from hermes_constants import get_hermes_home
+            call = {'server':server, 'home':str(get_hermes_home()), 'ready':False, 'expires':self.clock()+100, 'thread':prepared['thread'] if prepared else None}
             self.calls[call_id] = call
         try:
             if call['thread'] is None:
@@ -288,11 +289,18 @@ class Sessions:
             with self.lock:
                 if self.calls.get(call_id) is not call:
                     raise BrokerError('취소된 통화입니다.')
-                call['expires'] = self.clock()+45
+                call['expires'] = self.clock()+45;call['ready']=True
             return {'answer':answer,'callId':call_id,'engine':'codex','handoff':'client'}
         except Exception:
             self.stop(call_id)
             raise
+
+    def active(self,call_id):
+        from hermes_constants import get_hermes_home
+        with self.lock:
+            call=self.calls.get(call_id)
+            return bool(call and call.get('ready') and call.get('home')==str(get_hermes_home())
+                        and call['expires']>self.clock() and not call['server'].closed)
 
     def heartbeat(self, call_id):
         self.reap()

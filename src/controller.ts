@@ -1,14 +1,16 @@
+import {WakeConfirmation,type WakeCheckState} from './wake-confirmation.ts';
 import type {DiagnosticFields} from './diagnostics.ts';
 import {isGoodbye,GoodbyeDetector} from './goodbye.ts';
 import {audioDeviceError} from './devices.ts';
 import {spokenDelegation,type SpokenFragment} from './context.ts';
 import type {AudioPort,Connection,LiveEvent,Selection,Transport} from './types.ts';
-export interface CallState {status:'idle'|'connecting'|'listening'|'speaking'|'thinking'|'error';selection:Selection|null;muted:boolean;level:number;startedAt:number;error:string;transcript:{speaker:'user'|'assistant';text:string}[]}
-interface Dependencies {diagnostic?:(event:string,fields:DiagnosticFields,text?:string)=>void;voiceControl?:(text:string,context?:DiagnosticFields)=>boolean;isVoiceControl?:(text:string)=>boolean;goodbye?:()=>boolean;goodbyeNames?:()=>readonly string[];usage?:(event:LiveEvent)=>void;connected?:(selection:Connection)=>void;ended?:()=>void;prepare?:(signal:AbortSignal,selection:Selection)=>Promise<void>;audio:(speaking:(v:boolean)=>void,selection:Selection)=>AudioPort;token:(selection:Selection)=>Promise<Connection>;transport:(config:Connection,emit:(e:LiveEvent)=>void,audio:AudioPort)=>Transport;delegate:(text:string,signal:AbortSignal,voiceContext:string)=>Promise<string>;changed:(state:CallState)=>void}
+export interface CallState {wakeCheck?:WakeCheckState;status:'idle'|'connecting'|'listening'|'speaking'|'thinking'|'error';selection:Selection|null;muted:boolean;level:number;startedAt:number;error:string;transcript:{speaker:'user'|'assistant';text:string}[]}
+interface Dependencies {fallbackWakeTarget?:(text:string)=>string|null;diagnostic?:(event:string,fields:DiagnosticFields,text?:string)=>void;voiceControl?:(text:string,context?:DiagnosticFields)=>boolean;isVoiceControl?:(text:string)=>boolean;goodbye?:()=>boolean;goodbyeNames?:()=>readonly string[];usage?:(event:LiveEvent)=>void;connected?:(selection:Connection)=>void;ended?:()=>void;prepare?:(signal:AbortSignal,selection:Selection)=>Promise<void>;audio:(speaking:(v:boolean)=>void,selection:Selection)=>AudioPort;token:(selection:Selection)=>Promise<Connection>;transport:(config:Connection,emit:(e:LiveEvent)=>void,audio:AudioPort)=>Transport;delegate:(text:string,signal:AbortSignal,voiceContext:string)=>Promise<string>;changed:(state:CallState)=>void}
 export class CallController {
  snapshot:CallState={status:'idle',selection:null,muted:false,level:0,startedAt:0,error:'',transcript:[]};
  private callId='';private inputAt=0;private partialAt=0;
  private trace(event:string,fields:DiagnosticFields={},text?:string){try{this.deps.diagnostic?.(event,{callId:this.callId,...fields},text)}catch{}}
+ private confirmation:WakeConfirmation|null=null;private stopCapture:(()=>void)|null=null;
  private goodbyeDetector=new GoodbyeDetector();
  private completedUserTurns=new Set<string>();private deps:Dependencies;private generation=0;private abort:AbortController|null=null;private audio:AudioPort|null=null;private transport:Transport|null=null;private seen=new Set<string>();private cancelled=new Set<string>();private busy=false;private lastMeter=0;private spoken:SpokenFragment[]=[];
  constructor(deps:Dependencies){this.deps=deps}
@@ -20,7 +22,7 @@ export class CallController {
   try{
    await this.deps.prepare?.(abort.signal,selection);if(!current())return;
    const audio=this.deps.audio(speaking=>{if(current()&&this.snapshot.status!=='connecting')this.set({status:this.busy?'thinking':speaking?'speaking':'listening'})},selection);this.audio=audio;
-   const opening=audio.open(selection.provider==='gemini'?16000:['codex','qwen'].includes(selection.provider)?48000:24000,abort.signal,(data,level)=>{if(!current())return;this.transport?.audio(data);if(Date.now()-this.lastMeter>80){this.lastMeter=Date.now();this.set({level});if(Date.now()-this.inputAt>=10000){this.inputAt=Date.now();this.trace('audio.sample',{level,muted:this.snapshot.muted,source:'call'})}}});
+   const opening=audio.open(selection.provider==='gemini'?16000:['codex','qwen'].includes(selection.provider)?48000:24000,abort.signal,(data,level)=>{if(!current())return;this.transport?.audio(data);if(!this.snapshot.muted)this.confirmation?.tick();if(!current())return;if(Date.now()-this.lastMeter>80){this.lastMeter=Date.now();this.set({level});if(Date.now()-this.inputAt>=10000){this.inputAt=Date.now();this.trace('audio.sample',{level,muted:this.snapshot.muted,source:'call'})}}});
    // Auth/scope preflight has finished; microphone setup and history/token lookup are independent.
    const [,config]=await Promise.all([opening,this.deps.token(selection)]);
    if(!current()){audio.close();return}
@@ -28,6 +30,11 @@ export class CallController {
    await transport.open();if(!current()){transport.close();return}
    this.deps.connected?.(config);this.trace('call.connected',{provider:selection.provider});
    this.set({status:'listening',startedAt:Date.now()});
+   if(selection.provider==='codex'&&this.deps.fallbackWakeTarget&&transport.verifyWake&&audio.captureWake){
+    const confirmation=new WakeConfirmation({target:text=>this.snapshot.muted?null:this.deps.fallbackWakeTarget?.(text)??null,verify:(request,signal)=>transport.verifyWake!(request,signal),commit:(text,candidateId)=>{if(current())this.deps.voiceControl?.(text,{callId:this.callId,turnId:candidateId,traceId:candidateId,source:'dual_confirmed'})},trace:(reason,fields)=>this.trace('command.fallback',{reason,...fields,source:'local'}),state:wakeCheck=>{if(current())this.set({wakeCheck})}});
+    this.confirmation=confirmation;
+    void audio.captureWake(frame=>{if(current()&&!this.snapshot.muted)confirmation.pcm(frame)}).then(stop=>{if(current())this.stopCapture=stop;else stop()}).catch(()=>{if(current()){confirmation.reset('capture_unavailable');this.set({wakeCheck:'unavailable'});this.trace('command.fallback',{reason:'capture_unavailable'})}});
+   }
   }catch(error){if(current())this.fail(audioDeviceError(error))}
  }
  private event(event:LiveEvent,generation:number,signal:AbortSignal){
@@ -39,14 +46,16 @@ export class CallController {
    if(event.type==='interrupt'){this.audio?.interrupt();return}
    if(event.type==='cancelTools'){event.ids.forEach(id=>this.cancelled.add(id));return}
    if(event.type==='userTurnEnd'){
+    this.confirmation?.final();
     const turnId=event.id??crypto.randomUUID();
     if(event.id&&this.completedUserTurns.has(event.id)){this.trace('transcript.final',{turnId,reason:'duplicate',length:event.text.length});return}
     this.trace('transcript.final',{turnId,length:event.text.length},event.text);
     if(event.id){this.completedUserTurns.add(event.id);if(this.completedUserTurns.size>128)this.completedUserTurns.delete(this.completedUserTurns.values().next().value!)}
-    if(this.deps.voiceControl?.(event.text,{callId:this.callId,turnId})){this.goodbyeDetector.reset();return;}
+    if(this.deps.voiceControl?.(event.text,{callId:this.callId,turnId,source:'completed'})){this.goodbyeDetector.reset();return;}
     const enabled=Boolean(this.deps.goodbye?.());const matched=enabled&&this.goodbyeDetector.accept(event.text,this.deps.goodbyeNames?.()??['루미','Lumi']);this.trace('command.goodbye',{turnId,reason:!enabled?'disabled':matched?'matched':'no_match'});if(matched)this.stop();return;
    }
    if(event.type==='transcript'){
+    if(event.speaker==='user'&&!this.snapshot.muted)this.confirmation?.delta(event.text);
     if(event.speaker==='user'&&Date.now()-this.partialAt>=1000){this.partialAt=Date.now();this.trace('transcript.partial',{length:event.text.length})}
     this.spoken.push({speaker:event.speaker,text:event.text.slice(-6000),at:Date.now()});this.spoken=this.spoken.slice(-80);
     const transcript=this.snapshot.transcript.map(x=>({...x}));const last=transcript.at(-1);
@@ -65,7 +74,7 @@ export class CallController {
    });
   }catch{this.fail("HL_ERROR:errAudio")}
  }
- mute(){const muted=!this.snapshot.muted;this.audio?.mute(muted);this.set({muted,level:0})}
+ mute(){this.confirmation?.reset('muted');const muted=!this.snapshot.muted;this.audio?.mute(muted);this.set({muted,level:0})}
  private fail(message:string){this.trace('call.error',{reason:message.startsWith('HL_ERROR:')?message:'provider_or_audio_error'});this.stop();this.set({status:'error',error:message})}
- stop(){this.goodbyeDetector.reset();const wasActive=Boolean(this.abort);if(wasActive)this.trace('call.end');++this.generation;this.abort?.abort();this.abort=null;const transport=this.transport,audio=this.audio;this.transport=null;this.audio=null;try{transport?.close()}catch{}finally{try{audio?.close()}catch{}}this.busy=false;this.set({status:'idle',selection:null,muted:false,level:0,startedAt:0,error:''});if(wasActive)this.deps.ended?.()}
+ stop(){this.confirmation?.reset('call_ended');this.confirmation=null;try{this.stopCapture?.()}catch{}this.stopCapture=null;this.goodbyeDetector.reset();const wasActive=Boolean(this.abort);if(wasActive)this.trace('call.end');++this.generation;this.abort?.abort();this.abort=null;const transport=this.transport,audio=this.audio;this.transport=null;this.audio=null;try{transport?.close()}catch{}finally{try{audio?.close()}catch{}}this.busy=false;this.set({wakeCheck:'',status:'idle',selection:null,muted:false,level:0,startedAt:0,error:''});if(wasActive)this.deps.ended?.()}
 }

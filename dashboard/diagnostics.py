@@ -11,7 +11,7 @@ import threading
 import time
 import uuid
 
-EVENTS = set('transport.event runtime.start runtime.health wake.state wake.control wake.expired wake.detected wake.claimed wake.error model.ready model.error audio.sample stt.submitted stt.result call.start call.connected call.end call.error transcript.partial transcript.final command.wake command.goodbye navigation.start navigation.end navigation.error'.split())
+EVENTS = set('transport.event runtime.start runtime.health wake.state wake.control wake.expired wake.detected wake.claimed wake.error model.ready model.error audio.sample stt.submitted stt.result call.start call.connected call.end call.error transcript.partial transcript.final command.wake command.fallback command.confirm command.goodbye navigation.start navigation.end navigation.error'.split())
 FIELDS = set('origin source state reason action owner eventId callId turnId traceId target profile provider enabled muted ready listening level peak rms segments matches elapsedMs gapMs length targets dropped queued visibility wakeState callState lastInputAt lastFinalAt'.split())
 TOKEN = re.compile(r'^[\w.:-]{0,100}$', re.UNICODE)
 

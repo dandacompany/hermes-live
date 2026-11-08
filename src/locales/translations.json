@@ -151,7 +151,10 @@
     "wakeSave": "호출할 봇 저장",
     "errWakeChanged": "봇 목록이 바뀌었습니다. 새로고침 후 다시 저장하세요.",
     "errWakeRegistry": "별칭 수(최대 3개), 중복 이름, 선택한 봇의 설정을 확인하세요.",
-    "errBotsView": "호출한 봇을 열려면 Hermes Desktop에서 Bots를 켜세요. Bots 화면을 사용할 수 없으면 Desktop을 업데이트하세요."
+    "errBotsView": "호출한 봇을 열려면 Hermes Desktop에서 Bots를 켜세요. Bots 화면을 사용할 수 없으면 Desktop을 업데이트하세요.",
+    "wakeConfirming": "호출한 봇을 확인하고 있어요…",
+    "wakeConfirmRetry": "호출을 확인하지 못했어요. 봇 이름을 다시 불러 주세요.",
+    "wakeConfirmUnavailable": "로컬 재확인을 사용할 수 없어요. 완료 전사를 통한 제어는 유지됩니다."
   },
   "ja": {
     "call": "通話",
@@ -305,7 +308,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "呼び出したボットを確認しています…",
+    "wakeConfirmRetry": "呼び出しを確認できませんでした。ボット名をもう一度呼んでください。",
+    "wakeConfirmUnavailable": "ローカル確認を利用できません。確定した文字起こしによる操作は引き続き使えます。"
   },
   "zh": {
     "call": "通话",
@@ -459,7 +465,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "正在确认呼叫的机器人…",
+    "wakeConfirmRetry": "未能确认呼叫。请再说一次机器人名称。",
+    "wakeConfirmUnavailable": "本地确认不可用。最终转写控制仍然有效。"
   },
   "zh-hant": {
     "call": "通話",
@@ -613,7 +622,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "正在確認呼叫的機器人…",
+    "wakeConfirmRetry": "未能確認呼叫。請再說一次機器人名稱。",
+    "wakeConfirmUnavailable": "本機確認無法使用。最終轉寫控制仍然有效。"
   },
   "fr": {
     "call": "Appel",
@@ -767,7 +779,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Confirmation du bot demandé…",
+    "wakeConfirmRetry": "Appel non confirmé. Veuillez redire le nom du bot.",
+    "wakeConfirmUnavailable": "La confirmation locale est indisponible. Les commandes de la transcription finale restent actives."
   },
   "de": {
     "call": "Anruf",
@@ -921,7 +936,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Angeforderten Bot bestätigen…",
+    "wakeConfirmRetry": "Aufruf nicht bestätigt. Bitte den Bot-Namen erneut sagen.",
+    "wakeConfirmUnavailable": "Lokale Bestätigung nicht verfügbar. Die Steuerung über das endgültige Transkript bleibt aktiv."
   },
   "es": {
     "call": "Llamada",
@@ -1075,7 +1093,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Confirmando el bot solicitado…",
+    "wakeConfirmRetry": "No se pudo confirmar la llamada. Repite el nombre del bot.",
+    "wakeConfirmUnavailable": "La confirmación local no está disponible. Los controles de la transcripción final siguen activos."
   },
   "it": {
     "call": "Chiamata",
@@ -1229,7 +1250,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Conferma del bot richiesto…",
+    "wakeConfirmRetry": "Chiamata non confermata. Ripeti il nome del bot.",
+    "wakeConfirmUnavailable": "Conferma locale non disponibile. I comandi della trascrizione finale restano attivi."
   },
   "pt": {
     "call": "Chamada",
@@ -1383,7 +1407,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Confirmando o bot solicitado…",
+    "wakeConfirmRetry": "Não foi possível confirmar a chamada. Diga o nome do bot novamente.",
+    "wakeConfirmUnavailable": "A confirmação local está indisponível. Os controles da transcrição final continuam ativos."
   },
   "ru": {
     "call": "Звонок",
@@ -1537,7 +1564,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Подтверждаем выбранного бота…",
+    "wakeConfirmRetry": "Не удалось подтвердить вызов. Повторите имя бота.",
+    "wakeConfirmUnavailable": "Локальное подтверждение недоступно. Команды из окончательной расшифровки продолжают работать."
   },
   "uk": {
     "call": "Виклик",
@@ -1691,7 +1721,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Підтверджуємо вибраного бота…",
+    "wakeConfirmRetry": "Не вдалося підтвердити виклик. Повторіть ім’я бота.",
+    "wakeConfirmUnavailable": "Локальне підтвердження недоступне. Команди з остаточної розшифровки продовжують працювати."
   },
   "tr": {
     "call": "Arama",
@@ -1845,7 +1878,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "İstenen bot doğrulanıyor…",
+    "wakeConfirmRetry": "Çağrı doğrulanamadı. Lütfen bot adını tekrar söyleyin.",
+    "wakeConfirmUnavailable": "Yerel doğrulama kullanılamıyor. Son döküm komutları çalışmaya devam eder."
   },
   "ar": {
     "call": "مكالمة",
@@ -1999,7 +2035,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "جارٍ تأكيد الروبوت المطلوب…",
+    "wakeConfirmRetry": "تعذر تأكيد الاستدعاء. يرجى قول اسم الروبوت مرة أخرى.",
+    "wakeConfirmUnavailable": "التأكيد المحلي غير متاح. تظل أوامر النص النهائي فعالة."
   },
   "af": {
     "call": "Oproep",
@@ -2153,7 +2192,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "Bevestig die versoekte bot…",
+    "wakeConfirmRetry": "Kon nie die oproep bevestig nie. Sê asseblief weer die bot se naam.",
+    "wakeConfirmUnavailable": "Plaaslike bevestiging is nie beskikbaar nie. Opdragte uit die finale transkripsie werk steeds."
   },
   "hu": {
     "call": "Hívás",
@@ -2307,7 +2349,10 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "A kért bot megerősítése…",
+    "wakeConfirmRetry": "A hívást nem sikerült megerősíteni. Mondd ki újra a bot nevét.",
+    "wakeConfirmUnavailable": "A helyi megerősítés nem érhető el. A végleges átirat parancsai továbbra is működnek."
   },
   "ga": {
     "call": "Glao",
@@ -2461,6 +2506,9 @@
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
     "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
-    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
+    "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+    "wakeConfirming": "An bot iarrtha á dheimhniú…",
+    "wakeConfirmRetry": "Níorbh fhéidir an glao a dheimhniú. Abair ainm an bhot arís.",
+    "wakeConfirmUnavailable": "Níl deimhniú áitiúil ar fáil. Tá orduithe ón tras-scríbhinn deiridh fós ag obair."
   }
 }

@@ -78,7 +78,7 @@ export class WakeCoordinator {
   }catch(error){this.calling=false;this.enabled=false;this.set('off');throw error}
   finally{this.handling=false}
  }
- /** A completed user call command replaces the old call without a second mic listener. */
+ /** A final or independently confirmed user command replaces the old call without a second mic listener. */
  async handoff(target:string,closePrevious:()=>Promise<void>,context:DiagnosticFields={}){
   if(!this.enabled||this.handling||!this.deps.local()){this.trace('navigation.error',{target,reason:!this.enabled?'disabled':this.handling?'already_handling':'remote'});return;}
   const traceId=crypto.randomUUID();this.trace('navigation.start',{...context,target,traceId});

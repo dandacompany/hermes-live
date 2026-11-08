@@ -28,6 +28,11 @@ if 'hermes_live_diagnostics' not in sys.modules:
     _diag_spec.loader.exec_module(_diag_module)
 diag=sys.modules['hermes_live_diagnostics']
 
+_confirm_spec=importlib.util.spec_from_file_location(__name__+'_wake_confirmation',Path(__file__).with_name('wake_confirmation.py'))
+confirmation=importlib.util.module_from_spec(_confirm_spec)
+sys.modules[_confirm_spec.name]=confirmation
+_confirm_spec.loader.exec_module(confirmation)
+
 router = APIRouter()
 PROVIDERS = {
     'codex': {
@@ -292,6 +297,7 @@ def codex_heartbeat(body: CodexCallRequest):
 
 @router.post('/codex/stop')
 def codex_stop(body: CodexCallRequest):
+    confirmation.service.stop(str(body.callId))
     return codex.sessions.stop(str(body.callId))
 
 
@@ -452,6 +458,44 @@ def wake_config(*, preparing=False):
         raise HTTPException(503, 'Install the local sherpa wake model before enabling hands-free calling')
     return {**result,'model_dir':str(model_dir)}
 
+
+class WakeConfirmationRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    callId: UUID
+    candidateId: UUID
+    target: str = Field(min_length=1,max_length=100,pattern=r'^[\w.-]+$')
+    pcm: str = Field(min_length=13656,max_length=213336)
+
+class WakeConfirmationCancel(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    callId: UUID
+    candidateId: UUID
+
+@router.post('/wake/confirm/cancel')
+def cancel_wake_confirmation(body:WakeConfirmationCancel,response:Response):
+    response.headers['Cache-Control']='no-store'
+    if not codex.sessions.active(str(body.callId)):return {'ok':True}
+    confirmation.service.cancel(str(body.callId),str(body.candidateId))
+    return {'ok':True}
+
+@router.post('/wake/confirm')
+def confirm_wake(body:WakeConfirmationRequest,response:Response):
+    response.headers['Cache-Control']='no-store'
+    call=str(body.callId);candidate=str(body.candidateId)
+    if not codex.sessions.active(call):raise HTTPException(410,'call_ended')
+    cfg=wake_config()
+    if body.target not in {t['target'] for t in cfg['targets']}:raise HTTPException(409,'target_changed')
+    diag.journal().emit('command.confirm',{'callId':call,'traceId':candidate,'target':body.target,'reason':'started','source':'local'})
+    try:
+        result=confirmation.service.verify(call,candidate,body.target,body.pcm,cfg,lambda:codex.sessions.active(call))
+        latest=wake_config()
+        if latest['targets']!=cfg['targets'] or latest.get('whisper_native')!=cfg.get('whisper_native'):raise confirmation.ConfirmationError('target_changed')
+    except confirmation.ConfirmationError as error:
+        reason=str(error)
+        diag.journal().emit('command.confirm',{'callId':call,'traceId':candidate,'reason':reason,'source':'local'})
+        return {'candidateId':candidate,'target':None,'reason':reason}
+    diag.journal().emit('command.confirm',{'callId':call,'traceId':candidate,'target':body.target,'reason':result['reason'],'elapsedMs':result['elapsedMs'],'source':'local'})
+    return result
 
 @router.get('/wake/config')
 def get_wake_config(response: Response):
