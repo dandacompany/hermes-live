@@ -19,6 +19,31 @@ def valid_name(value):
     return (isinstance(value,str) and 0<len(value.strip())<=40 and
             all(c.isalnum() or c in ' -_' for c in value.strip()) and bool(normalized(value)))
 
+MAX_ALIASES=5
+# Profile names that carry no spoken identity: never added automatically.
+GENERIC_PROFILE_NAMES={'default'}
+
+def automatic_names(profile,title):
+    """Names a bot always answers to: its display title first, then its profile name."""
+    names=[];seen=set()
+    for name in (title,'' if profile.strip().lower() in GENERIC_PROFILE_NAMES else profile):
+        name=str(name or '').strip()
+        if valid_name(name) and normalized(name) not in seen:
+            seen.add(normalized(name));names.append(name)
+    return names
+
+def custom_aliases(aliases,automatic):
+    """Custom aliases without repeats and without the automatic names (they never use a slot)."""
+    if not isinstance(aliases,list):raise RegistryError('Invalid wake registry')
+    skip={normalized(n) for n in automatic};result=[]
+    for alias in aliases:
+        alias=alias.strip() if isinstance(alias,str) else alias
+        key=normalized(alias) if isinstance(alias,str) else None
+        if key is None or key not in skip:
+            result.append(alias)
+            if key is not None:skip.add(key)
+    return result
+
 class WakeRegistry:
     def __init__(self, path, roster, legacy):
         self.path,self.roster,self.legacy=Path(path),roster,legacy
@@ -43,15 +68,15 @@ class WakeRegistry:
         rows=self.roster();bots=[];targets=[];errors=[];owners={}
         for row in rows:
             profile=row['profile'];entry=data['entries'].get(profile,{})
-            name=str(row.get('display_name') or '').strip()
-            aliases=entry.get('aliases',[])
-            names=list(dict.fromkeys(([name] if name else [])+aliases))
-            bot={**row,'enabled':bool(entry.get('enabled',False)),'aliases':aliases,'phrases':[prefix+n for prefix in ('헤이 ','Hey ') for n in names],'error':''}
+            automatic=automatic_names(profile,row.get('display_name'))
+            aliases=custom_aliases(entry.get('aliases',[]),automatic)
+            names=automatic+aliases
+            bot={**row,'enabled':bool(entry.get('enabled',False)),'aliases':aliases,'auto_names':automatic,'phrases':[prefix+n for prefix in ('헤이 ','Hey ') for n in names],'error':''}
             if bot['enabled']:
                 if not names or not all(valid_name(n) for n in names):bot['error']='name'
                 elif not bot.get('ready'):bot['error']='setup'
                 else:
-                    target={'target':profile,'display_name':name or aliases[0],'names':names,'phrases':bot['phrases']}
+                    target={'target':profile,'display_name':names[0],'names':names,'phrases':bot['phrases']}
                     targets.append(target)
                     for phrase in target['phrases']:owners.setdefault(normalized(phrase),set()).add(profile)
             bots.append(bot)
@@ -75,8 +100,11 @@ class WakeRegistry:
             for bot in bots:
                 profile=bot.get('profile');aliases=bot.get('aliases',[]);enabled=bot.get('enabled',False)
                 if profile not in current or profile in seen:raise RegistryError('Unknown or duplicate profile')
-                if type(enabled) is not bool or not isinstance(aliases,list) or len(aliases)>3 or not all(valid_name(a) for a in aliases):raise RegistryError('Use up to three short names per bot')
-                seen.add(profile);entries[profile]={'enabled':enabled,'aliases':list(dict.fromkeys(a.strip() for a in aliases))}
+                if type(enabled) is not bool or not isinstance(aliases,list) or not all(valid_name(a) for a in aliases):raise RegistryError('Use short names for aliases')
+                row=next(b for b in before['bots'] if b['profile']==profile)
+                aliases=custom_aliases(aliases,row['auto_names'])
+                if len(aliases)>MAX_ALIASES:raise RegistryError('Use up to five aliases per bot')
+                seen.add(profile);entries[profile]={'enabled':enabled,'aliases':aliases}
             updated={'version':1,'serial':data.get('serial',0)+1,'entries':entries}
             result=self._view(updated)
             if result['errors']:raise RegistryError('HL_ERROR:errWakeRegistry')

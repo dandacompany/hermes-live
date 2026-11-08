@@ -17,7 +17,8 @@ var en = {
   wakeEmpty: "Choose a bot in Wake settings",
   wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
   wakeLocalOnly: "Name calling is available only on this Mac.",
-  wakeAliases: "Spoken aliases (up to 3)",
+  wakeAliases: "Spoken aliases (up to 5)",
+  wakeAutoNames: "Already included: {0}",
   wakeAliasesFor: "Spoken aliases for {0}",
   wakeAliasesHint: "Separate aliases with commas",
   wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -27,7 +28,7 @@ var en = {
   wakeSaved: "Saved. Changes apply to the next call.",
   wakeSave: "Save bot selection",
   errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-  errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+  errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
   wakeToggle: "Hands-free calling",
   wakeWarming: "Preparing local speech recognition\u2026",
   wakeHelp: "Say {0} to call; say your goodbye to end.",
@@ -309,7 +310,8 @@ var translations_default = {
     wakeEmpty: "\uC774\uB984 \uD638\uCD9C \uC124\uC815\uC5D0\uC11C \uBD07\uC744 \uC120\uD0DD\uD558\uC138\uC694",
     wakeDescription: "\uC774 \uB9E5\uC758 \uBD07\uC744 \uCF1C\uBA74 \u201C\uD5E4\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uD1B5\uD654\uD569\uB2C8\uB2E4. \uBCC0\uACBD\uC740 \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4. \u201CBye {\uC774\uB984}\u201D \uB610\uB294 \u201C\uBC14\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uC885\uB8CC\uD569\uB2C8\uB2E4.",
     wakeLocalOnly: "\uC774\uB984 \uD638\uCD9C\uC740 \uC774 \uB9E5\uC758 \uB85C\uCEEC \uBD07\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-    wakeAliases: "\uBD80\uB97C \uB54C \uC4F8 \uBCC4\uCE6D (\uCD5C\uB300 3\uAC1C)",
+    wakeAliases: "\uBD80\uB97C \uB54C \uC4F8 \uBCC4\uCE6D (\uCD5C\uB300 5\uAC1C)",
+    wakeAutoNames: "\uC774\uBBF8 \uD3EC\uD568\uB428: {0}",
     wakeAliasesFor: "{0} \uD638\uCD9C \uBCC4\uCE6D",
     wakeAliasesHint: "\uC27C\uD45C\uB85C \uAD6C\uBD84\uD574 \uC785\uB825",
     wakeExample: "\uD638\uCD9C\uC5B4: \u201C\uD5E4\uC774 {0}\u201D",
@@ -319,7 +321,7 @@ var translations_default = {
     wakeSaved: "\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4.",
     wakeSave: "\uD638\uCD9C\uD560 \uBD07 \uC800\uC7A5",
     errWakeChanged: "\uBD07 \uBAA9\uB85D\uC774 \uBC14\uB00C\uC5C8\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68 \uD6C4 \uB2E4\uC2DC \uC800\uC7A5\uD558\uC138\uC694.",
-    errWakeRegistry: "\uBCC4\uCE6D \uC218(\uCD5C\uB300 3\uAC1C), \uC911\uBCF5 \uC774\uB984, \uC120\uD0DD\uD55C \uBD07\uC758 \uC124\uC815\uC744 \uD655\uC778\uD558\uC138\uC694.",
+    errWakeRegistry: "\uBCC4\uCE6D \uC218(\uCD5C\uB300 5\uAC1C), \uC911\uBCF5 \uC774\uB984, \uC120\uD0DD\uD55C \uBD07\uC758 \uC124\uC815\uC744 \uD655\uC778\uD558\uC138\uC694.",
     errBotsView: "\uD638\uCD9C\uD55C \uBD07\uC744 \uC5F4\uB824\uBA74 Hermes Desktop\uC5D0\uC11C Bots\uB97C \uCF1C\uC138\uC694. Bots \uD654\uBA74\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC73C\uBA74 Desktop\uC744 \uC5C5\uB370\uC774\uD2B8\uD558\uC138\uC694."
   },
   ja: {
@@ -463,7 +465,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -473,7 +476,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   zh: {
@@ -617,7 +620,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -627,7 +631,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "zh-hant": {
@@ -771,7 +775,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -781,7 +786,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   fr: {
@@ -925,7 +930,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -935,7 +941,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   de: {
@@ -1079,7 +1085,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1089,7 +1096,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   es: {
@@ -1233,7 +1240,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1243,7 +1251,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   it: {
@@ -1387,7 +1395,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1397,7 +1406,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   pt: {
@@ -1541,7 +1550,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1551,7 +1561,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ru: {
@@ -1695,7 +1705,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1705,7 +1716,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   uk: {
@@ -1849,7 +1860,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -1859,7 +1871,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   tr: {
@@ -2003,7 +2015,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -2013,7 +2026,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ar: {
@@ -2157,7 +2170,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -2167,7 +2181,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   af: {
@@ -2311,7 +2325,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -2321,7 +2336,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   hu: {
@@ -2465,7 +2480,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -2475,7 +2491,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   ga: {
@@ -2619,7 +2635,8 @@ var translations_default = {
     wakeEmpty: "Choose a bot in Wake settings",
     wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
-    wakeAliases: "Spoken aliases (up to 3)",
+    wakeAliases: "Spoken aliases (up to 5)",
+    wakeAutoNames: "Already included: {0}",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
     wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
@@ -2629,7 +2646,7 @@ var translations_default = {
     wakeSaved: "Saved. Changes apply to the next call.",
     wakeSave: "Save bot selection",
     errWakeChanged: "The bot list changed. Refresh and apply your changes again.",
-    errWakeRegistry: "Check aliases (up to 3), duplicate names, and each selected bot\u2019s setup.",
+    errWakeRegistry: "Check aliases (up to 5), duplicate names, and each selected bot\u2019s setup.",
     errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   }
 };
@@ -2919,6 +2936,8 @@ function FieldSelect({ label, value, options, onChange, disabled = false }) {
 
 // src/wake-settings.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+var MAX_ALIASES = 5;
+var norm = (value) => value.normalize("NFKC").toLowerCase().replace(/[\s,，.!。！]/gu, "");
 function WakeSettings({ rest, changed, local }) {
   const { t, locale } = useLiveI18n();
   const c = setupCopy(locale);
@@ -2959,8 +2978,11 @@ function WakeSettings({ rest, changed, local }) {
     setError("");
     setSaved(false);
     try {
-      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: (aliases[b.profile] ?? "").split(/[,，]/u).map((n) => n.trim()).filter(Boolean) }));
-      if (bots.some((b) => b.aliases.length > 3)) throw new Error("HL_ERROR:errWakeRegistry");
+      const bots = data.bots.map((b) => {
+        const own = new Set((b.auto_names ?? []).map(norm));
+        return { profile: b.profile, enabled: b.enabled, aliases: (aliases[b.profile] ?? "").split(/[,，]/u).map((n) => n.trim()).filter((n) => n && !own.has(norm(n)) && (own.add(norm(n)), true)) };
+      });
+      if (bots.some((b) => b.aliases.length > MAX_ALIASES)) throw new Error("HL_ERROR:errWakeRegistry");
       const value = await rest("/wake/bots", { method: "PUT", body: { revision: data.revision, bots } });
       if (alive.current && id === request.current) {
         accept(value);
@@ -2988,12 +3010,13 @@ function WakeSettings({ rest, changed, local }) {
       ] }),
       /* @__PURE__ */ jsxs2("label", { style: { display: "grid", gap: 4, ...hint }, children: [
         t("wakeAliases"),
-        /* @__PURE__ */ jsx2("input", { "aria-label": t("wakeAliasesFor", bot.display_name || bot.profile), value: aliases[bot.profile] ?? "", disabled: busy || !bot.ready, maxLength: 126, onChange: (e) => {
+        /* @__PURE__ */ jsx2("input", { "aria-label": t("wakeAliasesFor", bot.display_name || bot.profile), value: aliases[bot.profile] ?? "", disabled: busy || !bot.ready, maxLength: 210, onChange: (e) => {
           setSaved(false);
           setAliases({ ...aliases, [bot.profile]: e.target.value });
         }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),
-      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026") : t("wakeSetup") }),
+      !!bot.auto_names?.length && /* @__PURE__ */ jsx2("div", { style: hint, children: t("wakeAutoNames", bot.auto_names.join(", ")) }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.auto_names?.[0] || (aliases[bot.profile] ?? "").split(",")[0].trim() || "\u2026") : t("wakeSetup") }),
       !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
       bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
     ] }, bot.profile)),

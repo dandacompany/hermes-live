@@ -339,7 +339,7 @@ class WakeBotEntry(BaseModel):
     model_config = ConfigDict(extra='forbid')
     profile: str = Field(min_length=1,max_length=64)
     enabled: bool
-    aliases: list[str] = Field(default_factory=list,max_length=3)
+    aliases: list[str] = Field(default_factory=list,max_length=5)
 
 class WakeBotsRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')

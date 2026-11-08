@@ -28,6 +28,17 @@ def match_target(text, targets):
     matches = {t['target'] for t in targets if any(matches_phrase(text,p) for p in t['phrases'])}
     return next(iter(matches)) if len(matches)==1 else None
 
+def vocabulary(targets, limit=400):
+    # List names by position across bots (every bot's first name, then every second name, ...) so one bot with
+    # many names cannot push the others out of the hint; cut on a name boundary at the cap.
+    ranked = [t['names'][i] for i in range(max((len(t['names']) for t in targets), default=0)) for t in targets if i < len(t['names'])]
+    prompt = ''
+    for name in dict.fromkeys(ranked):
+        joined = prompt+', '+name if prompt else name
+        if len(joined) > limit: break
+        prompt = joined
+    return prompt
+
 def send(value): print(json.dumps(value), flush=True)
 
 def main():
@@ -71,7 +82,7 @@ def main():
                     f.setnchannels(1);f.setsampwidth(2);f.setframerate(16000);f.writeframes(pcm)
                 boundary=secrets.token_hex(16)
                 fields={'response_format':'json','language':'ko','temperature':'0.0',
-                        'prompt':', '.join(dict.fromkeys(n for t in cfg['targets'] for n in t['names']))[:400]}
+                        'prompt':vocabulary(cfg['targets'])}
                 body=b''
                 for name,value in fields.items():
                     body+=f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'.encode()

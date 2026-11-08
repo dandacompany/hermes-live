@@ -4,7 +4,8 @@ export const en = {
  wakeEmpty:"Choose a bot in Wake settings",
  wakeDescription:"Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
  wakeLocalOnly:"Name calling is available only on this Mac.",
- wakeAliases:"Spoken aliases (up to 3)",
+ wakeAliases:"Spoken aliases (up to 5)",
+ wakeAutoNames:"Already included: {0}",
  wakeAliasesFor:"Spoken aliases for {0}",
  wakeAliasesHint:"Separate aliases with commas",
  wakeExample:"Say “헤이 {0}”",
@@ -14,7 +15,7 @@ export const en = {
  wakeSaved:"Saved. Changes apply to the next call.",
  wakeSave:"Save bot selection",
  errWakeChanged:"The bot list changed. Refresh and apply your changes again.",
- errWakeRegistry:"Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+ errWakeRegistry:"Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
 
  wakeToggle:'Hands-free calling',
  wakeWarming: 'Preparing local speech recognition…',
