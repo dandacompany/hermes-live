@@ -1,3 +1,6 @@
+declare const __HERMES_LIVE_DEV_DIAGNOSTICS__:boolean;
+import {Diagnostics,type DiagnosticReport,type DiagnosticFields} from './diagnostics.ts';
+import {DiagnosticsPanel} from './diagnostics-panel.tsx';
 import {Setup} from './setup.tsx';
 import {VoicePause} from './voice-pause.ts';
 import {basicReady,type SetupState} from './setup-state.ts';
@@ -58,6 +61,13 @@ export default {
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
+  const diagnostics=__HERMES_LIVE_DEV_DIAGNOSTICS__?new Diagnostics({scope:()=>`${host.state.connectionId.get()||'local'}:${host.state.profile.get()||'default'}`,send:events=>ctx.rest('/diagnostics/events',{method:'POST',body:{events},timeoutMs:5000})}):null;
+  let lastInputAt=0;let lastTick=Date.now();
+  if(__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics){
+  diagnostics.event('runtime.start');
+  ctx.setInterval(()=>void diagnostics.flush(),2000);
+  ctx.setInterval(()=>{const now=Date.now();if(controller.snapshot.level>.02&&!controller.snapshot.muted)lastInputAt=now;diagnostics.event('runtime.health',{callState:controller.snapshot.status,wakeState:wake.state,enabled:wake.enabled,muted:controller.snapshot.muted,lastInputAt,gapMs:now-lastTick,dropped:diagnostics.dropped,visibility:document.visibilityState});lastTick=now;void ctx.rest<DiagnosticReport>('/diagnostics',{timeoutMs:5000}).then(r=>diagnostics.consent(r)).catch(()=>{});},10000);
+  }
   let trialProfile:string|null=null;let trialConnected=false;
   let wake:WakeCoordinator;let wakeCall=false;let wakeNames:string[]=[];let wakeGreeting:Connection['wakeGreeting'];
   const activity=new VoiceActivity(active=>{if(active&&!['idle','error'].includes(controller.snapshot.status))stop();void wake?.tick()});
@@ -82,21 +92,24 @@ export default {
    adopt:scope=>{if(allowSessionAdopt)callOwner=scope},
   });
   const controller=new CallController({
+   diagnostic:diagnostics?(event,fields,text)=>diagnostics.event(event,fields,text):undefined,
    goodbye:()=>wakeCall,goodbyeNames:()=>wakeNames,
-   voiceControl:text=>{
-    if(!wake.enabled)return false;
+   voiceControl:(text,context={})=>{
+    const record=(reason:string,target='')=>diagnostics?.event('command.wake',{...context,reason,target,enabled:wake.enabled});
+    if(!wake.enabled){record('disabled');return false;}
     const target=matchWakeTarget(text,wake.config?.targets??[]);
-    if(!target)return false;
-    if(target===callOwner?.profile)return true;
+    if(!target){record(wake.config?.targets?.length?'no_match':'no_targets');return false}
+    if(target===callOwner?.profile){record('same_bot',target);return true}
+    record('matched',target);
     const previous=callOwner&&{...callOwner},previousRoute=route;
     void wake.handoff(target,async()=>{
-     stop();
+     void diagnostics?.flush();stop();
      if(previous?.session&&previousRoute&&host.state.busyBySession.get()[previous.session]){
       await host.requestProfile(previousRoute,'session.interrupt',{session_id:previous.session});
       const deadline=Date.now()+3000;
       while(host.state.busyBySession.get()[previous.session]&&Date.now()<deadline)await new Promise(r=>setTimeout(r,50));
      }
-    });return true;
+    },context);return true;
    },
    isVoiceControl:text=>Boolean(wake.enabled&&matchWakeTarget(text,wake.config?.targets??[])),
    prepare:async (signal,selection)=>{
@@ -146,7 +159,7 @@ export default {
    },
    usage:event=>{if(event.type==='usage')ledger?.tokens(event.tokens);if(event.type==='audioUsage')ledger?.audio(event.audioMs)},
    ended:()=>{if(trialProfile&&trialConnected)ctx.storage.set(`setup-trial:${trialProfile}`,'ended');trialProfile=null;trialConnected=false;callOwner=null;route=null;allowSessionAdopt=false;ledger?.end();ledger=null;const wasWake=wakeCall;wakeCall=false;wakeNames=[];wakeGreeting=undefined;wake?.ended();if(wasWake)chime(440)},
-   changed:()=>listeners.forEach(fn=>fn()),
+   changed:state=>{if(state.level>.02&&!state.muted)lastInputAt=Date.now();listeners.forEach(fn=>fn())},
   });
   const stop=()=>{controller.stop();callOwner=null;allowSessionAdopt=false;route=null};
   function chime(hz:number){
@@ -173,7 +186,7 @@ export default {
     host.navigate('/');await new Promise(r=>setTimeout(r,0));
     const targetConnection=host.state.connectionId.get()||'local';
     if(!host.state.focusedStoredSessionId)throw new Error('HL_ERROR:errBotsView');
-    const stored=await openWakeBot({routes:()=>host.profileRoutes(),activate:route=>host.ensureAgent(null,route.profile),isSelected:(stored,route)=>{const scope=currentScope();return scope.profile===route.profile&&scope.connection===route.connectionId&&host.state.focusedStoredSessionId!.get()===stored},request:(route,method,params)=>host.requestProfile(route,method,params),revealPane:host.revealPane,
+    void diagnostics?.flush();const stored=await openWakeBot({routes:()=>host.profileRoutes(),activate:route=>host.ensureAgent(null,route.profile),isSelected:(stored,route)=>{const scope=currentScope();return scope.profile===route.profile&&scope.connection===route.connectionId&&host.state.focusedStoredSessionId!.get()===stored},request:(route,method,params)=>host.requestProfile(route,method,params),revealPane:host.revealPane,
      paneVisible:host.paneVisibility?id=>host.paneVisibility!(id).get():undefined,
      label:host.setWorkspaceOwnerLabel,openSession:host.openSession},
      config.target,targetConnection,config.names?.[0]||config.target,valid);
@@ -191,6 +204,7 @@ export default {
    finally{unsubscribe()}
   }
   wake=new WakeCoordinator({
+   diagnostic:diagnostics?(event,fields)=>diagnostics.event(event,fields):undefined,
    config:()=>ctx.rest<WakeConfig>('/wake/config'),
    control:(owner,action,eventId)=>ctx.rest<WakeStatus>('/wake/control',{method:'POST',body:{owner,action,...(eventId?{eventId}:{})},timeoutMs:20000}),
    local:()=>!host.state.connectionId.get()||host.state.connectionId.get()==='local',
@@ -308,10 +322,11 @@ export default {
   }
 
   function SetupPage(){
+   const {locale}=useLiveI18n();
    const profile=useSyncExternalStore(fn=>host.state.profile.subscribe(fn),()=>host.state.profile.get());
    const connection=useSyncExternalStore(fn=>host.state.connectionId.subscribe(fn),()=>host.state.connectionId.get());
    useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>`${voiceMode.paused}:${voiceMode.busy}`);
-   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/></div><Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
+   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/></div>{__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics&&<DiagnosticsPanel key={`diag:${connection}:${profile}`} ctx={ctx} diagnostics={diagnostics} korean={locale.startsWith('ko')}/>}<Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
     subscribe={fn=>{listeners.add(fn);return()=>{listeners.delete(fn)}}} callState={()=>controller.snapshot.status}
     active={()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status)||host.state.busy.get()}
     hold={async()=>{const enabled=wake.enabled;await wake.enable(false);return()=>{if(enabled&&!voiceMode.paused&&!voiceMode.busy&&['idle','error'].includes(controller.snapshot.status))void wake.enable(true)}}}

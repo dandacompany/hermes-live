@@ -20,6 +20,14 @@ codex = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = codex
 _spec.loader.exec_module(codex)
 
+
+_diag_spec=importlib.util.spec_from_file_location('hermes_live_diagnostics',Path(__file__).with_name('diagnostics.py'))
+if 'hermes_live_diagnostics' not in sys.modules:
+    _diag_module=importlib.util.module_from_spec(_diag_spec)
+    sys.modules[_diag_spec.name]=_diag_module
+    _diag_spec.loader.exec_module(_diag_module)
+diag=sys.modules['hermes_live_diagnostics']
+
 router = APIRouter()
 PROVIDERS = {
     'codex': {
@@ -457,9 +465,12 @@ def wake_control(payload: WakeRequest, response: Response):
     cfg = {} if payload.action=='release' else wake_config()
     try:
         return wake.runtime().control(str(payload.owner),payload.action,cfg,str(payload.eventId) if payload.eventId else None)
-    except wake.WakeConflict:
+    except wake.WakeConflict as exc:
+        reasons={'Wake lease expired':'lease_expired','Another window owns the microphone':'foreign_owner','Stale wake event':'stale_event','Bot selection changed before claim':'selection_changed','Wake microphone disconnected':'mic_disconnected'}
+        diag.journal().emit('wake.error',{'action':payload.action,'owner':str(payload.owner),'reason':reasons.get(str(exc),'wake_conflict')})
         raise HTTPException(409, 'Hands-free listener is busy, expired or disconnected') from None
     except Exception:
+        diag.journal().emit('wake.error',{'action':payload.action,'reason':'microphone_or_dependencies'})
         raise HTTPException(503, 'Could not open the local wake microphone; check the device and wake dependencies') from None
 
 
@@ -567,3 +578,41 @@ def setup_login_start(response:Response):
 def setup_login_cancel(response:Response):
     response.headers['Cache-Control']='no-store'
     return codex.login_flow.cancel()
+
+
+class DiagnosticEvent(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    event: str = Field(max_length=64)
+    fields: dict = Field(default_factory=dict,max_length=30)
+    at: float | None = None
+    text: str | None = Field(default=None,max_length=500)
+    detailId: str | None = Field(default=None,max_length=80)
+
+class DiagnosticBatch(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    events: list[DiagnosticEvent] = Field(max_length=50)
+
+class DiagnosticConsent(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    seconds: int = Field(ge=0,le=300)
+
+def diagnostic_report(response:Response):
+    response.headers['Cache-Control']='no-store'
+    return diag.journal().snapshot()
+
+def diagnostic_events(body:DiagnosticBatch,response:Response):
+    response.headers['Cache-Control']='no-store'
+    journal=diag.journal()
+    for e in body.events:journal.emit(e.event,e.fields,text=e.text,at=e.at,detail_id=e.detailId)
+    return {'accepted':len(body.events),'writeError':journal.write_error}
+
+def diagnostic_detail(body:DiagnosticConsent,response:Response):
+    response.headers['Cache-Control']='no-store'
+    diag.journal().detail(body.seconds)
+    return diag.journal().snapshot()
+
+# Never mount diagnostic APIs in ordinary distribution installs.
+if diag.enabled():
+    router.add_api_route('/diagnostics',diagnostic_report,methods=['GET'])
+    router.add_api_route('/diagnostics/events',diagnostic_events,methods=['POST'])
+    router.add_api_route('/diagnostics/detail',diagnostic_detail,methods=['POST'])

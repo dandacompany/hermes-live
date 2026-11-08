@@ -1,3 +1,5 @@
+import importlib.util
+import sys
 """Leased local microphone. Every claimed event pins one enabled bot's names."""
 import importlib.util
 from pathlib import Path
@@ -5,6 +7,14 @@ import threading
 import time
 from uuid import uuid4
 from copy import deepcopy
+
+
+_diag_spec=importlib.util.spec_from_file_location('hermes_live_diagnostics',Path(__file__).with_name('diagnostics.py'))
+if 'hermes_live_diagnostics' not in sys.modules:
+    _diag_module=importlib.util.module_from_spec(_diag_spec)
+    sys.modules[_diag_spec.name]=_diag_module
+    _diag_spec.loader.exec_module(_diag_module)
+diag=sys.modules['hermes_live_diagnostics']
 
 class WakeConflict(RuntimeError):pass
 
@@ -20,6 +30,7 @@ class WakeService:
         self.owner=self.config=self.lease=self.event_id=self.event_target=self.claimed_target=None
         self.state='idle';self.deadline=self.not_before=0;self.error=''
         self.detections=self.claims=0
+        self.journal=diag.journal();self.last_heartbeat=0;self.last_sample=0
 
     def status(self,owner):
         with self.lock:
@@ -44,11 +55,14 @@ class WakeService:
         lease=self.lease
         self.owner=self.config=self.lease=self.event_id=self.event_target=self.claimed_target=None
         self.state='idle'
+        if lease is not None:self.journal.emit('wake.state',{'state':'idle','reason':'released'})
         if lease is not None:self.detector.stop_listening(owner=lease)
 
     def expire(self):
         with self.lock:
-            if self.owner is not None and self.clock()>=self.deadline:self._release()
+            if self.owner is not None and self.clock()>=self.deadline:
+                self.journal.emit('wake.expired',{'owner':self.owner,'state':self.state,'gapMs':round((self.clock()-self.deadline+25)*1000),'reason':'lease_timeout'})
+                self._release()
 
     def close(self):
         with self.lock:self._release()
@@ -58,6 +72,7 @@ class WakeService:
         self.owner,self.config,self.lease=owner,deepcopy(config),object()
         lease=self.lease
         self.state,self.error='armed',''
+        self.journal.emit('wake.state',{'state':'armed','owner':owner,'targets':len(targets_for(config))})
         cfg={**config,'provider':config.get('provider','sherpa'),'capture':'local',
              'profile_routing':False,'sensitivity':0.5}
         if config.get('model_dir'):cfg['sherpa']={'model_dir':config['model_dir']}
@@ -81,12 +96,19 @@ class WakeService:
             if self.owner is None:
                 if action!='arm':raise WakeConflict('Wake lease expired')
                 self._start(owner,config)
-            self.deadline=self.clock()+25
+            now=self.clock()
+            if action!='heartbeat' or now-self.last_sample>=10:
+                self.journal.emit('wake.control',{'action':action,'owner':owner,'state':self.state,'gapMs':round((now-self.last_heartbeat)*1000) if self.last_heartbeat else 0})
+                extra=self.diagnostics()
+                self.journal.emit('audio.sample',{k:extra[k] for k in ('listening','rms','peak','segments','matches') if k in extra})
+                self.last_sample=now
+            self.last_heartbeat=now;self.deadline=now+25
             if action=='claim':
                 if self.state!='pending' or event_id!=self.event_id:raise WakeConflict('Stale wake event')
                 self.claimed_target=self.event_target
                 self.state,self.event_id,self.event_target='paused',None,None
                 self.claims+=1
+                self.journal.emit('wake.claimed',{'owner':owner,'eventId':event_id,'target':self.claimed_target['target']})
             elif action=='pause':
                 if not self.detector.pause_listening(owner=self.lease):
                     self._release();raise WakeConflict('Could not pause the wake microphone')
@@ -111,6 +133,7 @@ class WakeService:
             if not self.detector.pause_listening(owner=lease):return
             self.detections+=1;self.event_id,self.state=str(uuid4()),'pending'
             self.event_target=deepcopy(selection)
+            self.journal.emit('wake.detected',{'owner':self.owner,'eventId':self.event_id,'target':matched})
             payload={'owner':self.owner,'eventId':self.event_id,'target':selection['target']}
         self.emit(payload)
 

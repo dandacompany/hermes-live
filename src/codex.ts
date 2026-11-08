@@ -91,7 +91,7 @@ export class CodexRTC implements Transport {
   this.media.stream.getTracks().forEach(track=>pc.addTrack(track,this.media.stream!));
   const channel=pc.createDataChannel('oai-events');this.channel=channel;
   pc.ontrack=event=>{if(!this.closed)this.media.receive(event.streams[0]??new MediaStream([event.track]))};
-  channel.onmessage=event=>{try{for(const item of decodeCodexEvent(JSON.parse(event.data)))this.emit(item)}catch{this.fail("HL_ERROR:errProtocol")}};
+  channel.onmessage=event=>{try{const message=JSON.parse(event.data);if(message.type==='turn.done')this.emit({type:'diagnostic',event:'transport.event',fields:{reason:message.turn?.role==='user'?(typeof message.turn.transcript==='string'?'user_final':'user_final_without_text'):'other_turn'}});for(const item of decodeCodexEvent(message))this.emit(item)}catch{this.fail("HL_ERROR:errProtocol")}};
   channel.onclose=()=>{if(!this.closed)this.fail("HL_ERROR:errConnection")};
   // Install handlers before negotiation; a fast connection cannot beat them.
   let seeded=false;

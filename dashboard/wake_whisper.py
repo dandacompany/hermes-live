@@ -1,3 +1,5 @@
+import importlib.util
+import sys
 """Local Whisper adapter using Hermes capture and the same machine-wide mic lock."""
 import base64
 from collections import deque
@@ -9,6 +11,14 @@ import subprocess
 import sys
 import threading
 import time
+
+
+_diag_spec=importlib.util.spec_from_file_location('hermes_live_diagnostics',Path(__file__).with_name('diagnostics.py'))
+if 'hermes_live_diagnostics' not in sys.modules:
+    _diag_module=importlib.util.module_from_spec(_diag_spec)
+    sys.modules[_diag_spec.name]=_diag_module
+    _diag_spec.loader.exec_module(_diag_module)
+diag=sys.modules['hermes_live_diagnostics']
 
 class UtteranceGate:
     """Bounded energy gate: keep short utterances, discard long speech until silence."""
@@ -57,6 +67,7 @@ class WhisperEngine:
 
     def __init__(self, cfg):
         self.lock = threading.RLock()
+        self.journal=diag.journal();self.engine_id=str(__import__("uuid").uuid4());self.detail_id=""
         self.gate = UtteranceGate()
         self.generation = 0
         self.pending = None
@@ -97,7 +108,9 @@ class WhisperEngine:
                     if result.get('ready'):
                         self.ready = True
                         self.warmup_ms = result.get('elapsedMs',0)
+                        self.journal.emit('model.ready',{'elapsedMs':self.warmup_ms})
                     elif result.get('id') == self.pending and self.pending is not None:
+                        self.journal.emit('stt.result',{'traceId':self.engine_id+':'+self.pending,'target':result.get('target') or '', 'reason':'transcription_failed' if result.get('error') else 'matched' if result.get('target') else 'no_match','elapsedMs':result.get('elapsedMs',0),'length':result.get('length',0)},text=result.get('text'),detail_id=self.detail_id)
                         self.pending = None
                         if not str(result['id']).startswith(f'{self.generation}:'):
                             continue
@@ -117,6 +130,7 @@ class WhisperEngine:
             with self.lock:
                 if not self.closed:
                     self.error = self.error or 'worker_stopped'
+                    self.journal.emit('model.error',{'reason':self.error})
 
     def reset(self):
         with self.lock:
@@ -148,8 +162,10 @@ class WhisperEngine:
                 return False
             self.requests += 1
             self.pending = f'{self.generation}:{self.requests}'
+            consent=self.journal.consent();self.detail_id=consent['id'] if consent['until'] else ''
+            self.journal.emit('stt.submitted',{'traceId':self.engine_id+':'+self.pending,'segments':self.requests})
             try:
-                self.proc.stdin.write(json.dumps({'id':self.pending,'pcm':base64.b64encode(pcm.astype('<i2').tobytes()).decode()})+'\n')
+                self.proc.stdin.write(json.dumps({'id':self.pending,'detail':bool(self.detail_id),'pcm':base64.b64encode(pcm.astype('<i2').tobytes()).decode()})+'\n')
                 self.proc.stdin.flush()
             except Exception:
                 self.error = 'worker_pipe_failed'

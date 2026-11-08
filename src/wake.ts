@@ -1,8 +1,10 @@
+import type {DiagnosticFields} from './diagnostics.ts';
 export interface WakeTarget {target:string;display_name:string;names:string[];phrases:string[]}
 export interface WakeConfig {target:string;phrase:string;input_device:string;targets?:WakeTarget[];names?:string[]}
 export interface WakeStatus {state:string;owned:boolean;eventId:string|null;target:string|null;selection?:WakeTarget|null}
 export interface WakeEvent {owner:string;eventId:string;target:string}
 interface Dependencies {
+ diagnostic?:(event:string,fields:DiagnosticFields)=>void;
  config():Promise<WakeConfig>;
  control(owner:string,action:string,eventId?:string):Promise<WakeStatus>;
  local():boolean;busy():boolean;externalBusy?():boolean;
@@ -15,13 +17,14 @@ export class WakeCoordinator {
  private deps:Dependencies;private held=false;private handling=false;private ticking=false;
  private generation=0;private queue=Promise.resolve();private seen=new Set<string>();private due=0;private calling=false;
  constructor(deps:Dependencies){this.deps=deps}
- private set(state:string){this.state=state;this.deps.changed()}
+ private trace(event:string,fields:DiagnosticFields){try{this.deps.diagnostic?.(event,{owner:this.owner,...fields})}catch{}}
+ private set(state:string){if(this.state!==state)this.trace('wake.state',{state,enabled:this.enabled});this.state=state;this.deps.changed()}
  private command(action:string,eventId?:string){
   const result=this.queue.then(()=>this.deps.control(this.owner,action,eventId));
   this.queue=result.then(()=>{},()=>{});return result;
  }
  async enable(value:boolean){
-  this.enabled=value;++this.generation;this.deps.changed();
+  this.trace('wake.control',{action:value?'enable':'disable'});this.enabled=value;++this.generation;this.deps.changed();
   if(!value){const held=this.held;this.held=false;if(held)await this.command('release').catch(()=>{});this.set('off');return}
   await this.tick();
  }
@@ -43,7 +46,7 @@ export class WakeCoordinator {
    if(status.eventId)await this.detected({owner:this.owner,eventId:status.eventId,target:status.target??config.target});
    else if(status.state==='paused'){await this.command('resume');this.set('armed')}
    else this.set(status.state);
-  }catch(error){this.error=error instanceof Error?error.message:String(error);if(this.held)await this.command('release').catch(()=>{});this.held=false;this.set('suspended')}
+  }catch(error){this.trace('wake.error',{reason:'control_failed'});this.error=error instanceof Error?error.message:String(error);if(this.held)await this.command('release').catch(()=>{});this.held=false;this.set('suspended')}
   finally{this.ticking=false}
  }
  async detected(event:WakeEvent){
@@ -57,8 +60,8 @@ export class WakeCoordinator {
    if(this.config?.targets&&(!selected||selected.target!==event.target))throw new Error('Stale bot selection');
    const config=selected?{...this.config!,target:selected.target,phrase:selected.phrases[0]!,names:[...selected.names]}:this.config!;
    if(this.deps.busy()){await this.command('resume');this.set('armed');return}
-   this.calling=true;this.set('calling');await this.deps.start(config,current);
-  }catch{if(this.held)await this.command('release').catch(()=>{});this.calling=false;this.held=false;this.set('suspended')}
+   this.calling=true;this.set('calling');this.trace('navigation.start',{target:config.target,traceId:event.eventId});await this.deps.start(config,current);this.trace('navigation.end',{target:config.target,traceId:event.eventId,reason:current()?'connected':'cancelled'});
+  }catch{this.trace('navigation.error',{reason:'start_failed',traceId:event.eventId});if(this.held)await this.command('release').catch(()=>{});this.calling=false;this.held=false;this.set('suspended')}
   finally{this.handling=false;if(!this.calling)this.due=Date.now()+2000}
  }
  /** Explicit setup trial: same navigation/call path, no synthetic wake event. */
@@ -76,8 +79,9 @@ export class WakeCoordinator {
   finally{this.handling=false}
  }
  /** A completed user call command replaces the old call without a second mic listener. */
- async handoff(target:string,closePrevious:()=>Promise<void>){
-  if(!this.enabled||this.handling||!this.deps.local())return;
+ async handoff(target:string,closePrevious:()=>Promise<void>,context:DiagnosticFields={}){
+  if(!this.enabled||this.handling||!this.deps.local()){this.trace('navigation.error',{target,reason:!this.enabled?'disabled':this.handling?'already_handling':'remote'});return;}
+  const traceId=crypto.randomUUID();this.trace('navigation.start',{...context,target,traceId});
   this.handling=true;const generation=this.generation;let starting=false;
   const current=()=>this.enabled&&generation===this.generation&&this.deps.local();
   try{
@@ -91,7 +95,9 @@ export class WakeCoordinator {
    if(this.deps.busy())throw new Error('HL_ERROR:errBusy');
    this.config=config;this.calling=true;this.set('calling');starting=true;
    await this.deps.start({...config,target,phrase:selected.phrases[0]!,names:[...selected.names]},current);
+   this.trace('navigation.end',{...context,target,traceId,reason:current()?'connected':'cancelled'});
   }catch(error){
+   this.trace('navigation.error',{...context,target,traceId,reason:'handoff_failed'});
    if(this.held)await this.command('release').catch(()=>{});
    this.calling=false;this.held=false;this.set(this.enabled?'suspended':'off');
    if(!starting)this.deps.failed?.(error);

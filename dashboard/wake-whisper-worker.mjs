@@ -26,7 +26,7 @@ try{
   for(let i=0;i<raw.length;i+=2)for(let j=0;j<3;j++)pcm.writeInt16LE(raw.readInt16LE(i),i*3+j*2);
   try{
    const result=await local.transcribe(pcm,options,cancel.signal,vocabulary);
-   send({id:item.id,target:matchWakeTarget(result.text,targets),elapsedMs:Math.round(result.elapsedMs)});
+   send({id:item.id,target:matchWakeTarget(result.text,targets),length:result.text.length,...(item.detail?{text:result.text.slice(0,500)}:{}),elapsedMs:Math.round(result.elapsedMs)});
   }catch{if(!closing)send({id:item.id,error:'local_transcription_failed'});}
  }
 }catch{if(!closing)send({error:'local_worker_failed'});process.exitCode=1;}

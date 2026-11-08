@@ -88,8 +88,8 @@ def main():
                 if not 6400<=len(pcm)<=192000 or len(pcm)%2: raise ValueError('PCM')
                 started=time.monotonic()
                 try:
-                    target=match_target(transcribe(pcm),cfg['targets'])
-                    send({'id':item['id'],'target':target,'elapsedMs':round((time.monotonic()-started)*1000)})
+                    text=transcribe(pcm);target=match_target(text,cfg['targets'])
+                    send({'id':item['id'],'target':target,'length':len(text),**({'text':text[:500]} if item.get('detail') else {}),'elapsedMs':round((time.monotonic()-started)*1000)})
                 except Exception: send({'id':item['id'],'error':'local_transcription_failed'})
         finally:
             if child and child.poll() is None:
