@@ -2856,6 +2856,8 @@ var text = {
   cue: ["Play confirmation sound", "\uD655\uC778\uC74C \uB4E4\uC5B4\uBCF4\uAE30"],
   cueVolume: ["Confirmation sound volume (0 = off)", "\uD655\uC778\uC74C \uC74C\uB7C9 (0 = \uB054)"],
   testWake: ["Test wake phrase", "\uD638\uCD9C\uC5B4 \uD14C\uC2A4\uD2B8"],
+  greetingRequired: ["Require the greeting", "\uC778\uC0AC\uB9D0 \uD544\uC218"],
+  greetingRequiredHint: [`Off: saying the bot name alone also wakes it (names of 5+ characters). On: a greeting must come first. Either way a misheard English greeting ("he", "a") is tolerated, so a very short word before the name ("ok", "I'm") can also wake it; longer sentences that mention the name do not.`, `\uB044\uBA74 \uBD07 \uC774\uB984\uB9CC \uB9D0\uD574\uB3C4 \uD638\uCD9C\uB429\uB2C8\uB2E4(5\uC790 \uC774\uC0C1\uC778 \uC774\uB984). \uCF1C\uBA74 \uC778\uC0AC\uB9D0\uC744 \uBA3C\uC800 \uB9D0\uD574\uC57C \uD569\uB2C8\uB2E4. \uC5B4\uB290 \uCABD\uC774\uB4E0 \uC798\uBABB \uC778\uC2DD\uB41C \uC601\uC5B4 \uC778\uC0AC\uB9D0("he", "a")\uC740 \uD5C8\uC6A9\uB418\uBBC0\uB85C \uC774\uB984 \uC55E\uC758 \uC544\uC8FC \uC9E7\uC740 \uC601\uC5B4 \uB2E8\uC5B4("ok", "I'm")\uB85C\uB3C4 \uD638\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC774\uB984\uC774 \uB4E4\uC5B4\uAC04 \uB354 \uAE34 \uBB38\uC7A5\uC73C\uB85C\uB294 \uD638\uCD9C\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`],
   testHint: ["This test only recognizes the name. It never starts a cloud call.", "\uC774 \uD14C\uC2A4\uD2B8\uB294 \uC774\uB984\uB9CC \uD655\uC778\uD569\uB2C8\uB2E4. \uD074\uB77C\uC6B0\uB4DC \uD1B5\uD654\uB97C \uC2DC\uC791\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
   recognized: ["Recognized", "\uC778\uC2DD\uD55C \uBD07"],
   notMatched: ["Speech received, but the wake phrase did not match. Try again or edit an alias.", "\uB9D0\uC18C\uB9AC\uB294 \uB4E4\uC5B4\uC654\uC9C0\uB9CC \uD638\uCD9C\uC5B4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uBD80\uB974\uAC70\uB098 \uBCC4\uCE6D\uC744 \uC218\uC815\uD558\uC138\uC694."],
@@ -3626,6 +3628,18 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     ] }),
     step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
+      /* @__PURE__ */ jsxs4("label", { children: [
+        /* @__PURE__ */ jsx4("input", { type: "checkbox", checked: data?.greeting_required ?? false, disabled: block, onChange: (e) => {
+          const required = e.target.checked;
+          void action(async () => {
+            await ctx.rest("/setup/greeting-required", { method: "PUT", body: { required } });
+            await load();
+          });
+        } }),
+        " ",
+        c("greetingRequired")
+      ] }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("greetingRequiredHint") }),
       /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
       /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),
       /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => {

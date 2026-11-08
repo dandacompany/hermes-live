@@ -331,6 +331,11 @@ def wake_settings():
             **assets_module.read_json(setup_path()).get('wake',{})}
 
 
+def wake_greeting_required(cfg):
+    # Off (default): a bot name of 5+ characters alone also wakes. A misheard Latin greeting is tolerated either way.
+    return cfg.get('wake_greeting_required') is True
+
+
 def bot_registry():
     cfg=wake_settings()
     return registry_module.registry({'target':cfg.get('wake_target',''),'phrase':cfg.get('wake_phrase','헤이 루미')})
@@ -381,6 +386,7 @@ def wake_config(*, preparing=False):
     result={'target':first['target'],'phrase':', '.join(t['phrases'][0] for t in targets),
             'targets':targets,'input_device':device[:200],'provider':provider}
     if provider == 'whisper':
+        result['greeting_required'] = wake_greeting_required(cfg)
         # New installs use the bundled engine. Explicit working legacy paths are preserved.
         legacy = not cfg.get('wake_managed',False) and all(str(cfg.get('wake_whisper_'+k) or '').strip() for k in ('node','module','models','engine'))
         if not legacy:
@@ -469,7 +475,8 @@ def get_setup(response: Response):
                'model':str(cfg.get('wake_whisper_model') or 'small'),'bytes':0,'source':'managed','progress':{}}
     return {'assets':model,'audio':setup_devices(),'device':cfg.get('wake_input_device',''),
             'enabled':bool(cfg.get('wake_enabled',False)), 'legacy':all(cfg.get('wake_whisper_'+k) for k in ('node','module','models','engine')) and not cfg.get('wake_managed'),
-            'configured':assets_module.read_json(setup_path()).get('configured',False)}
+            'configured':assets_module.read_json(setup_path()).get('configured',False),
+            'greeting_required':wake_greeting_required(cfg)}
 
 class SetupRequest(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -485,10 +492,26 @@ def save_setup(body:SetupRequest,response:Response):
     except assets_module.SetupError as exc: raise HTTPException(503,'HL_SETUP:'+str(exc)) from None
     # Preserve unrelated settings, models, bot opt-ins, and profile voice choices.
     value=assets_module.read_json(setup_path())
-    value['wake']={'wake_enabled':True,'wake_provider':'whisper','wake_input_device':body.device, 'wake_managed':True}
+    # Saving the microphone keeps the greeting setting from PUT /setup/greeting-required.
+    kept={k:v for k,v in value.get('wake',{}).items() if k=='wake_greeting_required'}
+    value['wake']={'wake_enabled':True,'wake_provider':'whisper','wake_input_device':body.device, 'wake_managed':True,**kept}
     value['configured']=True
     assets_module.atomic_json(setup_path(),value)
     return get_setup(response)
+
+class GreetingRequiredRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    required: bool
+
+@router.put('/setup/greeting-required')
+def save_greeting_required(body:GreetingRequiredRequest,response:Response):
+    response.headers['Cache-Control']='no-store'
+    value=assets_module.read_json(setup_path())
+    value['wake']={**value.get('wake',{}),'wake_greeting_required':body.required}
+    assets_module.atomic_json(setup_path(),value)
+    # wake_config() rereads it on every arm and heartbeat: a listening detector restarts with the
+    # new value, while one paused for a call keeps its snapshot until it resumes.
+    return {'greeting_required':body.required}
 
 @router.post('/setup/model')
 def prepare_model(response:Response):

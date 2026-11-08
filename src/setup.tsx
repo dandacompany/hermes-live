@@ -157,6 +157,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
+   <label><input type="checkbox" checked={data?.greeting_required??false} disabled={block} onChange={e=>{const required=e.target.checked;void action(async()=>{await ctx.rest('/setup/greeting-required',{method:'PUT',body:{required}});await load()})}}/> {c('greetingRequired')}</label>
+   <p style={hint}>{c('greetingRequiredHint')}</p>
    <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
    <p style={hint}>{c('trialHint')}</p>
