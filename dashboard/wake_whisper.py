@@ -60,6 +60,7 @@ class WhisperEngine:
         self.gate = UtteranceGate()
         self.generation = 0
         self.pending = None
+        self.queued = None
         self.matched = False
         self.last_target = None
         self.targets = cfg.get('targets') or [{'target':cfg['target'],'names':[cfg['phrase'].removeprefix('헤이 ').removeprefix('Hey ').removeprefix('안녕 ')],'phrases':[cfg['phrase']]}]
@@ -124,6 +125,7 @@ class WhisperEngine:
             # Keep pending until its response arrives; generation in the ID rejects stale text.
             self.matched = False
             self.last_target = None
+            self.queued = None
             self.gate.reset()
 
     def process(self, frame):
@@ -139,13 +141,17 @@ class WhisperEngine:
                 return False
             if self.matched:
                 self.matched = False
+                self.queued = None
                 self.gate.reset()
                 return True
-            if self.pending is not None:
-                return False
+            # Keep gating while a request is in flight: speech that starts during a transcription
+            # (a quick repeat after a miss) would otherwise lose its first word or vanish.
             pcm = self.gate.feed(frame)
-            if pcm is None:
+            if pcm is not None:
+                self.queued = pcm  # the newest finished utterance waits for the worker
+            if self.pending is not None or self.queued is None:
                 return False
+            pcm, self.queued = self.queued, None
             self.requests += 1
             self.pending = f'{self.generation}:{self.requests}'
             try:
