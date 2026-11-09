@@ -22,7 +22,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [mode,setMode]=useState(saved.mode),[step,setStep]=useState(saved.step),[data,setData]=useState<SetupState|null>(null);
  const [auth,setAuth]=useState<CatalogItem|null>(null),[targets,setTargets]=useState<WakeTarget[]>([]),[target,setTarget]=useState('');
  // The optional generic phrase can stand in for a bot: listening works with the phrase alone.
- const [generic,setGeneric]=useState(false);
+ const [generic,setGeneric]=useState(false),[genericPhrase,setGenericPhrase]=useState('');
  const [loading,setLoading]=useState(false),[error,setError]=useState(''),[note,setNote]=useState(''),[device,setDevice]=useState(''),[level,setLevel]=useState(0),[testing,setTesting]=useState(false);
  const [login,setLogin]=useState<{state:string;url?:string}>({state:'idle'}),[devices,setDevices]=useState<AudioDevices>(ctx.storage.get('audio-devices',{input:'',output:''}));
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1));
@@ -37,8 +37,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
  const load=async()=>{
   if(!local)return;setLoading(true);setError('');
-  try{const [value,bots,phrase]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots'),ctx.rest<{enabled:boolean;supported:boolean}>('/setup/generic').catch(()=>null)]);
-   safe(()=>{setData(value);setTargets(bots.targets);setGeneric(Boolean(phrase?.enabled&&phrase.supported));setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
+  try{const [value,bots,phrase]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots'),ctx.rest<{enabled:boolean;supported:boolean;phrase:string}>('/setup/generic').catch(()=>null)]);
+   safe(()=>{setData(value);setTargets(bots.targets);setGeneric(Boolean(phrase?.enabled&&phrase.supported));setGenericPhrase(phrase?.phrase??'');setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
   }catch(e){fail(e)}finally{safe(()=>setLoading(false))}
@@ -161,7 +161,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
-   <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
+   <strong style={{fontSize:23}}>{selected?.phrases[0]??((generic&&genericPhrase)||'…')}</strong><p style={hint}>{c('testHint')}</p>
    <Button disabled={block||!basicReady(data)||(!selected&&!generic)} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
    <p style={hint}>{c('trialHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>void action(()=>trial(target))}>{c('trial')}</Button>

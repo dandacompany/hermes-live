@@ -2810,8 +2810,8 @@ var text = {
   genericUnsupported: ["The generic wake phrase needs the local Whisper recognizer (wake provider \u201Cwhisper\u201D).", "\uC77C\uBC18 \uD638\uCD9C\uC5B4\uB294 \uB85C\uCEEC Whisper \uC778\uC2DD\uAE30(wake provider \u201Cwhisper\u201D)\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."],
   genericLetter: ["Use a phrase of up to 40 characters with at least one letter.", "\uAE00\uC790\uAC00 \uD558\uB098 \uC774\uC0C1 \uB4E4\uC5B4\uAC04 40\uC790 \uC774\uD558\uC758 \uBB38\uAD6C\uB97C \uC0AC\uC6A9\uD558\uC138\uC694."],
   genericCollision: ["An enabled bot already uses this phrase or name. Choose another phrase.", "\uCF1C\uC9C4 \uBD07\uC774 \uC774\uBBF8 \uC774 \uBB38\uAD6C\uB098 \uC774\uB984\uC744 \uC4F0\uACE0 \uC788\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
-  genericGoodbye: ["This phrase starts like a goodbye (\u201CBye \u2026\u201D, \u201C\uBC14\uC774 \u2026\u201D), which ends calls. Choose another phrase.", "\uC774 \uBB38\uAD6C\uB294 \uD1B5\uD654\uB97C \uB05D\uB0B4\uB294 \uC791\uBCC4 \uC778\uC0AC(\u201CBye \u2026\u201D, \u201C\uBC14\uC774 \u2026\u201D)\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
-  genericConflict: ["This phrase clashes with an enabled bot\u2019s phrase or name, or starts like a goodbye (\u201CBye \u2026\u201D). Choose another phrase.", "\uC774 \uBB38\uAD6C\uAC00 \uCF1C\uC9C4 \uBD07\uC758 \uD638\uCD9C\uC5B4\uB098 \uC774\uB984\uACFC \uACB9\uCE58\uAC70\uB098 \uC791\uBCC4 \uC778\uC0AC(\u201CBye \u2026\u201D)\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
+  genericGoodbye: ["This phrase starts like a goodbye, which ends calls: \u201CBye\u201D, \u201CBy\u201D, \u201C\uBC14\uC774\u201D, \u201C\uBC14\uC77C\u201D or \u201C\uD30C\uC77C\u201D at the start, spaces ignored (so \u201CByron\u201D too). Choose another phrase.", "\uC774 \uBB38\uAD6C\uB294 \uD1B5\uD654\uB97C \uB05D\uB0B4\uB294 \uC791\uBCC4 \uC778\uC0AC\uCC98\uB7FC \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB744\uC5B4\uC4F0\uAE30\uC640 \uAD00\uACC4\uC5C6\uC774 \u201CBye\u201D, \u201CBy\u201D, \u201C\uBC14\uC774\u201D, \u201C\uBC14\uC77C\u201D, \u201C\uD30C\uC77C\u201D\uB85C \uC2DC\uC791\uD558\uB294 \uBB38\uAD6C(\uC608: \u201CByron\u201D)\uB294 \uC4F8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
+  genericConflict: ["This phrase clashes with an enabled bot\u2019s phrase or name, or starts like a goodbye (\u201CBye\u201D, \u201CBy\u201D, \u201C\uBC14\uC774\u201D, \u201C\uBC14\uC77C\u201D or \u201C\uD30C\uC77C\u201D). Choose another phrase.", "\uC774 \uBB38\uAD6C\uAC00 \uCF1C\uC9C4 \uBD07\uC758 \uD638\uCD9C\uC5B4\uB098 \uC774\uB984\uACFC \uACB9\uCE58\uAC70\uB098 \uC791\uBCC4 \uC778\uC0AC(\u201CBye\u201D, \u201CBy\u201D, \u201C\uBC14\uC774\u201D, \u201C\uBC14\uC77C\u201D, \u201C\uD30C\uC77C\u201D)\uCC98\uB7FC \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
   title: ["Set up Hermes Live", "Hermes Live \uC2DC\uC791\uD558\uAE30"],
   intro: ["Complete what is missing. Keep what already works.", "\uD544\uC694\uD55C \uD56D\uBAA9\uB9CC \uC900\uBE44\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC124\uC815\uD55C \uD56D\uBAA9\uC740 \uC720\uC9C0\uD569\uB2C8\uB2E4."],
   overview: ["Start", "\uC2DC\uC791"],
@@ -3070,7 +3070,7 @@ function GenericWakeSettings({ rest, changed, local }) {
       ++request.current;
     };
   }, [local]);
-  const save = async (enabled, value) => {
+  const save = async (enabled, value, keepDraft = false) => {
     if (!data || busy) return;
     const id = ++request.current;
     setBusy(true);
@@ -3079,7 +3079,8 @@ function GenericWakeSettings({ rest, changed, local }) {
     try {
       const next = await rest("/setup/generic", { method: "PUT", body: { enabled, phrase: value.trim() || data.phrase } });
       if (alive.current && id === request.current) {
-        accept(next);
+        if (keepDraft) setData(next);
+        else accept(next);
         setSaved(true);
         changed();
       }
@@ -3093,7 +3094,7 @@ function GenericWakeSettings({ rest, changed, local }) {
   const off = busy || !data || !data.supported;
   return /* @__PURE__ */ jsxs3("section", { "aria-label": c("genericTitle"), style: { display: "grid", gap: 8, paddingTop: 12, borderTop: divider }, children: [
     /* @__PURE__ */ jsxs3("label", { style: { display: "flex", gap: 8, alignItems: "center" }, children: [
-      /* @__PURE__ */ jsx3("input", { type: "checkbox", checked: data?.enabled ?? false, disabled: busy || !data || !data.supported && !data.enabled, onChange: (e) => void save(e.target.checked, phrase) }),
+      /* @__PURE__ */ jsx3("input", { type: "checkbox", checked: data?.enabled ?? false, disabled: busy || !data || !data.supported && !data.enabled, onChange: (e) => void save(e.target.checked, data?.phrase ?? "", true) }),
       /* @__PURE__ */ jsx3("strong", { children: c("genericTitle") })
     ] }),
     /* @__PURE__ */ jsx3("p", { style: hint, children: c(data && !data.supported ? "genericUnsupported" : "genericHint") }),
@@ -3404,7 +3405,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const saved = ctx.storage.get(`setup:${scopeKey}`, { mode: "wake", step: 0 });
   const [mode, setMode] = useState4(saved.mode), [step, setStep] = useState4(saved.step), [data, setData] = useState4(null);
   const [auth, setAuth] = useState4(null), [targets, setTargets] = useState4([]), [target, setTarget] = useState4("");
-  const [generic, setGeneric] = useState4(false);
+  const [generic, setGeneric] = useState4(false), [genericPhrase, setGenericPhrase] = useState4("");
   const [loading, setLoading] = useState4(false), [error, setError] = useState4(""), [note, setNote] = useState4(""), [device, setDevice] = useState4(""), [level, setLevel] = useState4(0), [testing, setTesting] = useState4(false);
   const [login, setLogin] = useState4({ state: "idle" }), [devices, setDevices] = useState4(ctx.storage.get("audio-devices", { input: "", output: "" }));
   const [volume, setVolume] = useState4(ctx.storage.get("wake-cue-volume", 1));
@@ -3434,6 +3435,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
         setData(value);
         setTargets(bots.targets);
         setGeneric(Boolean(phrase?.enabled && phrase.supported));
+        setGenericPhrase(phrase?.phrase ?? "");
         setDevice((d) => d || value.device || value.audio.devices[0] || "");
         setTarget((id) => bots.targets.some((b) => b.target === id) ? id : bots.targets[0]?.target ?? "");
         if (initial.current) {
@@ -3734,7 +3736,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     ] }),
     step === 5 && local && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
       /* @__PURE__ */ jsx5(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
-      /* @__PURE__ */ jsx5("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
+      /* @__PURE__ */ jsx5("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? (generic && genericPhrase || "\u2026") }),
       /* @__PURE__ */ jsx5("p", { style: hint, children: c("testHint") }),
       /* @__PURE__ */ jsx5(Button4, { disabled: block || !basicReady(data) || !selected && !generic, onClick: () => {
         captureTask.current = capture("wake");

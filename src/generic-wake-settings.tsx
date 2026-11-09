@@ -19,18 +19,19 @@ export function GenericWakeSettings({rest,changed,local}:{rest:PluginContext['re
   finally{if(alive.current&&id===request.current)setBusy(false)}
  };
  useEffect(()=>{alive.current=true;void load();return()=>{alive.current=false;++request.current}},[local]);
- const save=async(enabled:boolean,value:string)=>{
+ // The checkbox saves only on/off, with the saved phrase, and keeps an unsaved draft; Save phrase saves the draft.
+ const save=async(enabled:boolean,value:string,keepDraft=false)=>{
   if(!data||busy)return;const id=++request.current;setBusy(true);setError('');setSaved(false);
   try{
    const next=await rest<GenericWake>('/setup/generic',{method:'PUT',body:{enabled,phrase:value.trim()||data.phrase}});
-   if(alive.current&&id===request.current){accept(next);setSaved(true);changed()}
+   if(alive.current&&id===request.current){if(keepDraft)setData(next);else accept(next);setSaved(true);changed()}
   }catch(e){if(alive.current&&id===request.current)setError(String(e))}
   finally{if(alive.current&&id===request.current)setBusy(false)}
  };
  if(!local)return null;
  const off=busy||!data||!data.supported;
  return <section aria-label={c('genericTitle')} style={{display:'grid',gap:8,paddingTop:12,borderTop:divider}}>
-  <label style={{display:'flex',gap:8,alignItems:'center'}}><input type="checkbox" checked={data?.enabled??false} disabled={busy||!data||(!data.supported&&!data.enabled)} onChange={e=>void save(e.target.checked,phrase)}/><strong>{c('genericTitle')}</strong></label>
+  <label style={{display:'flex',gap:8,alignItems:'center'}}><input type="checkbox" checked={data?.enabled??false} disabled={busy||!data||(!data.supported&&!data.enabled)} onChange={e=>void save(e.target.checked,data?.phrase??'',true)}/><strong>{c('genericTitle')}</strong></label>
   <p style={hint}>{c(data&&!data.supported?'genericUnsupported':'genericHint')}</p>
   <label style={{display:'grid',gap:4,...hint}}>{c('genericPhrase')}<input aria-label={c('genericPhrase')} value={phrase} disabled={off} maxLength={data?.max??40} onChange={e=>{setSaved(false);setPhrase(e.target.value)}} placeholder={data?.default??'Wake up'} style={{color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>
   {data?.conflict&&<div role="status" style={hint}>{c('genericConflict')}</div>}
