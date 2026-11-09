@@ -1,12 +1,16 @@
-export interface WakeTarget {target:string;display_name:string;names:string[];phrases:string[]}
-export interface WakeConfig {target:string;phrase:string;input_device:string;targets?:WakeTarget[];names?:string[]}
+export interface WakeTarget {target:string;display_name:string;names:string[];phrases:string[];generic?:boolean}
+/** Optional generic phrase (present only when enabled): it names no bot, so the call goes to the focused chat. */
+export interface GenericWake {phrase:string;names:Record<string,string[]>}
+export interface WakeConfig {target:string;phrase:string;input_device:string;targets?:WakeTarget[];names?:string[];generic?:GenericWake}
 export interface WakeStatus {state:string;owned:boolean;eventId:string|null;target:string|null;selection?:WakeTarget|null}
-export interface WakeEvent {owner:string;eventId:string;target:string}
+export interface WakeEvent {owner:string;eventId:string;target:string;generic?:boolean}
 interface Dependencies {
  config():Promise<WakeConfig>;
  control(owner:string,action:string,eventId?:string):Promise<WakeStatus>;
  local():boolean;busy():boolean;externalBusy?():boolean;
  start(config:WakeConfig,current:()=>boolean):Promise<void>;
+ /** Generic phrase: call the focused chat's agent; no profile switch or Bots navigation. */
+ startFocused?(config:WakeConfig,current:()=>boolean):Promise<void>;
  changed():void;failed?(error:unknown):void;
 }
 /** Serialized lease operations, with generation fences around asynchronous navigation. */
@@ -34,25 +38,31 @@ export class WakeCoordinator {
    // Revalidate configuration on the active profile, never borrow a remote route.
    const config=await this.deps.config();if(!this.enabled||generation!==this.generation)return;
    this.config=config;this.error='';
-   if(config.targets?.length===0){if(this.held){await this.command('release');this.held=false}this.set('empty');return}
+   if(config.targets?.length===0&&!config.generic){if(this.held){await this.command('release');this.held=false}this.set('empty');return}
    const status=await this.command(this.held?'heartbeat':'arm');
    if(!this.enabled||generation!==this.generation){await this.command('release').catch(()=>{});return}
    this.held=true;
    if(this.deps.externalBusy?.()){await this.command('pause');this.set('blocked');return}
    if(this.calling){if(status.state==='armed')await this.command('pause');this.set('calling');return}
-   if(status.eventId)await this.detected({owner:this.owner,eventId:status.eventId,target:status.target??config.target});
+   if(status.eventId)await this.detected({owner:this.owner,eventId:status.eventId,target:status.target??config.target,...(status.selection?.generic?{generic:true}:{})});
    else if(status.state==='paused'){await this.command('resume');this.set('armed')}
    else this.set(status.state);
   }catch(error){this.error=error instanceof Error?error.message:String(error);if(this.held)await this.command('release').catch(()=>{});this.held=false;this.set('suspended')}
   finally{this.ticking=false}
  }
  async detected(event:WakeEvent){
-  if(!this.enabled||this.handling||this.calling||!this.deps.local()||event.owner!==this.owner||!event.eventId||!(this.config?.targets?.some(t=>t.target===event.target)??event.target===this.config?.target)||this.seen.has(event.eventId))return;
+  const known=event.generic?Boolean(this.config?.generic&&this.deps.startFocused):(this.config?.targets?.some(t=>t.target===event.target)??event.target===this.config?.target);
+  if(!this.enabled||this.handling||this.calling||!this.deps.local()||event.owner!==this.owner||!event.eventId||!known||this.seen.has(event.eventId))return;
   this.handling=true;const generation=this.generation;
   this.seen.add(event.eventId);if(this.seen.size>128)this.seen.delete(this.seen.values().next().value!);
   const current=()=>this.enabled&&generation===this.generation&&this.deps.local();
   try{
    const claimed=await this.command('claim',event.eventId);if(!current())return;
+   if(event.generic){
+    if(!claimed.selection?.generic||!this.config?.generic)throw new Error('Stale generic selection');
+    if(this.deps.busy()){await this.command('resume');this.set('armed');return}
+    this.calling=true;this.set('calling');await this.deps.startFocused!(this.config,current);return;
+   }
    const selected=claimed.selection??this.config?.targets?.find(t=>t.target===event.target);
    if(this.config?.targets&&(!selected||selected.target!==event.target))throw new Error('Stale bot selection');
    const config=selected?{...this.config!,target:selected.target,phrase:selected.phrases[0]!,names:[...selected.names]}:this.config!;

@@ -5,6 +5,7 @@ import {localizeError} from './i18n.ts';
 import {setupCopy,setupError,type SetupKey} from './setup-copy.ts';
 import {basicReady,preparingModel,setupSteps,type SetupState} from './setup-state.ts';
 import {WakeSettings} from './wake-settings.tsx';
+import {GenericWakeSettings} from './generic-wake-settings.tsx';
 import {DeviceSettings} from './device-settings.tsx';
 import {settingsHref} from './auth.ts';
 import {FieldSelect,hint,divider} from './ui.tsx';
@@ -20,6 +21,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const saved=ctx.storage.get<{mode:'wake'|'call';step:number}>(`setup:${scopeKey}`,{mode:'wake',step:0});
  const [mode,setMode]=useState(saved.mode),[step,setStep]=useState(saved.step),[data,setData]=useState<SetupState|null>(null);
  const [auth,setAuth]=useState<CatalogItem|null>(null),[targets,setTargets]=useState<WakeTarget[]>([]),[target,setTarget]=useState('');
+ // The optional generic phrase can stand in for a bot: listening works with the phrase alone.
+ const [generic,setGeneric]=useState(false),[genericPhrase,setGenericPhrase]=useState('');
  const [loading,setLoading]=useState(false),[error,setError]=useState(''),[note,setNote]=useState(''),[device,setDevice]=useState(''),[level,setLevel]=useState(0),[testing,setTesting]=useState(false);
  const [login,setLogin]=useState<{state:string;url?:string}>({state:'idle'}),[devices,setDevices]=useState<AudioDevices>(ctx.storage.get('audio-devices',{input:'',output:''}));
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1));
@@ -34,8 +37,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
  const load=async()=>{
   if(!local)return;setLoading(true);setError('');
-  try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
-   safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
+  try{const [value,bots,phrase]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots'),ctx.rest<{enabled:boolean;supported:boolean;phrase:string}>('/setup/generic').catch(()=>null)]);
+   safe(()=>{setData(value);setTargets(bots.targets);setGeneric(Boolean(phrase?.enabled&&phrase.supported));setGenericPhrase(phrase?.phrase??'');setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
   }catch(e){fail(e)}finally{safe(()=>setLoading(false))}
@@ -96,8 +99,8 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const selected=targets.find(t=>t.target===target);
  const progress=data?.assets.progress;
  const errorText=progress?.error?setupError(locale,'HL_SETUP:'+progress.error):data?.assets.error?setupError(locale,'HL_SETUP:'+data.assets.error):null;
- const complete=mode==='call'?Boolean(devices):basicReady(data)&&targets.length>0&&Boolean(auth?.available)&&Boolean(data?.legacy||data?.assets.prepared)&&Boolean(data?.legacy||ctx.storage.get(`setup-mic:${device}`,false));
- const canNext=step===1?targets.length>0:step===2?Boolean(auth?.available)||mode==='call':step===3?Boolean(data?.assets.prepared):step===4?mode==='call'||Boolean(data?.device===device&&ctx.storage.get(`setup-mic:${device}`,false)):true;
+ const complete=mode==='call'?Boolean(devices):basicReady(data)&&(targets.length>0||generic)&&Boolean(auth?.available)&&Boolean(data?.legacy||data?.assets.prepared)&&Boolean(data?.legacy||ctx.storage.get(`setup-mic:${device}`,false));
+ const canNext=step===1?targets.length>0||generic:step===2?Boolean(auth?.available)||mode==='call':step===3?Boolean(data?.assets.prepared):step===4?mode==='call'||Boolean(data?.device===device&&ctx.storage.get(`setup-mic:${device}`,false)):true;
  const next=()=>setStep(steps[Math.min(steps.indexOf(step)+1,steps.length-1)]!);
  const panel={display:'grid',gap:16} as const;
  return <div style={{...panel,maxWidth:760,padding:'24px 16px',margin:'0 auto',color:'var(--dt-foreground)'}}>
@@ -113,6 +116,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
    <p style={hint}>{c('selectBots')}</p>
    {host.pluginDecisions?.get()['hermes-bots']===false&&<p style={hint}>{c('botsDisabled')} <Button size="sm" onClick={()=>host.navigate('/capabilities?tab=plugins')}>{c('manage')}</Button></p>}
    <WakeSettings rest={ctx.rest} local={local} changed={()=>void load()}/>
+   <GenericWakeSettings rest={ctx.rest} local={local} changed={()=>void load()}/>
    <Button variant="ghost" onClick={()=>host.revealPane?.('hermes-bots:pane')}>{c('botsView')}</Button>
   </div>}
   {step===2&&<div style={panel}>
@@ -157,14 +161,14 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
-   <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
-   <Button disabled={block||!basicReady(data)||!selected} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
+   <strong style={{fontSize:23}}>{selected?.phrases[0]??((generic&&genericPhrase)||'…')}</strong><p style={hint}>{c('testHint')}</p>
+   <Button disabled={block||!basicReady(data)||(!selected&&!generic)} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
    <p style={hint}>{c('trialHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>void action(()=>trial(target))}>{c('trial')}</Button>
    <p role="status">{c(ctx.storage.get<string>(`setup-trial:${target}`,'')==='ended'?'verified':'unverified')}</p>
   </div>}
   {step===6&&<div style={panel}>
-   {!complete&&mode==='wake'&&<p role="status">{c('intro')} <Button onClick={()=>setStep(!targets.length?1:!auth?.available?2:!data?.assets.installed?3:4)}>{c('next')}</Button></p>}
+   {!complete&&mode==='wake'&&<p role="status">{c('intro')} <Button onClick={()=>setStep(!targets.length&&!generic?1:!auth?.available?2:!data?.assets.installed?3:4)}>{c('next')}</Button></p>}
    <p>{c('readyHint')}</p>{mode==='wake'?<p>{targets.map(t=>t.display_name).join(', ')||'—'} · {data?.device||'—'}</p>:<p role="status">{c('manualReady')}</p>}
    {mode==='wake'&&<><p>{targets.map(t=>t.phrases[0]+' / Bye '+t.display_name).join(' · ')}</p>
     <p role="status">{targets.map(t=>`${t.display_name}: ${c(ctx.storage.get<string>(`setup-trial:${t.target}`,'')==='ended'?'verified':'unverified')}`).join(' · ')}</p>

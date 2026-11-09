@@ -1,5 +1,6 @@
 export const en = {
  errBotsView:'Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.',
+ errNoFocusedChat:'Could not tell which agent owns this chat. Select the chat and try again.',
  wake:"Wake",
  wakeEmpty:"Choose a bot in Wake settings",
  wakeDescription:"Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",

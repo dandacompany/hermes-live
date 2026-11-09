@@ -62,6 +62,10 @@ class WhisperEngine:
         self.pending = None
         self.matched = False
         self.last_target = None
+        self.last_generic = False
+        # The optional generic wake phrase (whisper only); absent when off, so the worker command stays as before.
+        self.generic_phrase = (cfg.get('generic') or {}).get('phrase') or ''
+        generic = {'generic_phrase':self.generic_phrase} if self.generic_phrase else {}
         self.targets = cfg.get('targets') or [{'target':cfg['target'],'names':[cfg['phrase'].removeprefix('헤이 ').removeprefix('Hey ').removeprefix('안녕 ')],'phrases':[cfg['phrase']]}]
         self.ready = False
         self.error = ''
@@ -72,13 +76,13 @@ class WhisperEngine:
         native = cfg.get('whisper_native')
         if native:
             command = [sys.executable, str(Path(__file__).with_name('wake-native-worker.py')),
-                       json.dumps({**native, 'targets':self.targets})]
+                       json.dumps({**native, 'targets':self.targets, **generic})]
             env = {'HOME':str(Path.home()),'PATH':'/usr/bin:/bin'}
         else:
             worker = Path(__file__).with_name('wake-whisper-worker.mjs')
             node = cfg['whisper_node']
             options = {'module':cfg['whisper_module'],'models':cfg['whisper_models'],
-                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets}
+                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets,**generic}
             command = [node,str(worker),json.dumps(options)]
             env = {'HOME':str(Path.home()),'PATH':str(Path(node).parent)+':/usr/bin:/bin'}
         self.proc = subprocess.Popen(command,stdin=subprocess.PIPE,
@@ -106,6 +110,12 @@ class WhisperEngine:
                             self.error = 'transcription_failed'
                         elif result.get('target') in {t['target'] for t in self.targets}:
                             self.last_target = result['target']
+                            self.last_generic = False
+                            self.matched = True
+                            self.matches += 1
+                        elif result.get('generic') is True and self.generic_phrase:
+                            self.last_target = None
+                            self.last_generic = True
                             self.matched = True
                             self.matches += 1
                     elif result.get('error') and 'id' not in result:
@@ -124,6 +134,7 @@ class WhisperEngine:
             # Keep pending until its response arrives; generation in the ID rejects stale text.
             self.matched = False
             self.last_target = None
+            self.last_generic = False
             self.gate.reset()
 
     def process(self, frame):
@@ -237,6 +248,7 @@ class WhisperDetector:
         return True
 
     def matched_target(self):return self.listener.engine.last_target if self.listener else None
+    def matched_generic(self):return bool(self.listener and self.listener.engine.last_generic)
     def is_listening(self):return bool(self.listener and self.listener.running)
     def audio_is_silent(self):return bool(self.listener and self.listener.audio_silent)
     def get_input_device_status(self, cfg=None):return self.listener.input_device_details if self.listener else {}

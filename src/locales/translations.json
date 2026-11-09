@@ -1,6 +1,7 @@
 {
   "ko": {
     "call": "통화",
+    "errNoFocusedChat": "이 채팅의 에이전트를 확인하지 못했습니다. 채팅을 다시 선택한 뒤 시도하세요.",
     "audio": "오디오",
     "usage": "사용량",
     "settings": "Hermes Live 설정",
@@ -155,6 +156,7 @@
   },
   "ja": {
     "call": "通話",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "オーディオ",
     "usage": "使用量",
     "settings": "Hermes Live 設定",
@@ -309,6 +311,7 @@
   },
   "zh": {
     "call": "通话",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "音频",
     "usage": "用量",
     "settings": "Hermes Live 设置",
@@ -463,6 +466,7 @@
   },
   "zh-hant": {
     "call": "通話",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "音訊",
     "usage": "用量",
     "settings": "Hermes Live 設定",
@@ -617,6 +621,7 @@
   },
   "fr": {
     "call": "Appel",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Audio",
     "usage": "Utilisation",
     "settings": "Paramètres Hermes Live",
@@ -771,6 +776,7 @@
   },
   "de": {
     "call": "Anruf",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Audio",
     "usage": "Nutzung",
     "settings": "Hermes Live-Einstellungen",
@@ -925,6 +931,7 @@
   },
   "es": {
     "call": "Llamada",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Audio",
     "usage": "Uso",
     "settings": "Ajustes de Hermes Live",
@@ -1079,6 +1086,7 @@
   },
   "it": {
     "call": "Chiamata",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Audio",
     "usage": "Utilizzo",
     "settings": "Impostazioni Hermes Live",
@@ -1233,6 +1241,7 @@
   },
   "pt": {
     "call": "Chamada",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Áudio",
     "usage": "Utilização",
     "settings": "Definições do Hermes Live",
@@ -1387,6 +1396,7 @@
   },
   "ru": {
     "call": "Звонок",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Аудио",
     "usage": "Использование",
     "settings": "Настройки Hermes Live",
@@ -1541,6 +1551,7 @@
   },
   "uk": {
     "call": "Виклик",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Аудіо",
     "usage": "Використання",
     "settings": "Налаштування Hermes Live",
@@ -1695,6 +1706,7 @@
   },
   "tr": {
     "call": "Arama",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Ses",
     "usage": "Kullanım",
     "settings": "Hermes Live ayarları",
@@ -1849,6 +1861,7 @@
   },
   "ar": {
     "call": "مكالمة",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "الصوت",
     "usage": "الاستخدام",
     "settings": "إعدادات Hermes Live",
@@ -2003,6 +2016,7 @@
   },
   "af": {
     "call": "Oproep",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Oudio",
     "usage": "Gebruik",
     "settings": "Hermes Live-instellings",
@@ -2157,6 +2171,7 @@
   },
   "hu": {
     "call": "Hívás",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Hang",
     "usage": "Használat",
     "settings": "Hermes Live beállítások",
@@ -2311,6 +2326,7 @@
   },
   "ga": {
     "call": "Glao",
+    "errNoFocusedChat": "Could not tell which agent owns this chat. Select the chat and try again.",
     "audio": "Fuaim",
     "usage": "Úsáid",
     "settings": "Socruithe Hermes Live",
