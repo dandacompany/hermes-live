@@ -3016,7 +3016,7 @@ function WakeSettings({ rest, changed, local }) {
         }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),
       !!bot.auto_names?.length && /* @__PURE__ */ jsx2("div", { style: hint, children: t("wakeAutoNames", bot.auto_names.join(", ")) }),
-      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.auto_names?.[0] || (aliases[bot.profile] ?? "").split(",")[0].trim() || "\u2026") : t("wakeSetup") }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", (bot.auto_names ? bot.auto_names[0] : bot.display_name) || (aliases[bot.profile] ?? "").split(/[,，]/u)[0].trim() || "\u2026") : t("wakeSetup") }),
       !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
       bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
     ] }, bot.profile)),
