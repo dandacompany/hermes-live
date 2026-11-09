@@ -67,7 +67,9 @@ class WakeRegistry:
             if bot['error']:errors.append({'profile':bot['profile'],'reason':bot['error']})
         targets=[t for t in targets if t['target'] not in conflicts]
         material=json.dumps({'data':data,'roster':rows},ensure_ascii=False,sort_keys=True)
-        return {'revision':hashlib.sha256(material.encode()).hexdigest()[:24],'bots':bots,'targets':targets,'errors':errors}
+        # The selected greeting lets the settings preview a bot that has no saved name yet in the right language.
+        return {'revision':hashlib.sha256(material.encode()).hexdigest()[:24],'bots':bots,'targets':targets,'errors':errors,
+                'greeting':greeting_order(self.legacy.get('greeting'))[0].strip()}
 
     def read(self):
         with self.locked():return self._view(self._load())

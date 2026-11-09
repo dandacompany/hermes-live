@@ -2995,7 +2995,7 @@ function WakeSettings({ rest, changed, local }) {
           setAliases({ ...aliases, [bot.profile]: e.target.value });
         }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),
-      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.phrases?.[0] ?? "Hey " + (bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026")) : t("wakeSetup") }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.phrases?.[0] ?? (data?.greeting ?? "Hey") + " " + (bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026")) : t("wakeSetup") }),
       !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
       bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
     ] }, bot.profile)),
