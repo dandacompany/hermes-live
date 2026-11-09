@@ -8,10 +8,11 @@ import socket
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import re
+import unicodedata
 
 import httpx
 from fastapi import APIRouter, HTTPException, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from uuid import UUID
 
 _spec = importlib.util.spec_from_file_location(__name__ + '_codex', Path(__file__).with_name('codex_broker.py'))
@@ -331,6 +332,50 @@ def wake_settings():
             **assets_module.read_json(setup_path()).get('wake',{})}
 
 
+# Optional generic wake phrase: off unless wake_generic_enabled is literally true. When on, saying the phrase
+# alone starts a Codex call with the agent of the chat focused in Hermes Desktop (whisper provider only).
+GENERIC_KEYS=('wake_generic_enabled','wake_generic_phrase')
+GENERIC_DEFAULT='Wake up'
+GENERIC_MAX=40
+
+def generic_phrase_ok(value):
+    return isinstance(value,str) and 0<len(value.strip())<=GENERIC_MAX and any(c.isalpha() for c in value)
+
+def wake_generic(cfg):
+    phrase=cfg.get('wake_generic_phrase')
+    return {'enabled':cfg.get('wake_generic_enabled') is True,
+            'phrase':phrase.strip() if generic_phrase_ok(phrase) else GENERIC_DEFAULT}
+
+def generic_collides(phrase,targets):
+    # Normalized like the wake worker. One utterance can match two phrases exactly when both repeat a
+    # common phrase, that is when they commute (equal phrases are the plain case).
+    value=registry_module.normalized(phrase)
+    others=(registry_module.normalized(p) for t in targets for p in t['phrases'])
+    if any(other and value+other==other+value for other in others):return True
+    # An enabled bot's name said alone names that bot, though none of its phrases matches it.
+    return any(value==registry_module.normalized(n) for t in targets for n in t['names'])
+
+# Mirror of src/goodbye.ts (fillers, normalize(), prefixes): "Bye <name>" ends a call. A generic phrase that
+# opens like a goodbye would turn a goodbye into a wake, so it is refused.
+# JavaScript's \s also matches U+FEFF and Python's does not, so it is listed explicitly.
+GOODBYE_FILLERS=re.compile(r'^(?:(?:음|어|um|uh)[\s\ufeff,.…]+)+',re.IGNORECASE)
+GOODBYE_IGNORED=re.compile(r'[\s\ufeff,，.!。！]')
+GOODBYE_PREFIXES=('bye','by','바이','바일','파일')
+
+def generic_goodbye(phrase):
+    said=unicodedata.normalize('NFKC',GOODBYE_FILLERS.sub('',phrase,count=1)).strip().lower()
+    return GOODBYE_IGNORED.sub('',said).startswith(GOODBYE_PREFIXES)
+
+def generic_names(view):
+    # Frozen goodbye names for a generic call, by profile: an enabled bot keeps its own wake names; any other
+    # profile answers to its Bots title (or display name) and its profile name.
+    names={t['target']:list(t['names']) for t in view['targets']}
+    for bot in view['bots']:
+        title=str(bot.get('display_name') or '').strip()
+        names.setdefault(bot['profile'],list(dict.fromkeys(n for n in (title,bot['profile']) if n)))
+    return names
+
+
 def bot_registry():
     cfg=wake_settings()
     return registry_module.registry({'target':cfg.get('wake_target',''),'phrase':cfg.get('wake_phrase','헤이 루미')})
@@ -375,7 +420,8 @@ def wake_config(*, preparing=False):
     device = str(cfg.get('wake_input_device','')).strip()
     if not device:
         raise HTTPException(400,'Hands-free microphone is required')
-    targets=bot_registry().read()['targets']
+    view=bot_registry().read()
+    targets=view['targets']
     provider=cfg.get('wake_provider','whisper')
     first=targets[0] if targets else {'target':'','phrases':[]}
     result={'target':first['target'],'phrase':', '.join(t['phrases'][0] for t in targets),
@@ -396,6 +442,10 @@ def wake_config(*, preparing=False):
             if model not in assets_module.MODELS or not (Path(result['whisper_models'])/f'ggml-{model}.bin').is_file():
                 raise HTTPException(503, 'HL_SETUP:modelMissing')
             result['whisper_model'] = model
+        generic = wake_generic(cfg)
+        if generic['enabled']:
+            # Absent when off, so the listener config and the worker command stay exactly as before.
+            result['generic'] = {'phrase':generic['phrase'],'names':generic_names(view)}
         return result
     if provider == 'sherpa' and len(targets)>1:
         raise HTTPException(400,'Multiple bot names require the local Whisper provider')
@@ -485,7 +535,8 @@ def save_setup(body:SetupRequest,response:Response):
     except assets_module.SetupError as exc: raise HTTPException(503,'HL_SETUP:'+str(exc)) from None
     # Preserve unrelated settings, models, bot opt-ins, and profile voice choices.
     value=assets_module.read_json(setup_path())
-    value['wake']={'wake_enabled':True,'wake_provider':'whisper','wake_input_device':body.device, 'wake_managed':True}
+    kept={k:v for k,v in value.get('wake',{}).items() if k in GENERIC_KEYS}
+    value['wake']={'wake_enabled':True,'wake_provider':'whisper','wake_input_device':body.device, 'wake_managed':True,**kept}
     value['configured']=True
     assets_module.atomic_json(setup_path(),value)
     return get_setup(response)
@@ -501,6 +552,36 @@ def cancel_model(response:Response):
     response.headers['Cache-Control']='no-store'
     assets_module.assets().cancel()
     return {'cancelled':True}
+
+def generic_state(cfg):
+    generic=wake_generic(cfg)
+    return {**generic,'supported':cfg.get('wake_provider','whisper')=='whisper','default':GENERIC_DEFAULT,
+            'max':GENERIC_MAX,'conflict':generic_goodbye(generic['phrase']) or generic_collides(generic['phrase'],bot_registry().read()['targets'])}
+
+@router.get('/setup/generic')
+def get_generic_wake(response:Response):
+    response.headers['Cache-Control']='no-store'
+    return generic_state(wake_settings())
+
+class GenericWakeRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    enabled: StrictBool
+    phrase: str = Field(min_length=1,max_length=GENERIC_MAX)
+
+@router.put('/setup/generic')
+def save_generic_wake(body:GenericWakeRequest,response:Response):
+    response.headers['Cache-Control']='no-store'
+    phrase=body.phrase.strip()
+    if not generic_phrase_ok(phrase):raise HTTPException(422,'HL_SETUP:genericLetter')
+    if body.enabled:
+        if wake_settings().get('wake_provider','whisper')!='whisper':raise HTTPException(422,'HL_SETUP:genericUnsupported')
+        if generic_goodbye(phrase):raise HTTPException(422,'HL_SETUP:genericGoodbye')
+        if generic_collides(phrase,bot_registry().read()['targets']):raise HTTPException(422,'HL_SETUP:genericCollision')
+    value=assets_module.read_json(setup_path())
+    value['wake']={**value.get('wake',{}),'wake_generic_enabled':body.enabled,'wake_generic_phrase':phrase}
+    assets_module.atomic_json(setup_path(),value)
+    # wake_config() rereads it on every arm and heartbeat; a detector paused for a call keeps its snapshot.
+    return get_generic_wake(response)
 
 @router.post('/setup/test')
 def setup_test(body:WakeRequest,response:Response):

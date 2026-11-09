@@ -1,13 +1,16 @@
 /** Local-only, persistent model worker. This worker never persists PCM or transcripts. */
 import {createInterface} from 'node:readline';
 import {pathToFileURL} from 'node:url';
-import {matchWakeTarget} from './wake-phrase.mjs';
+import {matchesWakePhrase,matchWakeTarget} from './wake-phrase.mjs';
 const cfg=JSON.parse(process.argv[2]);
 const targets=cfg.targets;const vocabulary=[...new Set(targets.flatMap(t=>t.names))];
 const {LocalWhisper}=await import(pathToFileURL(cfg.module).href);
 const local=new LocalWhisper(cfg.models,cfg.engine),cancel=new AbortController();
 const options={kind:'local',localModel:cfg.model,language:'ko',timeoutMs:15000};
 const send=value=>process.stdout.write(JSON.stringify(value)+'\n');
+// Optional generic phrase: counts only when no bot phrase matched at all, like the native worker.
+const genericPhrase=typeof cfg.generic_phrase==='string'?cfg.generic_phrase:'';
+const generic=text=>Boolean(genericPhrase)&&!targets.some(t=>t.phrases.some(p=>matchesWakePhrase(text,p)))&&matchesWakePhrase(text,genericPhrase);
 let closing=false;
 async function close(){if(closing)return;closing=true;cancel.abort();await local.close();}
 process.on('SIGTERM',()=>void close().finally(()=>process.exit(0)));
@@ -26,7 +29,7 @@ try{
   for(let i=0;i<raw.length;i+=2)for(let j=0;j<3;j++)pcm.writeInt16LE(raw.readInt16LE(i),i*3+j*2);
   try{
    const result=await local.transcribe(pcm,options,cancel.signal,vocabulary);
-   send({id:item.id,target:matchWakeTarget(result.text,targets),elapsedMs:Math.round(result.elapsedMs)});
+   send({id:item.id,target:matchWakeTarget(result.text,targets),...(generic(result.text)?{generic:true}:{}),elapsedMs:Math.round(result.elapsedMs)});
   }catch{if(!closing)send({id:item.id,error:'local_transcription_failed'});}
  }
 }catch{if(!closing)send({error:'local_worker_failed'});process.exitCode=1;}

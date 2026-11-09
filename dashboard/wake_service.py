@@ -13,6 +13,12 @@ def targets_for(config):
     name=config['phrase'].removeprefix('헤이 ').removeprefix('Hey ').removeprefix('안녕 ').strip()
     return [{'target':config['target'],'names':[name],'phrases':[config['phrase']],'display_name':name}]
 
+def generic_target(config):
+    # The optional generic phrase as a selection. It names no bot (target ''); the renderer calls the agent
+    # of the focused chat instead of opening a bot.
+    phrase=config['generic']['phrase']
+    return {'target':'','generic':True,'names':[],'phrases':[phrase],'display_name':phrase}
+
 class WakeService:
     def __init__(self, detector, emit, clock=time.monotonic):
         self.detector,self.emit,self.clock=detector,emit,clock
@@ -54,7 +60,7 @@ class WakeService:
         with self.lock:self._release()
 
     def _start(self,owner,config):
-        if not targets_for(config):raise WakeConflict('No enabled bot names')
+        if not targets_for(config) and not config.get('generic'):raise WakeConflict('No enabled bot names')
         self.owner,self.config,self.lease=owner,deepcopy(config),object()
         lease=self.lease
         self.state,self.error='armed',''
@@ -107,11 +113,14 @@ class WakeService:
             targets=targets_for(self.config)
             matched=self.detector.matched_target() if hasattr(self.detector,'matched_target') else self.config['target']
             selection=next((t for t in targets if t['target']==matched),None)
+            if selection is None and self.config.get('generic') and getattr(self.detector,'matched_generic',lambda:False)():
+                selection=generic_target(self.config)
             if selection is None:return
             if not self.detector.pause_listening(owner=lease):return
             self.detections+=1;self.event_id,self.state=str(uuid4()),'pending'
             self.event_target=deepcopy(selection)
             payload={'owner':self.owner,'eventId':self.event_id,'target':selection['target']}
+            if selection.get('generic'):payload['generic']=True
         self.emit(payload)
 
 class DetectorRouter:
@@ -127,6 +136,7 @@ class DetectorRouter:
     def matched_target(self):
         if hasattr(self.active,'matched_target'):return self.active.matched_target()
         return self.current_target
+    def matched_generic(self):return bool(getattr(self.active,'matched_generic',lambda:False)())
     def diagnostics(self):return self.active.diagnostics() if hasattr(self.active,'diagnostics') else {}
     def __getattr__(self,name):return getattr(self.active,name)
 

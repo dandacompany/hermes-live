@@ -14,6 +14,7 @@ import {matchWakeTarget} from '../dashboard/wake-phrase.mjs';
 import {openWakeBot,wakeBotReady,ProfileTransition} from './wake-navigation.ts';
 import {HoverControls} from './hover-controls.tsx';
 import {WakeSettings} from './wake-settings.tsx';
+import {GenericWakeSettings} from './generic-wake-settings.tsx';
 import {UsageSettings,type Quota} from './usage-settings.tsx';
 import {defaultDevices,selectWakeMicrophone,canonicalMicrophoneLabel,type AudioDevices} from './devices.ts';
 import {UsageLedger,emptyUsage,type UsageData} from './usage.ts';
@@ -189,6 +190,33 @@ export default {
    }catch(error){stop();host.notify({kind:'error',message:localizeError(t,error instanceof Error?error.message:'HL_ERROR:errGeneric')});throw error}
    finally{unsubscribe()}
   }
+  /** Generic wake phrase: the call button's path (focused chat, its own agent) on the Codex subscription like a named wake. */
+  async function startFocused(config:WakeConfig,current:()=>boolean){
+   if(voiceMode.paused)throw new Error('HL_ERROR:errBusy');
+   // Stop only a call this attempt started: a manual call begun while devices were listed must stay up.
+   // That call also keeps the wake lease paused (no rethrow below): its end, not this failure, re-arms listening.
+   let owned=false;
+   try{
+    // No profile switch and no Bots navigation: the focused chat must already be on the active local backend.
+    // A draft (no saved session) resolves to the active owner like the call button; null means the owner is unknown.
+    const scope=currentScope();
+    if(!host.state.focusedSessionOwner.get()||!scope.profile)throw new Error('HL_ERROR:errNoFocusedChat');
+    if(!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
+    const selected=selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(),config.input_device);
+    if(!current()||!sameScope(scope,currentScope())||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
+    if(activity.active||!['idle','error'].includes(controller.snapshot.status)||host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean))throw new Error('HL_ERROR:errBusy');
+    void playWakeCue(devices().output,ctx.storage.get('wake-cue-volume',1));
+    ctx.storage.set('audio-devices',{...devices(),input:selected.deviceId});
+    // Same provider as a named wake. The chat's saved Codex voice is reused; its saved selection is not changed.
+    const saved=ctx.storage.get<Selection|null>(`selection:${scope.connection}:${scope.profile}`,null);
+    const selection:Selection={provider:'codex',model:'gpt-live-1-codex',voice:saved?.provider==='codex'&&saved.voice?saved.voice:'cove'};
+    // Goodbye names are frozen like a named wake: the profile's wake names, else its title and profile name.
+    const names=config.generic?.names?.[scope.profile]?.filter(Boolean)??[];
+    if(!names.length)names.push(scope.profile);
+    callOwner=scope;owned=true;wakeNames=[...names];wakeCall=true;wakeGreeting={name:names[0]!,phrase:config.generic?.phrase??''};await controller.start(selection);
+    if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
+   }catch(error){if(owned)stop();host.notify({kind:'error',message:localizeError(t,error instanceof Error?error.message:'HL_ERROR:errGeneric')});if(!owned&&!['idle','error'].includes(controller.snapshot.status))return;throw error}
+  }
   wake=new WakeCoordinator({
    config:()=>ctx.rest<WakeConfig>('/wake/config'),
    control:(owner,action,eventId)=>ctx.rest<WakeStatus>('/wake/control',{method:'POST',body:{owner,action,...(eventId?{eventId}:{})},timeoutMs:20000}),
@@ -196,7 +224,7 @@ export default {
    externalBusy:()=>activity.active,
    busy:()=>activity.active||!['idle','error'].includes(controller.snapshot.status)||host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean),
    failed:error=>host.notify({kind:'error',message:localizeError(t,error instanceof Error?error.message:'HL_ERROR:errGeneric')}),
-   start:startWake,changed:()=>listeners.forEach(fn=>fn()),
+   start:startWake,startFocused,changed:()=>listeners.forEach(fn=>fn()),
   });
   ctx.onEvent('plugin.hermes-live.wake',event=>{if(event.payload)void wake.detected(event.payload as WakeEvent)});
   ctx.onEvent('voice.status',event=>{const value=event.payload as {enabled?:boolean;state?:string};activity.set('recorder',Boolean(value?.enabled)||(Boolean(value?.state)&&!['idle','off','stopped'].includes(value.state!)))});
@@ -332,7 +360,7 @@ export default {
    const key=usageKey(currentScope());const usage=ledger&&ledgerKey===key?ledger.data:ctx.storage.get<UsageData>(key,emptyUsage());
    const readQuota=async()=>{const scope=currentScope();if(!apiScopeMatches(scope))throw new Error("HL_ERROR:errScope");const value=await ctx.rest<Quota>('/codex/usage',{timeoutMs:40000});if(!sameScope(scope,currentScope()))throw new Error("HL_ERROR:errScope");return value};
    const label=state.muted&&state.status==='listening'?t('muted'):{idle:t('idle'),connecting:t('preparing'),listening:t('listening'),speaking:t('speaking'),thinking:t('thinking'),error:t('errorStatus')}[state.status];
-   const wakeLabel=voiceMode.paused?c(voiceMode.failed?(voiceMode.intent==='pause'?'pauseFailed':'resumeFailed'):'pausedVoice'):!wake.enabled?t('wakeOff'):wake.state==='armed'?t('wakeArmed',wake.config?.phrase??'…'):t(wake.state==='empty'?'wakeEmpty':wake.state==='warming'?'wakeWarming':wake.state==='calling'?'wakeCalling':wake.state==='rearming'?'wakeRearming':'wakeSuspended');
+   const wakeLabel=voiceMode.paused?c(voiceMode.failed?(voiceMode.intent==='pause'?'pauseFailed':'resumeFailed'):'pausedVoice'):!wake.enabled?t('wakeOff'):wake.state==='armed'?t('wakeArmed',wake.config?.generic?[wake.config.phrase,wake.config.generic.phrase].filter(Boolean).join(', '):wake.config?.phrase??'…'):t(wake.state==='empty'?'wakeEmpty':wake.state==='warming'?'wakeWarming':wake.state==='calling'?'wakeCalling':wake.state==='rearming'?'wakeRearming':'wakeSuspended');
    const discStyle={height:primarySize,width:primarySize,padding:0,borderRadius:999,boxShadow:'0 2px 8px #0003'};
    return <span role="group" aria-label={t('call')} style={{order:1,display:'inline-flex',alignItems:'center',flexShrink:0}}>
     <HoverControls label={t('callSettings')} holdOpen={open} tip={active?t('actionTip',label,state.status==='connecting'?t('cancel'):t('end')):wakeLabel} primary={<Button type="button" variant={active?'default':'ghost'} size={active?'sm':'icon'} aria-label={active?(state.status==='connecting'?t('cancelConnection'):t('endCall')):t('wakeToggle')} aria-pressed={active||wake.enabled} aria-busy={state.status==='connecting'} disabled={voiceMode.busy} onClick={()=>{if(active)stop();else if(voiceMode.paused)void changeVoiceMode();else if(wake.enabled){ctx.storage.set('hands-free-enabled',false);void wake.enable(false)}else void (async()=>{try{const scope=currentScope();if(!apiScopeMatches(scope))await host.ensureAgent(scope.connection==='local'?null:scope.connection,scope.profile);const ready=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});if(!basicReady(ready)){openSetup();return}ctx.storage.set('hands-free-enabled',true);await wake.enable(true);if(wake.state==='suspended')openSetup()}catch{openSetup()}})()}} style={{height:active?primarySize:controlSize,width:active?undefined:controlSize,padding:active?'0 12px':0,gap:6,borderRadius:999,color:!active&&wake.enabled?'var(--dt-primary-solid)':undefined}}>{active?<><CallWave state={state}/><span>{state.status==='connecting'?t('preparing'):t('end')}</span></>:<Icon name="wake"/>}</Button>
@@ -350,7 +378,7 @@ export default {
      </header>
      <div style={{padding:16,minHeight:0,overflowY:'auto',display:'grid',gap:16}}>
      {tab==='audio'&&<>{error&&<p role="alert">{setupError(locale,error)||localizeError(t,error)}</p>}<DeviceSettings value={deviceChoice} active={active||voiceMode.paused||voiceMode.busy} onChange={value=>void updateDevices(value)}/></>}
-     {tab==='wake'&&<><Button onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button>{wake.error&&<p role="alert">{setupError(locale,wake.error)||localizeError(t,wake.error)}</p>}<p role="status" style={{...hint,margin:0}}>{wakeLabel}</p><WakeSettings key={scopeKey} rest={ctx.rest} changed={()=>void wake.tick()} local={!host.state.connectionId.get()||host.state.connectionId.get()==='local'}/></>}
+     {tab==='wake'&&<><Button onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button>{wake.error&&<p role="alert">{setupError(locale,wake.error)||localizeError(t,wake.error)}</p>}<p role="status" style={{...hint,margin:0}}>{wakeLabel}</p><WakeSettings key={scopeKey} rest={ctx.rest} changed={()=>void wake.tick()} local={!host.state.connectionId.get()||host.state.connectionId.get()==='local'}/><GenericWakeSettings key={`generic:${scopeKey}`} rest={ctx.rest} changed={()=>void wake.tick()} local={!host.state.connectionId.get()||host.state.connectionId.get()==='local'}/></>}
      {tab==='usage'&&<UsageSettings key={scopeKey} data={usage} selection={selection} readQuota={readQuota}/>}
      {tab==='call'&&<><Button variant="ghost" onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button><div style={{display:'grid',gap:12}}>
       <FieldSelect label={t('provider')} value={selection.provider} disabled={active||loading} options={(catalog.length?catalog:[{id:selection.provider,available:true}]).map(p=>({value:p.id,label:providerName(p.id)+(p.available?'':` · ${t('setupNeeded')}`)}))} onChange={value=>{const p=catalog.find(p=>p.id===value);if(p)change({provider:p.id,model:p.models[0]!.id,voice:p.voices[0]!})}}/>

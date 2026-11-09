@@ -1,6 +1,6 @@
 // src/setup.tsx
-import { useEffect as useEffect3, useRef as useRef3, useState as useState3, useSyncExternalStore } from "react";
-import { Button as Button3, host as host2 } from "@hermes/plugin-sdk";
+import { useEffect as useEffect4, useRef as useRef4, useState as useState4, useSyncExternalStore } from "react";
+import { Button as Button4, host as host2 } from "@hermes/plugin-sdk";
 
 // src/i18n-react.ts
 import { useI18n, usePluginI18n } from "@hermes/plugin-sdk";
@@ -13,6 +13,7 @@ function useLiveI18n() {
 // src/locales/en.ts
 var en = {
   errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
+  errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
   wake: "Wake",
   wakeEmpty: "Choose a bot in Wake settings",
   wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
@@ -170,6 +171,7 @@ var en = {
 var translations_default = {
   ko: {
     call: "\uD1B5\uD654",
+    errNoFocusedChat: "\uC774 \uCC44\uD305\uC758 \uC5D0\uC774\uC804\uD2B8\uB97C \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uCC44\uD305\uC744 \uB2E4\uC2DC \uC120\uD0DD\uD55C \uB4A4 \uC2DC\uB3C4\uD558\uC138\uC694.",
     audio: "\uC624\uB514\uC624",
     usage: "\uC0AC\uC6A9\uB7C9",
     settings: "Hermes Live \uC124\uC815",
@@ -324,6 +326,7 @@ var translations_default = {
   },
   ja: {
     call: "\u901A\u8A71",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u30AA\u30FC\u30C7\u30A3\u30AA",
     usage: "\u4F7F\u7528\u91CF",
     settings: "Hermes Live \u8A2D\u5B9A",
@@ -478,6 +481,7 @@ var translations_default = {
   },
   zh: {
     call: "\u901A\u8BDD",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u97F3\u9891",
     usage: "\u7528\u91CF",
     settings: "Hermes Live \u8BBE\u7F6E",
@@ -632,6 +636,7 @@ var translations_default = {
   },
   "zh-hant": {
     call: "\u901A\u8A71",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u97F3\u8A0A",
     usage: "\u7528\u91CF",
     settings: "Hermes Live \u8A2D\u5B9A",
@@ -786,6 +791,7 @@ var translations_default = {
   },
   fr: {
     call: "Appel",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Audio",
     usage: "Utilisation",
     settings: "Param\xE8tres Hermes Live",
@@ -940,6 +946,7 @@ var translations_default = {
   },
   de: {
     call: "Anruf",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Audio",
     usage: "Nutzung",
     settings: "Hermes Live-Einstellungen",
@@ -1094,6 +1101,7 @@ var translations_default = {
   },
   es: {
     call: "Llamada",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Audio",
     usage: "Uso",
     settings: "Ajustes de Hermes Live",
@@ -1248,6 +1256,7 @@ var translations_default = {
   },
   it: {
     call: "Chiamata",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Audio",
     usage: "Utilizzo",
     settings: "Impostazioni Hermes Live",
@@ -1402,6 +1411,7 @@ var translations_default = {
   },
   pt: {
     call: "Chamada",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\xC1udio",
     usage: "Utiliza\xE7\xE3o",
     settings: "Defini\xE7\xF5es do Hermes Live",
@@ -1556,6 +1566,7 @@ var translations_default = {
   },
   ru: {
     call: "\u0417\u0432\u043E\u043D\u043E\u043A",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u0410\u0443\u0434\u0438\u043E",
     usage: "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0435",
     settings: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 Hermes Live",
@@ -1710,6 +1721,7 @@ var translations_default = {
   },
   uk: {
     call: "\u0412\u0438\u043A\u043B\u0438\u043A",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u0410\u0443\u0434\u0456\u043E",
     usage: "\u0412\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F",
     settings: "\u041D\u0430\u043B\u0430\u0448\u0442\u0443\u0432\u0430\u043D\u043D\u044F Hermes Live",
@@ -1864,6 +1876,7 @@ var translations_default = {
   },
   tr: {
     call: "Arama",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Ses",
     usage: "Kullan\u0131m",
     settings: "Hermes Live ayarlar\u0131",
@@ -2018,6 +2031,7 @@ var translations_default = {
   },
   ar: {
     call: "\u0645\u0643\u0627\u0644\u0645\u0629",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "\u0627\u0644\u0635\u0648\u062A",
     usage: "\u0627\u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645",
     settings: "\u0625\u0639\u062F\u0627\u062F\u0627\u062A Hermes Live",
@@ -2172,6 +2186,7 @@ var translations_default = {
   },
   af: {
     call: "Oproep",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Oudio",
     usage: "Gebruik",
     settings: "Hermes Live-instellings",
@@ -2326,6 +2341,7 @@ var translations_default = {
   },
   hu: {
     call: "H\xEDv\xE1s",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Hang",
     usage: "Haszn\xE1lat",
     settings: "Hermes Live be\xE1ll\xEDt\xE1sok",
@@ -2480,6 +2496,7 @@ var translations_default = {
   },
   ga: {
     call: "Glao",
+    errNoFocusedChat: "Could not tell which agent owns this chat. Select the chat and try again.",
     audio: "Fuaim",
     usage: "\xDAs\xE1id",
     settings: "Socruithe Hermes Live",
@@ -2785,6 +2802,16 @@ var text = {
   prepareHint: ["The existing file is verified and prepared locally. No download is needed.", "\uAE30\uC874 \uD30C\uC77C\uC744 \uAC80\uC99D\uD558\uACE0 \uB85C\uCEEC\uC5D0\uC11C \uC900\uBE44\uD569\uB2C8\uB2E4. \uB2E4\uC6B4\uB85C\uB4DC\uB294 \uD544\uC694\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
   manualReady: ["Audio preferences are saved. Choose a provider in Call settings and start a call to verify the connection.", "\uC624\uB514\uC624 \uC120\uD0DD\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uD1B5\uD654 \uC124\uC815\uC5D0\uC11C \uC74C\uC131 \uC11C\uBE44\uC2A4\uB97C \uC120\uD0DD\uD558\uACE0 \uC2E4\uC81C \uC5F0\uACB0\uC744 \uD655\uC778\uD558\uC138\uC694."],
   modelUnsupported: ["This model is not supported by automatic setup. Select base, small, large-v3-turbo, or large-v3 in plugin settings.", "\uC790\uB3D9 \uC900\uBE44\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uBAA8\uB378\uC785\uB2C8\uB2E4. \uD50C\uB7EC\uADF8\uC778 \uC124\uC815\uC5D0\uC11C base, small, large-v3-turbo \uB610\uB294 large-v3\uB97C \uC120\uD0DD\uD558\uC138\uC694."],
+  genericTitle: ["Generic wake phrase", "\uC77C\uBC18 \uD638\uCD9C\uC5B4"],
+  genericPhrase: ["Phrase (said alone)", "\uD638\uCD9C \uBB38\uAD6C (\uC774 \uBB38\uAD6C\uB9CC \uB9D0\uD558\uAE30)"],
+  genericSave: ["Save phrase", "\uBB38\uAD6C \uC800\uC7A5"],
+  genericSaved: ["Saved. Applies to the next wake.", "\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC74C \uD638\uCD9C\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4."],
+  genericHint: ["Off by default. When on, saying this phrase alone starts a Codex subscription call with the agent of the chat focused in Hermes, including an ordinary chat in Sessions. Bot phrases keep working and win over this phrase. Whisper must write the phrase as typed, so use words in the language it listens in.", "\uAE30\uBCF8\uAC12\uC740 \uAEBC\uC9D0\uC785\uB2C8\uB2E4. \uCF1C\uBA74 \uC774 \uBB38\uAD6C\uB9CC \uB9D0\uD588\uC744 \uB54C Hermes\uC5D0\uC11C \uBCF4\uACE0 \uC788\uB294 \uCC44\uD305(\uC138\uC158\uC758 \uC77C\uBC18 \uCC44\uD305 \uD3EC\uD568)\uC758 \uC5D0\uC774\uC804\uD2B8\uC640 Codex \uAD6C\uB3C5 \uD1B5\uD654\uB97C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uBD07 \uD638\uCD9C\uC5B4\uB3C4 \uADF8\uB300\uB85C \uB3D9\uC791\uD558\uBA70 \uC774 \uBB38\uAD6C\uBCF4\uB2E4 \uC6B0\uC120\uD569\uB2C8\uB2E4. Whisper\uAC00 \uC785\uB825\uD55C \uADF8\uB300\uB85C \uBC1B\uC544\uC368\uC57C \uD558\uBBC0\uB85C \uC778\uC2DD \uC5B8\uC5B4\uC758 \uB2E8\uC5B4\uB97C \uC0AC\uC6A9\uD558\uC138\uC694."],
+  genericUnsupported: ["The generic wake phrase needs the local Whisper recognizer (wake provider \u201Cwhisper\u201D).", "\uC77C\uBC18 \uD638\uCD9C\uC5B4\uB294 \uB85C\uCEEC Whisper \uC778\uC2DD\uAE30(wake provider \u201Cwhisper\u201D)\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."],
+  genericLetter: ["Use a phrase of up to 40 characters with at least one letter.", "\uAE00\uC790\uAC00 \uD558\uB098 \uC774\uC0C1 \uB4E4\uC5B4\uAC04 40\uC790 \uC774\uD558\uC758 \uBB38\uAD6C\uB97C \uC0AC\uC6A9\uD558\uC138\uC694."],
+  genericCollision: ["An enabled bot already uses this phrase or name. Choose another phrase.", "\uCF1C\uC9C4 \uBD07\uC774 \uC774\uBBF8 \uC774 \uBB38\uAD6C\uB098 \uC774\uB984\uC744 \uC4F0\uACE0 \uC788\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
+  genericGoodbye: ["This phrase starts like a goodbye (\u201CBye \u2026\u201D, \u201C\uBC14\uC774 \u2026\u201D), which ends calls. Choose another phrase.", "\uC774 \uBB38\uAD6C\uB294 \uD1B5\uD654\uB97C \uB05D\uB0B4\uB294 \uC791\uBCC4 \uC778\uC0AC(\u201CBye \u2026\u201D, \u201C\uBC14\uC774 \u2026\u201D)\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
+  genericConflict: ["This phrase clashes with an enabled bot\u2019s phrase or name, or starts like a goodbye (\u201CBye \u2026\u201D). Choose another phrase.", "\uC774 \uBB38\uAD6C\uAC00 \uCF1C\uC9C4 \uBD07\uC758 \uD638\uCD9C\uC5B4\uB098 \uC774\uB984\uACFC \uACB9\uCE58\uAC70\uB098 \uC791\uBCC4 \uC778\uC0AC(\u201CBye \u2026\u201D)\uB85C \uC2DC\uC791\uD569\uB2C8\uB2E4. \uB2E4\uB978 \uBB38\uAD6C\uB97C \uACE0\uB974\uC138\uC694."],
   title: ["Set up Hermes Live", "Hermes Live \uC2DC\uC791\uD558\uAE30"],
   intro: ["Complete what is missing. Keep what already works.", "\uD544\uC694\uD55C \uD56D\uBAA9\uB9CC \uC900\uBE44\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC124\uC815\uD55C \uD56D\uBAA9\uC740 \uC720\uC9C0\uD569\uB2C8\uB2E4."],
   overview: ["Start", "\uC2DC\uC791"],
@@ -3006,9 +3033,87 @@ function WakeSettings({ rest, changed, local }) {
   ] });
 }
 
-// src/device-settings.tsx
+// src/generic-wake-settings.tsx
 import { useEffect as useEffect2, useRef as useRef2, useState as useState2 } from "react";
 import { Button as Button2 } from "@hermes/plugin-sdk";
+import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
+function GenericWakeSettings({ rest, changed, local }) {
+  const { t, locale } = useLiveI18n();
+  const c = setupCopy(locale);
+  const [data, setData] = useState2(null), [phrase, setPhrase] = useState2("");
+  const [busy, setBusy] = useState2(false), [error, setError] = useState2(""), [saved, setSaved] = useState2(false);
+  const alive = useRef2(true), request = useRef2(0);
+  const accept = (value) => {
+    setData(value);
+    setPhrase(value.phrase);
+  };
+  const load = async () => {
+    if (!local) return;
+    const id = ++request.current;
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      const value = await rest("/setup/generic");
+      if (alive.current && id === request.current) accept(value);
+    } catch (e) {
+      if (alive.current && id === request.current) setError(String(e));
+    } finally {
+      if (alive.current && id === request.current) setBusy(false);
+    }
+  };
+  useEffect2(() => {
+    alive.current = true;
+    void load();
+    return () => {
+      alive.current = false;
+      ++request.current;
+    };
+  }, [local]);
+  const save = async (enabled, value) => {
+    if (!data || busy) return;
+    const id = ++request.current;
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      const next = await rest("/setup/generic", { method: "PUT", body: { enabled, phrase: value.trim() || data.phrase } });
+      if (alive.current && id === request.current) {
+        accept(next);
+        setSaved(true);
+        changed();
+      }
+    } catch (e) {
+      if (alive.current && id === request.current) setError(String(e));
+    } finally {
+      if (alive.current && id === request.current) setBusy(false);
+    }
+  };
+  if (!local) return null;
+  const off = busy || !data || !data.supported;
+  return /* @__PURE__ */ jsxs3("section", { "aria-label": c("genericTitle"), style: { display: "grid", gap: 8, paddingTop: 12, borderTop: divider }, children: [
+    /* @__PURE__ */ jsxs3("label", { style: { display: "flex", gap: 8, alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx3("input", { type: "checkbox", checked: data?.enabled ?? false, disabled: busy || !data || !data.supported && !data.enabled, onChange: (e) => void save(e.target.checked, phrase) }),
+      /* @__PURE__ */ jsx3("strong", { children: c("genericTitle") })
+    ] }),
+    /* @__PURE__ */ jsx3("p", { style: hint, children: c(data && !data.supported ? "genericUnsupported" : "genericHint") }),
+    /* @__PURE__ */ jsxs3("label", { style: { display: "grid", gap: 4, ...hint }, children: [
+      c("genericPhrase"),
+      /* @__PURE__ */ jsx3("input", { "aria-label": c("genericPhrase"), value: phrase, disabled: off, maxLength: data?.max ?? 40, onChange: (e) => {
+        setSaved(false);
+        setPhrase(e.target.value);
+      }, placeholder: data?.default ?? "Wake up", style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
+    ] }),
+    data?.conflict && /* @__PURE__ */ jsx3("div", { role: "status", style: hint, children: c("genericConflict") }),
+    error && /* @__PURE__ */ jsx3("div", { role: "alert", style: hint, children: setupError(locale, error) || localizeError(t, error) }),
+    saved && /* @__PURE__ */ jsx3("div", { role: "status", style: hint, children: c("genericSaved") }),
+    /* @__PURE__ */ jsx3("div", { style: { display: "flex", gap: 8 }, children: /* @__PURE__ */ jsx3(Button2, { size: "sm", disabled: off || !phrase.trim() || phrase.trim() === data?.phrase, onClick: () => void save(data.enabled, phrase), children: c("genericSave") }) })
+  ] });
+}
+
+// src/device-settings.tsx
+import { useEffect as useEffect3, useRef as useRef3, useState as useState3 } from "react";
+import { Button as Button3 } from "@hermes/plugin-sdk";
 
 // src/devices.ts
 var defaultDevices = { input: "", output: "" };
@@ -3178,11 +3283,11 @@ var AudioEngine = class {
 };
 
 // src/device-settings.tsx
-import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
+import { jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
 function DeviceSettings({ value, onChange, active }) {
   const { t } = useLiveI18n();
-  const [devices, setDevices] = useState2([]), [error, setError] = useState2(""), [testing, setTesting] = useState2(false), [level, setLevel] = useState2(0);
-  const test = useRef2(null), alive = useRef2(true);
+  const [devices, setDevices] = useState3([]), [error, setError] = useState3(""), [testing, setTesting] = useState3(false), [level, setLevel] = useState3(0);
+  const test = useRef3(null), alive = useRef3(true);
   const refresh = async () => {
     try {
       const list = await navigator.mediaDevices.enumerateDevices();
@@ -3197,7 +3302,7 @@ function DeviceSettings({ value, onChange, active }) {
     setTesting(false);
     setLevel(0);
   };
-  useEffect2(() => {
+  useEffect3(() => {
     alive.current = true;
     void refresh();
     navigator.mediaDevices?.addEventListener("devicechange", refresh);
@@ -3208,7 +3313,7 @@ function DeviceSettings({ value, onChange, active }) {
       navigator.mediaDevices?.removeEventListener("devicechange", refresh);
     };
   }, []);
-  useEffect2(() => {
+  useEffect3(() => {
     if (active) stop();
   }, [active]);
   const probe = async () => {
@@ -3240,28 +3345,28 @@ function DeviceSettings({ value, onChange, active }) {
     }
   };
   const supported = typeof AudioContext.prototype.setSinkId === "function";
-  return /* @__PURE__ */ jsxs3("section", { "aria-label": t("audio"), style: section, children: [
-    /* @__PURE__ */ jsxs3("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
-      /* @__PURE__ */ jsx3("strong", { style: { fontSize: ".8125rem" }, children: t("audio") }),
-      /* @__PURE__ */ jsx3(Button2, { variant: "ghost", size: "sm", onClick: () => void refresh(), children: t("refreshDevices") })
+  return /* @__PURE__ */ jsxs4("section", { "aria-label": t("audio"), style: section, children: [
+    /* @__PURE__ */ jsxs4("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx4("strong", { style: { fontSize: ".8125rem" }, children: t("audio") }),
+      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", size: "sm", onClick: () => void refresh(), children: t("refreshDevices") })
     ] }),
     ["input", "output"].map((kind) => {
       const items = (kind === "output" && !supported ? [] : devices).filter((d) => d.kind === (kind === "input" ? "audioinput" : "audiooutput") && d.deviceId && d.deviceId !== "default");
       const options = [{ value: "system", label: t("systemDefault") }, ...value[kind] && !items.some((d) => d.deviceId === value[kind]) ? [{ value: "device:" + value[kind], label: t("missingDevice") }] : [], ...items.map((d, i) => ({ value: "device:" + d.deviceId, label: d.label || `${kind === "input" ? t("microphone") : t("speaker")} ${i + 1}` }))];
-      return /* @__PURE__ */ jsx3(FieldSelect, { label: kind === "input" ? t("microphone") : t("speaker"), options, value: value[kind] ? "device:" + value[kind] : "system", disabled: active || testing, onChange: (selected) => {
+      return /* @__PURE__ */ jsx4(FieldSelect, { label: kind === "input" ? t("microphone") : t("speaker"), options, value: value[kind] ? "device:" + value[kind] : "system", disabled: active || testing, onChange: (selected) => {
         setError("");
         onChange({ ...value, [kind]: selected === "system" ? "" : selected.slice(7) });
       } }, kind);
     }),
-    /* @__PURE__ */ jsxs3("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
-      /* @__PURE__ */ jsx3(Button2, { variant: "secondary", size: "sm", disabled: active, onClick: () => void probe(), children: testing ? t("stopTest") : t("microphoneTest") }),
-      /* @__PURE__ */ jsx3("div", { role: "meter", "aria-label": t("inputLevel"), "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.round(level * 100), style: { flex: 1, height: 6, borderRadius: 4, overflow: "hidden", background: "var(--dt-muted)" }, children: /* @__PURE__ */ jsx3("div", { style: { height: "100%", width: `${Math.round(level * 100)}%`, background: "var(--dt-primary)", transition: "width 80ms linear" } }) })
+    /* @__PURE__ */ jsxs4("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+      /* @__PURE__ */ jsx4(Button3, { variant: "secondary", size: "sm", disabled: active, onClick: () => void probe(), children: testing ? t("stopTest") : t("microphoneTest") }),
+      /* @__PURE__ */ jsx4("div", { role: "meter", "aria-label": t("inputLevel"), "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.round(level * 100), style: { flex: 1, height: 6, borderRadius: 4, overflow: "hidden", background: "var(--dt-muted)" }, children: /* @__PURE__ */ jsx4("div", { style: { height: "100%", width: `${Math.round(level * 100)}%`, background: "var(--dt-primary)", transition: "width 80ms linear" } }) })
     ] }),
-    /* @__PURE__ */ jsxs3("div", { style: hint, children: [
+    /* @__PURE__ */ jsxs4("div", { style: hint, children: [
       testing ? t("testHint") : t("deviceHint"),
       !supported && t("speakerHint")
     ] }),
-    error && /* @__PURE__ */ jsx3("div", { role: "alert", style: hint, children: localizeError(t, error) })
+    error && /* @__PURE__ */ jsx4("div", { role: "alert", style: hint, children: localizeError(t, error) })
   ] });
 }
 
@@ -3293,23 +3398,24 @@ async function playWakeCue(output = "", volume = 1) {
 }
 
 // src/setup.tsx
-import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
 function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, active, hold, standby, listening, trial, stop, subscribe, callState, callSettings }) {
   const { locale, t } = useLiveI18n(), c = setupCopy(locale);
   const saved = ctx.storage.get(`setup:${scopeKey}`, { mode: "wake", step: 0 });
-  const [mode, setMode] = useState3(saved.mode), [step, setStep] = useState3(saved.step), [data, setData] = useState3(null);
-  const [auth, setAuth] = useState3(null), [targets, setTargets] = useState3([]), [target, setTarget] = useState3("");
-  const [loading, setLoading] = useState3(false), [error, setError] = useState3(""), [note, setNote] = useState3(""), [device, setDevice] = useState3(""), [level, setLevel] = useState3(0), [testing, setTesting] = useState3(false);
-  const [login, setLogin] = useState3({ state: "idle" }), [devices, setDevices] = useState3(ctx.storage.get("audio-devices", { input: "", output: "" }));
-  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1));
-  const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
-  const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null);
-  useEffect3(() => registerStopTest?.(async () => {
+  const [mode, setMode] = useState4(saved.mode), [step, setStep] = useState4(saved.step), [data, setData] = useState4(null);
+  const [auth, setAuth] = useState4(null), [targets, setTargets] = useState4([]), [target, setTarget] = useState4("");
+  const [generic, setGeneric] = useState4(false);
+  const [loading, setLoading] = useState4(false), [error, setError] = useState4(""), [note, setNote] = useState4(""), [device, setDevice] = useState4(""), [level, setLevel] = useState4(0), [testing, setTesting] = useState4(false);
+  const [login, setLogin] = useState4({ state: "idle" }), [devices, setDevices] = useState4(ctx.storage.get("audio-devices", { input: "", output: "" }));
+  const [volume, setVolume] = useState4(ctx.storage.get("wake-cue-volume", 1));
+  const [auto, setAuto] = useState4(ctx.storage.get("hands-free-enabled", false));
+  const alive = useRef4(true), cancel = useRef4(null), owner = useRef4(null), restore = useRef4(null), polling = useRef4(false), openedLogin = useRef4(""), initial = useRef4(true);
+  const captureTask = useRef4(null);
+  useEffect4(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
   }), [registerStopTest]);
-  useEffect3(() => {
+  useEffect4(() => {
     if (suspended) cancel.current?.abort();
   }, [suspended]);
   const currentCall = useSyncExternalStore(subscribe, callState);
@@ -3323,10 +3429,11 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     setLoading(true);
     setError("");
     try {
-      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
+      const [value, bots, phrase] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots"), ctx.rest("/setup/generic").catch(() => null)]);
       safe(() => {
         setData(value);
         setTargets(bots.targets);
+        setGeneric(Boolean(phrase?.enabled && phrase.supported));
         setDevice((d) => d || value.device || value.audio.devices[0] || "");
         setTarget((id) => bots.targets.some((b) => b.target === id) ? id : bots.targets[0]?.target ?? "");
         if (initial.current) {
@@ -3362,7 +3469,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       restore.current = null;
     }
   };
-  useEffect3(() => {
+  useEffect4(() => {
     alive.current = true;
     void load();
     void checkAuth();
@@ -3372,11 +3479,11 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       void release();
     };
   }, [scopeKey, local]);
-  useEffect3(() => {
+  useEffect4(() => {
     ctx.storage.set(`setup:${scopeKey}`, { mode, step });
     if (step === 2) void checkAuth();
   }, [step, mode]);
-  useEffect3(() => {
+  useEffect4(() => {
     if (!local) return;
     const timer = setInterval(async () => {
       if (polling.current) return;
@@ -3511,173 +3618,174 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const selected = targets.find((t2) => t2.target === target);
   const progress = data?.assets.progress;
   const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
-  const complete = mode === "call" ? Boolean(devices) : basicReady(data) && targets.length > 0 && Boolean(auth?.available) && Boolean(data?.legacy || data?.assets.prepared) && Boolean(data?.legacy || ctx.storage.get(`setup-mic:${device}`, false));
-  const canNext = step === 1 ? targets.length > 0 : step === 2 ? Boolean(auth?.available) || mode === "call" : step === 3 ? Boolean(data?.assets.prepared) : step === 4 ? mode === "call" || Boolean(data?.device === device && ctx.storage.get(`setup-mic:${device}`, false)) : true;
+  const complete = mode === "call" ? Boolean(devices) : basicReady(data) && (targets.length > 0 || generic) && Boolean(auth?.available) && Boolean(data?.legacy || data?.assets.prepared) && Boolean(data?.legacy || ctx.storage.get(`setup-mic:${device}`, false));
+  const canNext = step === 1 ? targets.length > 0 || generic : step === 2 ? Boolean(auth?.available) || mode === "call" : step === 3 ? Boolean(data?.assets.prepared) : step === 4 ? mode === "call" || Boolean(data?.device === device && ctx.storage.get(`setup-mic:${device}`, false)) : true;
   const next = () => setStep(steps[Math.min(steps.indexOf(step) + 1, steps.length - 1)]);
   const panel = { display: "grid", gap: 16 };
-  return /* @__PURE__ */ jsxs4("div", { style: { ...panel, maxWidth: 760, padding: "24px 16px", margin: "0 auto", color: "var(--dt-foreground)" }, children: [
-    /* @__PURE__ */ jsxs4("header", { children: [
-      /* @__PURE__ */ jsx4("h2", { style: { fontSize: 22, margin: "0 0 8px" }, children: c("title") }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("intro") })
+  return /* @__PURE__ */ jsxs5("div", { style: { ...panel, maxWidth: 760, padding: "24px 16px", margin: "0 auto", color: "var(--dt-foreground)" }, children: [
+    /* @__PURE__ */ jsxs5("header", { children: [
+      /* @__PURE__ */ jsx5("h2", { style: { fontSize: 22, margin: "0 0 8px" }, children: c("title") }),
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("intro") })
     ] }),
-    /* @__PURE__ */ jsx4("nav", { "aria-label": c("title"), style: { display: "flex", gap: 6, flexWrap: "wrap", borderBottom: divider, paddingBottom: 12 }, children: steps.map((n) => /* @__PURE__ */ jsx4(Button3, { size: "sm", variant: step === n ? "secondary" : "ghost", "aria-current": step === n ? "step" : void 0, disabled: testing, onClick: () => setStep(n), children: c(labels[n]) }, n)) }),
-    !local && /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+    /* @__PURE__ */ jsx5("nav", { "aria-label": c("title"), style: { display: "flex", gap: 6, flexWrap: "wrap", borderBottom: divider, paddingBottom: 12 }, children: steps.map((n) => /* @__PURE__ */ jsx5(Button4, { size: "sm", variant: step === n ? "secondary" : "ghost", "aria-current": step === n ? "step" : void 0, disabled: testing, onClick: () => setStep(n), children: c(labels[n]) }, n)) }),
+    !local && /* @__PURE__ */ jsxs5("p", { role: "status", children: [
       c("localOnly"),
       " ",
-      /* @__PURE__ */ jsx4(Button3, { onClick: callSettings, children: c("callSettings") })
+      /* @__PURE__ */ jsx5(Button4, { onClick: callSettings, children: c("callSettings") })
     ] }),
-    step === 0 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsxs4("label", { children: [
-        /* @__PURE__ */ jsx4("input", { type: "radio", name: "live-setup-mode", checked: mode === "wake", onChange: () => setMode("wake") }),
+    step === 0 && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsxs5("label", { children: [
+        /* @__PURE__ */ jsx5("input", { type: "radio", name: "live-setup-mode", checked: mode === "wake", onChange: () => setMode("wake") }),
         " ",
         c("wakeMode"),
-        /* @__PURE__ */ jsx4("p", { style: hint, children: c("wakeHint") })
+        /* @__PURE__ */ jsx5("p", { style: hint, children: c("wakeHint") })
       ] }),
-      /* @__PURE__ */ jsxs4("label", { children: [
-        /* @__PURE__ */ jsx4("input", { type: "radio", name: "live-setup-mode", checked: mode === "call", onChange: () => setMode("call") }),
+      /* @__PURE__ */ jsxs5("label", { children: [
+        /* @__PURE__ */ jsx5("input", { type: "radio", name: "live-setup-mode", checked: mode === "call", onChange: () => setMode("call") }),
         " ",
         c("manualMode"),
-        /* @__PURE__ */ jsx4("p", { style: hint, children: c("manualHint") })
+        /* @__PURE__ */ jsx5("p", { style: hint, children: c("manualHint") })
       ] }),
-      mode === "wake" && data && !data.assets.supported && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("localOnly") })
+      mode === "wake" && data && !data.assets.supported && /* @__PURE__ */ jsx5("p", { role: "alert", children: c("localOnly") })
     ] }),
-    step === 1 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("selectBots") }),
-      host2.pluginDecisions?.get()["hermes-bots"] === false && /* @__PURE__ */ jsxs4("p", { style: hint, children: [
+    step === 1 && local && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("selectBots") }),
+      host2.pluginDecisions?.get()["hermes-bots"] === false && /* @__PURE__ */ jsxs5("p", { style: hint, children: [
         c("botsDisabled"),
         " ",
-        /* @__PURE__ */ jsx4(Button3, { size: "sm", onClick: () => host2.navigate("/capabilities?tab=plugins"), children: c("manage") })
+        /* @__PURE__ */ jsx5(Button4, { size: "sm", onClick: () => host2.navigate("/capabilities?tab=plugins"), children: c("manage") })
       ] }),
-      /* @__PURE__ */ jsx4(WakeSettings, { rest: ctx.rest, local, changed: () => void load() }),
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => host2.revealPane?.("hermes-bots:pane"), children: c("botsView") })
+      /* @__PURE__ */ jsx5(WakeSettings, { rest: ctx.rest, local, changed: () => void load() }),
+      /* @__PURE__ */ jsx5(GenericWakeSettings, { rest: ctx.rest, local, changed: () => void load() }),
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => host2.revealPane?.("hermes-bots:pane"), children: c("botsView") })
     ] }),
-    step === 2 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("authHint") }),
-      auth?.available ? /* @__PURE__ */ jsx4("p", { role: "status", children: c("signedIn") }) : /* @__PURE__ */ jsxs4(Fragment, { children: [
-        auth?.reason && /* @__PURE__ */ jsx4("p", { role: "status", children: localizeError(t, auth.reason) }),
-        auth?.authState === "cli_missing" ? /* @__PURE__ */ jsx4(Button3, { onClick: () => void ctx.os?.openExternal("https://developers.openai.com/codex/cli/"), children: c("installCodex") }) : /* @__PURE__ */ jsx4(Button3, { disabled: loading || ["starting", "waiting"].includes(login.state), onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "POST" }))), children: c("login") }),
-        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx4("p", { role: "status", children: c("waitingLogin") }),
-        login.url && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void ctx.os?.openExternal(login.url), children: c("openLogin") }),
-        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "DELETE" }))), children: c("cancel") }),
-        ["error", "expired", "cancelled"].includes(login.state) && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("loginFailed") }),
-        /* @__PURE__ */ jsxs4("details", { children: [
-          /* @__PURE__ */ jsx4("summary", { children: c("loginCli") }),
-          /* @__PURE__ */ jsx4("p", { children: /* @__PURE__ */ jsx4("code", { children: "codex login" }) }),
-          /* @__PURE__ */ jsx4("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", children: "Codex" })
+    step === 2 && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("authHint") }),
+      auth?.available ? /* @__PURE__ */ jsx5("p", { role: "status", children: c("signedIn") }) : /* @__PURE__ */ jsxs5(Fragment, { children: [
+        auth?.reason && /* @__PURE__ */ jsx5("p", { role: "status", children: localizeError(t, auth.reason) }),
+        auth?.authState === "cli_missing" ? /* @__PURE__ */ jsx5(Button4, { onClick: () => void ctx.os?.openExternal("https://developers.openai.com/codex/cli/"), children: c("installCodex") }) : /* @__PURE__ */ jsx5(Button4, { disabled: loading || ["starting", "waiting"].includes(login.state), onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "POST" }))), children: c("login") }),
+        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx5("p", { role: "status", children: c("waitingLogin") }),
+        login.url && /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => void ctx.os?.openExternal(login.url), children: c("openLogin") }),
+        ["starting", "waiting"].includes(login.state) && /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => void action(async () => setLogin(await ctx.rest("/setup/login", { method: "DELETE" }))), children: c("cancel") }),
+        ["error", "expired", "cancelled"].includes(login.state) && /* @__PURE__ */ jsx5("p", { role: "alert", children: c("loginFailed") }),
+        /* @__PURE__ */ jsxs5("details", { children: [
+          /* @__PURE__ */ jsx5("summary", { children: c("loginCli") }),
+          /* @__PURE__ */ jsx5("p", { children: /* @__PURE__ */ jsx5("code", { children: "codex login" }) }),
+          /* @__PURE__ */ jsx5("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", children: "Codex" })
         ] })
       ] }),
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: loading, onClick: () => void checkAuth(), children: c("refresh") }),
-      mode === "call" && /* @__PURE__ */ jsx4(Button3, { onClick: callSettings, children: c("callSettings") })
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", disabled: loading, onClick: () => void checkAuth(), children: c("refresh") }),
+      mode === "call" && /* @__PURE__ */ jsx5(Button4, { onClick: callSettings, children: c("callSettings") })
     ] }),
-    step === 3 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("modelHint") }),
-      /* @__PURE__ */ jsxs4("strong", { children: [
+    step === 3 && local && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("modelHint") }),
+      /* @__PURE__ */ jsxs5("strong", { children: [
         "Whisper ",
         data?.assets.model ?? "Small",
         " \xB7 ",
         Math.ceil((data?.assets.bytes ?? 487601967) / 1e6),
         " MB"
       ] }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c(data?.assets.source === "existing" ? "existing" : "managed") }),
-      data?.assets.prepared ? /* @__PURE__ */ jsx4("p", { role: "status", children: c("modelReady") }) : preparingModel(data?.assets) ? /* @__PURE__ */ jsxs4(Fragment, { children: [
-        /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c(data?.assets.source === "existing" ? "existing" : "managed") }),
+      data?.assets.prepared ? /* @__PURE__ */ jsx5("p", { role: "status", children: c("modelReady") }) : preparingModel(data?.assets) ? /* @__PURE__ */ jsxs5(Fragment, { children: [
+        /* @__PURE__ */ jsxs5("p", { role: "status", children: [
           c(progress?.state),
           progress?.state === "downloading" && ` \xB7 ${Math.floor((progress.received ?? 0) / 1e6)} / ${Math.ceil((progress.total ?? 0) / 1e6)} MB`
         ] }),
-        progress?.state === "downloading" && /* @__PURE__ */ jsx4("progress", { "aria-label": c("downloading"), max: progress.total, value: progress.received, style: { width: "100%" } }),
-        /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void action(async () => {
+        progress?.state === "downloading" && /* @__PURE__ */ jsx5("progress", { "aria-label": c("downloading"), max: progress.total, value: progress.received, style: { width: "100%" } }),
+        /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => void action(async () => {
           await ctx.rest("/setup/model", { method: "DELETE" });
           await load();
         }), children: c("cancelDownload") })
-      ] }) : /* @__PURE__ */ jsx4(Button3, { disabled: loading || !data?.assets.supported || !data.assets.engine, onClick: () => void model(), children: c(data?.assets.installed ? "recheckModel" : "download") }),
-      data?.assets.supported && !data.assets.engine && /* @__PURE__ */ jsx4("p", { role: "alert", children: c("engineMissing") }),
-      errorText && /* @__PURE__ */ jsx4("p", { role: "alert", children: errorText }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c(data?.assets.installed ? "prepareHint" : "downloadHint") })
+      ] }) : /* @__PURE__ */ jsx5(Button4, { disabled: loading || !data?.assets.supported || !data.assets.engine, onClick: () => void model(), children: c(data?.assets.installed ? "recheckModel" : "download") }),
+      data?.assets.supported && !data.assets.engine && /* @__PURE__ */ jsx5("p", { role: "alert", children: c("engineMissing") }),
+      errorText && /* @__PURE__ */ jsx5("p", { role: "alert", children: errorText }),
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c(data?.assets.installed ? "prepareHint" : "downloadHint") })
     ] }),
-    step === 4 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("audioHint") }),
-      mode === "call" ? /* @__PURE__ */ jsx4(DeviceSettings, { value: devices, active: block, onChange: (value) => {
+    step === 4 && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("audioHint") }),
+      mode === "call" ? /* @__PURE__ */ jsx5(DeviceSettings, { value: devices, active: block, onChange: (value) => {
         setDevices(value);
         ctx.storage.set("audio-devices", value);
-      } }) : /* @__PURE__ */ jsxs4(Fragment, { children: [
-        /* @__PURE__ */ jsx4(Button3, { disabled: block, onClick: () => void permission(), children: c("grantMic") }),
-        data?.audio.error && /* @__PURE__ */ jsx4("p", { role: "alert", children: setupError(locale, "HL_SETUP:" + data.audio.error) }),
-        /* @__PURE__ */ jsx4(FieldSelect, { label: c("audio"), value: device, disabled: block, options: (data?.audio.devices ?? []).filter((n) => !data?.audio.duplicates.includes(n)).map((n) => ({ value: n, label: n })), onChange: (n) => {
+      } }) : /* @__PURE__ */ jsxs5(Fragment, { children: [
+        /* @__PURE__ */ jsx5(Button4, { disabled: block, onClick: () => void permission(), children: c("grantMic") }),
+        data?.audio.error && /* @__PURE__ */ jsx5("p", { role: "alert", children: setupError(locale, "HL_SETUP:" + data.audio.error) }),
+        /* @__PURE__ */ jsx5(FieldSelect, { label: c("audio"), value: device, disabled: block, options: (data?.audio.devices ?? []).filter((n) => !data?.audio.duplicates.includes(n)).map((n) => ({ value: n, label: n })), onChange: (n) => {
           setDevice(n);
           setNote("");
         } }),
-        /* @__PURE__ */ jsx4(Button3, { disabled: block || !device || !data?.assets.installed, onClick: () => void saveDevice(), children: c("saveMic") }),
-        /* @__PURE__ */ jsx4(Button3, { disabled: block || data?.device !== device || !data?.enabled, onClick: () => {
+        /* @__PURE__ */ jsx5(Button4, { disabled: block || !device || !data?.assets.installed, onClick: () => void saveDevice(), children: c("saveMic") }),
+        /* @__PURE__ */ jsx5(Button4, { disabled: block || data?.device !== device || !data?.enabled, onClick: () => {
           captureTask.current = capture("mic");
         }, children: c("testMic") }),
-        /* @__PURE__ */ jsx4("progress", { "aria-label": c("audio"), max: 1, value: level, style: { width: "100%" } }),
-        /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void ctx.os?.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"), children: c("permission") })
+        /* @__PURE__ */ jsx5("progress", { "aria-label": c("audio"), max: 1, value: level, style: { width: "100%" } }),
+        /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => void ctx.os?.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"), children: c("permission") })
       ] }),
-      /* @__PURE__ */ jsxs4("label", { children: [
+      /* @__PURE__ */ jsxs5("label", { children: [
         c("cueVolume"),
         " ",
-        /* @__PURE__ */ jsx4("input", { "aria-label": c("cueVolume"), type: "range", min: "0", max: "1", step: "0.1", value: volume, onChange: (e) => {
+        /* @__PURE__ */ jsx5("input", { "aria-label": c("cueVolume"), type: "range", min: "0", max: "1", step: "0.1", value: volume, onChange: (e) => {
           const n = Number(e.target.value);
           setVolume(n);
           ctx.storage.set("wake-cue-volume", n);
         } })
       ] }),
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: () => void playWakeCue(devices.output, volume), children: c("cue") })
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: () => void playWakeCue(devices.output, volume), children: c("cue") })
     ] }),
-    step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
-      /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),
-      /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => {
+    step === 5 && local && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      /* @__PURE__ */ jsx5(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
+      /* @__PURE__ */ jsx5("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("testHint") }),
+      /* @__PURE__ */ jsx5(Button4, { disabled: block || !basicReady(data) || !selected && !generic, onClick: () => {
         captureTask.current = capture("wake");
       }, children: c("testWake") }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("trialHint") }),
-      /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => void action(() => trial(target)), children: c("trial") }),
-      /* @__PURE__ */ jsx4("p", { role: "status", children: c(ctx.storage.get(`setup-trial:${target}`, "") === "ended" ? "verified" : "unverified") })
+      /* @__PURE__ */ jsx5("p", { style: hint, children: c("trialHint") }),
+      /* @__PURE__ */ jsx5(Button4, { disabled: block || !basicReady(data) || !selected, onClick: () => void action(() => trial(target)), children: c("trial") }),
+      /* @__PURE__ */ jsx5("p", { role: "status", children: c(ctx.storage.get(`setup-trial:${target}`, "") === "ended" ? "verified" : "unverified") })
     ] }),
-    step === 6 && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
-      !complete && mode === "wake" && /* @__PURE__ */ jsxs4("p", { role: "status", children: [
+    step === 6 && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
+      !complete && mode === "wake" && /* @__PURE__ */ jsxs5("p", { role: "status", children: [
         c("intro"),
         " ",
-        /* @__PURE__ */ jsx4(Button3, { onClick: () => setStep(!targets.length ? 1 : !auth?.available ? 2 : !data?.assets.installed ? 3 : 4), children: c("next") })
+        /* @__PURE__ */ jsx5(Button4, { onClick: () => setStep(!targets.length && !generic ? 1 : !auth?.available ? 2 : !data?.assets.installed ? 3 : 4), children: c("next") })
       ] }),
-      /* @__PURE__ */ jsx4("p", { children: c("readyHint") }),
-      mode === "wake" ? /* @__PURE__ */ jsxs4("p", { children: [
+      /* @__PURE__ */ jsx5("p", { children: c("readyHint") }),
+      mode === "wake" ? /* @__PURE__ */ jsxs5("p", { children: [
         targets.map((t2) => t2.display_name).join(", ") || "\u2014",
         " \xB7 ",
         data?.device || "\u2014"
-      ] }) : /* @__PURE__ */ jsx4("p", { role: "status", children: c("manualReady") }),
-      mode === "wake" && /* @__PURE__ */ jsxs4(Fragment, { children: [
-        /* @__PURE__ */ jsx4("p", { children: targets.map((t2) => t2.phrases[0] + " / Bye " + t2.display_name).join(" \xB7 ") }),
-        /* @__PURE__ */ jsx4("p", { role: "status", children: targets.map((t2) => `${t2.display_name}: ${c(ctx.storage.get(`setup-trial:${t2.target}`, "") === "ended" ? "verified" : "unverified")}`).join(" \xB7 ") }),
-        /* @__PURE__ */ jsxs4("label", { children: [
-          /* @__PURE__ */ jsx4("input", { type: "checkbox", checked: auto, onChange: (e) => {
+      ] }) : /* @__PURE__ */ jsx5("p", { role: "status", children: c("manualReady") }),
+      mode === "wake" && /* @__PURE__ */ jsxs5(Fragment, { children: [
+        /* @__PURE__ */ jsx5("p", { children: targets.map((t2) => t2.phrases[0] + " / Bye " + t2.display_name).join(" \xB7 ") }),
+        /* @__PURE__ */ jsx5("p", { role: "status", children: targets.map((t2) => `${t2.display_name}: ${c(ctx.storage.get(`setup-trial:${t2.target}`, "") === "ended" ? "verified" : "unverified")}`).join(" \xB7 ") }),
+        /* @__PURE__ */ jsxs5("label", { children: [
+          /* @__PURE__ */ jsx5("input", { type: "checkbox", checked: auto, onChange: (e) => {
             setAuto(e.target.checked);
             ctx.storage.set("hands-free-enabled", e.target.checked);
           } }),
           " ",
           c("autoStart")
         ] }),
-        /* @__PURE__ */ jsx4("p", { style: hint, children: c("resumeHint") }),
-        /* @__PURE__ */ jsx4(Button3, { disabled: block || !complete || listening(), onClick: () => void action(async () => {
+        /* @__PURE__ */ jsx5("p", { style: hint, children: c("resumeHint") }),
+        /* @__PURE__ */ jsx5(Button4, { disabled: block || !complete || listening(), onClick: () => void action(async () => {
           if (await standby()) setNote(c("standby"));
         }), children: c(listening() ? "standby" : "begin") }),
-        listening() && /* @__PURE__ */ jsx4("p", { role: "status", children: c("standby") })
+        listening() && /* @__PURE__ */ jsx5("p", { role: "status", children: c("standby") })
       ] }),
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", onClick: callSettings, children: c("callSettings") })
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", onClick: callSettings, children: c("callSettings") })
     ] }),
-    testing && /* @__PURE__ */ jsx4(Button3, { variant: "secondary", onClick: () => cancel.current?.abort(), children: c("stopTest") }),
-    !["idle", "error"].includes(currentCall) && /* @__PURE__ */ jsx4(Button3, { onClick: stop, children: c("endCall") }),
-    note && /* @__PURE__ */ jsx4("p", { role: "status", style: hint, children: note }),
-    error && /* @__PURE__ */ jsxs4("div", { role: "alert", children: [
-      /* @__PURE__ */ jsx4("p", { children: error }),
-      /* @__PURE__ */ jsx4(Button3, { size: "sm", variant: "ghost", onClick: () => host2.navigate(settingsHref(host2.state.profile.get() || "default")), children: c("manage") })
+    testing && /* @__PURE__ */ jsx5(Button4, { variant: "secondary", onClick: () => cancel.current?.abort(), children: c("stopTest") }),
+    !["idle", "error"].includes(currentCall) && /* @__PURE__ */ jsx5(Button4, { onClick: stop, children: c("endCall") }),
+    note && /* @__PURE__ */ jsx5("p", { role: "status", style: hint, children: note }),
+    error && /* @__PURE__ */ jsxs5("div", { role: "alert", children: [
+      /* @__PURE__ */ jsx5("p", { children: error }),
+      /* @__PURE__ */ jsx5(Button4, { size: "sm", variant: "ghost", onClick: () => host2.navigate(settingsHref(host2.state.profile.get() || "default")), children: c("manage") })
     ] }),
-    /* @__PURE__ */ jsxs4("footer", { style: { display: "flex", gap: 8, flexWrap: "wrap", borderTop: divider, paddingTop: 16 }, children: [
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: testing, onClick: () => host2.navigate("/"), children: c("later") }),
-      /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: loading, onClick: () => void load(), children: c(loading ? "checking" : "refresh") }),
-      step > 0 && /* @__PURE__ */ jsx4(Button3, { variant: "ghost", disabled: block, onClick: () => setStep(steps[Math.max(0, steps.indexOf(step) - 1)]), children: c("back") }),
-      step < 6 && /* @__PURE__ */ jsx4(Button3, { disabled: block || !canNext || mode === "wake" && (!local || !data?.assets.supported), onClick: next, children: c("next") })
+    /* @__PURE__ */ jsxs5("footer", { style: { display: "flex", gap: 8, flexWrap: "wrap", borderTop: divider, paddingTop: 16 }, children: [
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", disabled: testing, onClick: () => host2.navigate("/"), children: c("later") }),
+      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", disabled: loading, onClick: () => void load(), children: c(loading ? "checking" : "refresh") }),
+      step > 0 && /* @__PURE__ */ jsx5(Button4, { variant: "ghost", disabled: block, onClick: () => setStep(steps[Math.max(0, steps.indexOf(step) - 1)]), children: c("back") }),
+      step < 6 && /* @__PURE__ */ jsx5(Button4, { disabled: block || !canNext || mode === "wake" && (!local || !data?.assets.supported), onClick: next, children: c("next") })
     ] })
   ] });
 }
@@ -3799,7 +3907,7 @@ var WakeCoordinator = class {
       if (!this.enabled || generation !== this.generation) return;
       this.config = config;
       this.error = "";
-      if (config.targets?.length === 0) {
+      if (config.targets?.length === 0 && !config.generic) {
         if (this.held) {
           await this.command("release");
           this.held = false;
@@ -3824,7 +3932,7 @@ var WakeCoordinator = class {
         this.set("calling");
         return;
       }
-      if (status.eventId) await this.detected({ owner: this.owner, eventId: status.eventId, target: status.target ?? config.target });
+      if (status.eventId) await this.detected({ owner: this.owner, eventId: status.eventId, target: status.target ?? config.target, ...status.selection?.generic ? { generic: true } : {} });
       else if (status.state === "paused") {
         await this.command("resume");
         this.set("armed");
@@ -3840,7 +3948,8 @@ var WakeCoordinator = class {
     }
   }
   async detected(event) {
-    if (!this.enabled || this.handling || this.calling || !this.deps.local() || event.owner !== this.owner || !event.eventId || !(this.config?.targets?.some((t) => t.target === event.target) ?? event.target === this.config?.target) || this.seen.has(event.eventId)) return;
+    const known = event.generic ? Boolean(this.config?.generic && this.deps.startFocused) : this.config?.targets?.some((t) => t.target === event.target) ?? event.target === this.config?.target;
+    if (!this.enabled || this.handling || this.calling || !this.deps.local() || event.owner !== this.owner || !event.eventId || !known || this.seen.has(event.eventId)) return;
     this.handling = true;
     const generation = this.generation;
     this.seen.add(event.eventId);
@@ -3849,6 +3958,18 @@ var WakeCoordinator = class {
     try {
       const claimed = await this.command("claim", event.eventId);
       if (!current()) return;
+      if (event.generic) {
+        if (!claimed.selection?.generic || !this.config?.generic) throw new Error("Stale generic selection");
+        if (this.deps.busy()) {
+          await this.command("resume");
+          this.set("armed");
+          return;
+        }
+        this.calling = true;
+        this.set("calling");
+        await this.deps.startFocused(this.config, current);
+        return;
+      }
       const selected = claimed.selection ?? this.config?.targets?.find((t) => t.target === event.target);
       if (this.config?.targets && (!selected || selected.target !== event.target)) throw new Error("Stale bot selection");
       const config = selected ? { ...this.config, target: selected.target, phrase: selected.phrases[0], names: [...selected.names] } : this.config;
@@ -3985,39 +4106,39 @@ var VoiceActivity = class {
 };
 
 // src/auth-settings.tsx
-import { useEffect as useEffect4, useState as useState4 } from "react";
-import { Button as Button4, DisclosureCaret } from "@hermes/plugin-sdk";
-import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+import { useEffect as useEffect5, useState as useState5 } from "react";
+import { Button as Button5, DisclosureCaret } from "@hermes/plugin-sdk";
+import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
 function AuthSettings({ provider, selected, backend, connection, profile, active, loading, configure, recheck }) {
   const { t } = useLiveI18n();
   const codex = selected === "codex";
-  const [expanded, setExpanded] = useState4(false);
-  useEffect4(() => {
+  const [expanded, setExpanded] = useState5(false);
+  useEffect5(() => {
     setExpanded(provider?.available === false);
   }, [selected, provider?.available]);
-  return /* @__PURE__ */ jsxs5("section", { "aria-label": t("authentication"), style: { ...section, borderTop: divider, paddingTop: 16 }, children: [
-    /* @__PURE__ */ jsxs5("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }, children: [
-      /* @__PURE__ */ jsx5("strong", { style: { fontSize: ".8125rem" }, children: t("authentication") }),
-      /* @__PURE__ */ jsx5(Button4, { variant: "ghost", size: "sm", disabled: active || loading, onClick: recheck, children: loading ? t("checking") : t("refresh") })
+  return /* @__PURE__ */ jsxs6("section", { "aria-label": t("authentication"), style: { ...section, borderTop: divider, paddingTop: 16 }, children: [
+    /* @__PURE__ */ jsxs6("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }, children: [
+      /* @__PURE__ */ jsx6("strong", { style: { fontSize: ".8125rem" }, children: t("authentication") }),
+      /* @__PURE__ */ jsx6(Button5, { variant: "ghost", size: "sm", disabled: active || loading, onClick: recheck, children: loading ? t("checking") : t("refresh") })
     ] }),
-    /* @__PURE__ */ jsxs5("div", { style: { ...section, gap: 4 }, children: [
-      provider?.available && /* @__PURE__ */ jsx5("p", { role: "status", style: { ...hint, color: "var(--dt-foreground)" }, children: t(codex ? "authSignedIn" : "authConfigured") }),
-      /* @__PURE__ */ jsx5("p", { style: { ...hint, overflowWrap: "anywhere" }, children: t("authTarget", backend || "\u2014", connection, profile) })
+    /* @__PURE__ */ jsxs6("div", { style: { ...section, gap: 4 }, children: [
+      provider?.available && /* @__PURE__ */ jsx6("p", { role: "status", style: { ...hint, color: "var(--dt-foreground)" }, children: t(codex ? "authSignedIn" : "authConfigured") }),
+      /* @__PURE__ */ jsx6("p", { style: { ...hint, overflowWrap: "anywhere" }, children: t("authTarget", backend || "\u2014", connection, profile) })
     ] }),
-    codex ? /* @__PURE__ */ jsxs5("div", { style: { display: "grid", gap: expanded ? 12 : 0 }, children: [
-      /* @__PURE__ */ jsxs5(Button4, { variant: "ghost", size: "sm", "aria-expanded": expanded, onClick: () => setExpanded((value) => !value), style: { justifyContent: "flex-start", gap: 6, paddingInline: 0, width: "fit-content" }, children: [
-        /* @__PURE__ */ jsx5(DisclosureCaret, { open: expanded }),
+    codex ? /* @__PURE__ */ jsxs6("div", { style: { display: "grid", gap: expanded ? 12 : 0 }, children: [
+      /* @__PURE__ */ jsxs6(Button5, { variant: "ghost", size: "sm", "aria-expanded": expanded, onClick: () => setExpanded((value) => !value), style: { justifyContent: "flex-start", gap: 6, paddingInline: 0, width: "fit-content" }, children: [
+        /* @__PURE__ */ jsx6(DisclosureCaret, { open: expanded }),
         t("authSignIn")
       ] }),
-      expanded && /* @__PURE__ */ jsxs5("div", { style: { ...section, ...hint, gap: 12 }, children: [
-        /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: t("authCodexScope") }),
-        [["authLocal", "codex login"], ["authRemote", "codex login --device-auth"]].map(([key, command]) => /* @__PURE__ */ jsxs5("div", { style: { display: "grid", gap: 6 }, children: [
-          /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: t(key) }),
-          /* @__PURE__ */ jsx5("code", { style: { display: "block", userSelect: "text", padding: "8px 10px", border: divider, borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", color: "var(--dt-foreground)", overflowWrap: "anywhere" }, children: command })
+      expanded && /* @__PURE__ */ jsxs6("div", { style: { ...section, ...hint, gap: 12 }, children: [
+        /* @__PURE__ */ jsx6("p", { style: { margin: 0 }, children: t("authCodexScope") }),
+        [["authLocal", "codex login"], ["authRemote", "codex login --device-auth"]].map(([key, command]) => /* @__PURE__ */ jsxs6("div", { style: { display: "grid", gap: 6 }, children: [
+          /* @__PURE__ */ jsx6("p", { style: { margin: 0 }, children: t(key) }),
+          /* @__PURE__ */ jsx6("code", { style: { display: "block", userSelect: "text", padding: "8px 10px", border: divider, borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", color: "var(--dt-foreground)", overflowWrap: "anywhere" }, children: command })
         ] }, key)),
-        /* @__PURE__ */ jsx5("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", style: { color: "var(--dt-primary)", textDecoration: "underline", textUnderlineOffset: 3 }, children: t("authDocs") })
+        /* @__PURE__ */ jsx6("a", { href: "https://developers.openai.com/codex/auth/", target: "_blank", rel: "noreferrer", style: { color: "var(--dt-primary)", textDecoration: "underline", textUnderlineOffset: 3 }, children: t("authDocs") })
       ] })
-    ] }) : /* @__PURE__ */ jsx5(Button4, { variant: "secondary", size: "sm", disabled: active || loading, onClick: configure, style: { justifySelf: "start" }, children: t("authConfigure") })
+    ] }) : /* @__PURE__ */ jsx6(Button5, { variant: "secondary", size: "sm", disabled: active || loading, onClick: configure, style: { justifySelf: "start" }, children: t("authConfigure") })
   ] });
 }
 
@@ -4108,14 +4229,14 @@ var ProfileTransition = class {
 };
 
 // src/hover-controls.tsx
-import { useEffect as useEffect5, useRef as useRef4, useState as useState5 } from "react";
+import { useEffect as useEffect6, useRef as useRef5, useState as useState6 } from "react";
 import { Popover, PopoverContent, PopoverTrigger, Tip } from "@hermes/plugin-sdk";
-import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
 function HoverControls({ primary, children, label, tip, holdOpen }) {
-  const [open, setOpen] = useState5(false);
-  const timer = useRef4(null);
-  const panel = useRef4(null);
-  const anchor = useRef4(null), skipFocus = useRef4(false);
+  const [open, setOpen] = useState6(false);
+  const timer = useRef5(null);
+  const panel = useRef5(null);
+  const anchor = useRef5(null), skipFocus = useRef5(false);
   const cancel = () => {
     if (timer.current !== null) clearTimeout(timer.current);
     timer.current = null;
@@ -4131,8 +4252,8 @@ function HoverControls({ primary, children, label, tip, holdOpen }) {
       setOpen(false);
     }, 150);
   };
-  useEffect5(() => cancel, []);
-  useEffect5(() => {
+  useEffect6(() => cancel, []);
+  useEffect6(() => {
     if (!open || holdOpen) return;
     const move = (event) => {
       const node = event.target instanceof Node ? event.target : null;
@@ -4149,11 +4270,11 @@ function HoverControls({ primary, children, label, tip, holdOpen }) {
     anchor.current?.querySelector("button")?.focus();
     skipFocus.current = false;
   };
-  return /* @__PURE__ */ jsxs6(Popover, { open: open || holdOpen, onOpenChange: (value) => {
+  return /* @__PURE__ */ jsxs7(Popover, { open: open || holdOpen, onOpenChange: (value) => {
     if (value) show();
     else setOpen(false);
   }, children: [
-    /* @__PURE__ */ jsx6("span", { ref: anchor, style: { display: "inline-flex", position: "relative" }, onPointerEnter: show, onPointerLeave: hideSoon, onFocus: () => {
+    /* @__PURE__ */ jsx7("span", { ref: anchor, style: { display: "inline-flex", position: "relative" }, onPointerEnter: show, onPointerLeave: hideSoon, onFocus: () => {
       if (!skipFocus.current) show();
     }, onBlur: (e) => {
       if (!e.currentTarget.contains(e.relatedTarget)) hideSoon();
@@ -4166,8 +4287,8 @@ function HoverControls({ primary, children, label, tip, holdOpen }) {
         show();
         requestAnimationFrame(() => panel.current?.querySelector("button")?.focus());
       }
-    }, children: /* @__PURE__ */ jsx6(Tip, { label: tip, placement: "control", children: /* @__PURE__ */ jsx6(PopoverTrigger, { asChild: true, children: primary }) }) }),
-    /* @__PURE__ */ jsx6(PopoverContent, { ref: panel, role: "group", "aria-label": label, side: "top", align: "center", sideOffset: 4, variant: "menu", onPointerEnter: show, onPointerLeave: hideSoon, onFocus: show, onBlur: (e) => {
+    }, children: /* @__PURE__ */ jsx7(Tip, { label: tip, placement: "control", children: /* @__PURE__ */ jsx7(PopoverTrigger, { asChild: true, children: primary }) }) }),
+    /* @__PURE__ */ jsx7(PopoverContent, { ref: panel, role: "group", "aria-label": label, side: "top", align: "center", sideOffset: 4, variant: "menu", onPointerEnter: show, onPointerLeave: hideSoon, onFocus: show, onBlur: (e) => {
       if (!e.currentTarget.contains(e.relatedTarget)) hideSoon();
     }, onOpenAutoFocus: (e) => e.preventDefault(), onCloseAutoFocus: (e) => e.preventDefault(), onEscapeKeyDown: () => {
       if (!holdOpen) escape();
@@ -4176,8 +4297,8 @@ function HoverControls({ primary, children, label, tip, holdOpen }) {
 }
 
 // src/usage-settings.tsx
-import { useEffect as useEffect6, useState as useState6 } from "react";
-import { Button as Button5, SegmentedControl } from "@hermes/plugin-sdk";
+import { useEffect as useEffect7, useState as useState7 } from "react";
+import { Button as Button6, SegmentedControl } from "@hermes/plugin-sdk";
 
 // src/usage.ts
 var PRICING_DATE = "2026-10-23";
@@ -4292,13 +4413,13 @@ var UsageLedger = class {
 };
 
 // src/usage-settings.tsx
-import { Fragment as Fragment2, jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 var names = { qwen: "Qwen Realtime", gemini: "Gemini Live", grok: "Grok Voice", codex: "Codex \xB7 GPT Live" };
 function UsageSettings({ data, selection, readQuota }) {
   const { t, locale } = useLiveI18n();
   const duration = (ms) => formatDuration(locale, ms), number = (n) => formatNumber(locale, n), dollars = (n) => formatMoney(locale, n);
-  const [provider, setProvider] = useState6(selection.provider), [quota, setQuota] = useState6(null), [error, setError] = useState6(""), [loading, setLoading] = useState6(false), [refresh, setRefresh] = useState6(0);
-  useEffect6(() => {
+  const [provider, setProvider] = useState7(selection.provider), [quota, setQuota] = useState7(null), [error, setError] = useState7(""), [loading, setLoading] = useState7(false), [refresh, setRefresh] = useState7(0);
+  useEffect7(() => {
     let cancelled = false;
     if (provider !== "codex") return;
     setLoading(true);
@@ -4316,102 +4437,102 @@ function UsageSettings({ data, selection, readQuota }) {
     };
   }, [provider, refresh]);
   const total = summarize(data, provider), day = summarize(data, provider, Date.now() - 864e5), five = summarize(data, provider, Date.now() - 5 * 36e5);
-  const tokenTotals = /* @__PURE__ */ jsxs7(Fragment2, { children: [
-    /* @__PURE__ */ jsx7("div", { children: t("tokens", number(total.input), number(total.output)) }),
-    /* @__PURE__ */ jsxs7("div", { children: [
+  const tokenTotals = /* @__PURE__ */ jsxs8(Fragment2, { children: [
+    /* @__PURE__ */ jsx8("div", { children: t("tokens", number(total.input), number(total.output)) }),
+    /* @__PURE__ */ jsxs8("div", { children: [
       t("estimated", dollars(total.usd)),
       total.unpriced > 0 ? t("unpriced") : ""
     ] })
   ] });
-  const rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs7(Fragment2, { children: [
+  const rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs8(Fragment2, { children: [
     t("audioRates", dollars(audioIn), dollars(audioOut)),
-    /* @__PURE__ */ jsx7("br", {}),
+    /* @__PURE__ */ jsx8("br", {}),
     t("textRates", dollars(textIn), dollars(textOut))
   ] });
-  return /* @__PURE__ */ jsxs7("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
-    /* @__PURE__ */ jsx7("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx7(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
-    /* @__PURE__ */ jsx7("strong", { children: names[provider] }),
-    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx7("span", { children: t("last24") }),
-      /* @__PURE__ */ jsxs7("span", { children: [
+  return /* @__PURE__ */ jsxs8("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
+    /* @__PURE__ */ jsx8("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx8(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
+    /* @__PURE__ */ jsx8("strong", { children: names[provider] }),
+    /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx8("span", { children: t("last24") }),
+      /* @__PURE__ */ jsxs8("span", { children: [
         duration(day.durationMs),
         " \xB7 ",
         t("calls", number(day.calls))
       ] })
     ] }),
-    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx7("span", { children: t("totalCalls") }),
-      /* @__PURE__ */ jsxs7("span", { children: [
+    /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx8("span", { children: t("totalCalls") }),
+      /* @__PURE__ */ jsxs8("span", { children: [
         duration(total.durationMs),
         " \xB7 ",
         t("calls", number(total.calls))
       ] })
     ] }),
-    provider === "gemini" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+    provider === "gemini" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsx7("div", { style: hint, children: t("geminiHint") }),
-      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
+      /* @__PURE__ */ jsx8("div", { style: hint, children: t("geminiHint") }),
+      /* @__PURE__ */ jsxs8("div", { style: hint, children: [
         t("perMillion"),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         "Gemini 3.8 / 3.1: ",
         rates(3, 12, 0.75, 4.5),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         "Gemini 2.5: ",
         rates(3, 12, 0.5, 2)
       ] })
     ] }),
-    provider === "qwen" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+    provider === "qwen" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
+      /* @__PURE__ */ jsxs8("div", { style: hint, children: [
         t("qwenHint"),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         t("perMillion"),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         "Singapore: ",
         rates(0.93, 1.87, 0.23, 0.7),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         "Beijing: ",
         rates(0.848, 1.696, 0.212, 0.636)
       ] })
     ] }),
-    provider === "grok" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
-      /* @__PURE__ */ jsx7("div", { children: t("estimated", dollars(total.usd)) }),
-      /* @__PURE__ */ jsx7("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
+    provider === "grok" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
+      /* @__PURE__ */ jsx8("div", { children: t("estimated", dollars(total.usd)) }),
+      /* @__PURE__ */ jsx8("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
     ] }),
-    provider === "codex" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
-      /* @__PURE__ */ jsxs7("div", { children: [
+    provider === "codex" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
+      /* @__PURE__ */ jsxs8("div", { children: [
         t("last5"),
         " ",
         duration(five.durationMs)
       ] }),
-      /* @__PURE__ */ jsx7("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
-      /* @__PURE__ */ jsxs7("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
-        /* @__PURE__ */ jsx7("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
-        /* @__PURE__ */ jsx7(Button5, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: loading ? t("refreshing") : t("refresh") })
+      /* @__PURE__ */ jsx8("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
+      /* @__PURE__ */ jsxs8("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
+        /* @__PURE__ */ jsx8("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
+        /* @__PURE__ */ jsx8(Button6, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: loading ? t("refreshing") : t("refresh") })
       ] }),
-      error && /* @__PURE__ */ jsx7("div", { role: "alert", style: hint, children: localizeError(t, error) }),
-      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs7("div", { children: [
-        /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
-          /* @__PURE__ */ jsx7("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
-          /* @__PURE__ */ jsx7("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
+      error && /* @__PURE__ */ jsx8("div", { role: "alert", style: hint, children: localizeError(t, error) }),
+      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs8("div", { children: [
+        /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
+          /* @__PURE__ */ jsx8("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
+          /* @__PURE__ */ jsx8("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
         ] }),
-        /* @__PURE__ */ jsx7("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
-        w.resetsAt && /* @__PURE__ */ jsx7("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
+        /* @__PURE__ */ jsx8("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
+        w.resetsAt && /* @__PURE__ */ jsx8("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
       ] }, i)),
-      quota && /* @__PURE__ */ jsxs7("div", { style: hint, children: [
+      quota && /* @__PURE__ */ jsxs8("div", { style: hint, children: [
         quota.windows.length ? t("officialQuota") : t("noQuota"),
         " ",
         t("checked", formatDate(locale, quota.checkedAt * 1e3, true)),
-        /* @__PURE__ */ jsx7("br", {}),
+        /* @__PURE__ */ jsx8("br", {}),
         t("quotaHint")
       ] })
     ] }),
-    /* @__PURE__ */ jsx7("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
-    /* @__PURE__ */ jsxs7("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
+    /* @__PURE__ */ jsx8("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
+    /* @__PURE__ */ jsxs8("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
       provider === "codex" ? t("quotaPage") : t("pricingPage"),
       " \u2197"
     ] }),
-    provider !== "codex" && /* @__PURE__ */ jsx7("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
+    provider !== "codex" && /* @__PURE__ */ jsx8("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
   ] });
 }
 
@@ -4461,8 +4582,8 @@ function voiceSubmission(session, text2, context, submissionId) {
 }
 
 // src/plugin.tsx
-import { useEffect as useEffect7, useRef as useRef5, useState as useState7, useSyncExternalStore as useSyncExternalStore2 } from "react";
-import { Button as Button6, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+import { useEffect as useEffect8, useRef as useRef6, useState as useState8, useSyncExternalStore as useSyncExternalStore2 } from "react";
+import { Button as Button7, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
 
 // src/goodbye.ts
 var normalize2 = (value) => value.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
@@ -5411,18 +5532,18 @@ var HermesBridge = class {
 };
 
 // src/plugin.tsx
-import { Fragment as Fragment3, jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
 function Icon({ name, size = 16 }) {
-  const paths = { wake: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "M6 9a6 6 0 0 1 12 0c0 4-4 4-4 7a4 4 0 0 1-8 0M10 9a2 2 0 0 1 4 0c0 2-3 2-3 5" }) }), settings: /* @__PURE__ */ jsxs8(Fragment3, { children: [
-    /* @__PURE__ */ jsx8("path", { d: "M4 6h16M4 12h16M4 18h16" }),
-    /* @__PURE__ */ jsx8("circle", { cx: "9", cy: "6", r: "2", fill: "currentColor" }),
-    /* @__PURE__ */ jsx8("circle", { cx: "15", cy: "12", r: "2", fill: "currentColor" }),
-    /* @__PURE__ */ jsx8("circle", { cx: "8", cy: "18", r: "2", fill: "currentColor" })
-  ] }), live: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4" }) }), mic: /* @__PURE__ */ jsxs8(Fragment3, { children: [
-    /* @__PURE__ */ jsx8("rect", { x: "9", y: "2", width: "6", height: "12", rx: "3" }),
-    /* @__PURE__ */ jsx8("path", { d: "M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" })
-  ] }), muted: /* @__PURE__ */ jsx8(Fragment3, { children: /* @__PURE__ */ jsx8("path", { d: "m3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 0v4M5 10v2a7 7 0 0 0 12 5M12 19v3m-4 0h8" }) }), end: /* @__PURE__ */ jsx8("path", { d: "M4 15c-1 0-2-1-2-2v-2c5-6 15-6 20 0v2c0 1-1 2-2 2l-4-2v-3a14 14 0 0 0-8 0v3z" }), close: /* @__PURE__ */ jsx8("path", { d: "m6 6 12 12M6 18 18 6" }) };
-  return /* @__PURE__ */ jsx8("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
+  const paths = { wake: /* @__PURE__ */ jsx9(Fragment3, { children: /* @__PURE__ */ jsx9("path", { d: "M6 9a6 6 0 0 1 12 0c0 4-4 4-4 7a4 4 0 0 1-8 0M10 9a2 2 0 0 1 4 0c0 2-3 2-3 5" }) }), settings: /* @__PURE__ */ jsxs9(Fragment3, { children: [
+    /* @__PURE__ */ jsx9("path", { d: "M4 6h16M4 12h16M4 18h16" }),
+    /* @__PURE__ */ jsx9("circle", { cx: "9", cy: "6", r: "2", fill: "currentColor" }),
+    /* @__PURE__ */ jsx9("circle", { cx: "15", cy: "12", r: "2", fill: "currentColor" }),
+    /* @__PURE__ */ jsx9("circle", { cx: "8", cy: "18", r: "2", fill: "currentColor" })
+  ] }), live: /* @__PURE__ */ jsx9(Fragment3, { children: /* @__PURE__ */ jsx9("path", { d: "M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4" }) }), mic: /* @__PURE__ */ jsxs9(Fragment3, { children: [
+    /* @__PURE__ */ jsx9("rect", { x: "9", y: "2", width: "6", height: "12", rx: "3" }),
+    /* @__PURE__ */ jsx9("path", { d: "M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" })
+  ] }), muted: /* @__PURE__ */ jsx9(Fragment3, { children: /* @__PURE__ */ jsx9("path", { d: "m3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 0v4M5 10v2a7 7 0 0 0 12 5M12 19v3m-4 0h8" }) }), end: /* @__PURE__ */ jsx9("path", { d: "M4 15c-1 0-2-1-2-2v-2c5-6 15-6 20 0v2c0 1-1 2-2 2l-4-2v-3a14 14 0 0 0-8 0v3z" }), close: /* @__PURE__ */ jsx9("path", { d: "m6 6 12 12M6 18 18 6" }) };
+  return /* @__PURE__ */ jsx9("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", children: paths[name] });
 }
 var mutedStyle = hint;
 var controlSize = "var(--composer-control-size, 24px)";
@@ -5432,9 +5553,9 @@ var providerNames = { qwen: "Alibaba Qwen Realtime", gemini: "Google Gemini Live
 function CallWave({ state }) {
   const speaking = state.status === "speaking";
   const level = state.muted ? 0 : Math.max(0, Math.min(1, state.level));
-  return /* @__PURE__ */ jsxs8("span", { "aria-hidden": "true", style: { display: "flex", height: 12, alignItems: "center", gap: 2 }, children: [
-    /* @__PURE__ */ jsx8("style", { children: "@keyframes hermes-live-wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}@media(prefers-reduced-motion:reduce){.hermes-live-wave{animation:none!important}}" }),
-    [0.55, 0.85, 1, 0.85, 0.55].map((weight, i) => /* @__PURE__ */ jsx8("span", { className: "hermes-live-wave", style: { width: 2, borderRadius: 2, background: "currentColor", height: speaking ? 12 : (0.3 + Math.min(0.7, level * weight)) * 12, transition: "height 100ms ease", animation: speaking ? `hermes-live-wave ${0.55 + i * 0.07}s ease-in-out ${i * -0.12}s infinite` : void 0 } }, i))
+  return /* @__PURE__ */ jsxs9("span", { "aria-hidden": "true", style: { display: "flex", height: 12, alignItems: "center", gap: 2 }, children: [
+    /* @__PURE__ */ jsx9("style", { children: "@keyframes hermes-live-wave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}@media(prefers-reduced-motion:reduce){.hermes-live-wave{animation:none!important}}" }),
+    [0.55, 0.85, 1, 0.85, 0.55].map((weight, i) => /* @__PURE__ */ jsx9("span", { className: "hermes-live-wave", style: { width: 2, borderRadius: 2, background: "currentColor", height: speaking ? 12 : (0.3 + Math.min(0.7, level * weight)) * 12, transition: "height 100ms ease", animation: speaking ? `hermes-live-wave ${0.55 + i * 0.07}s ease-in-out ${i * -0.12}s infinite` : void 0 } }, i))
   ] });
 }
 function currentScope() {
@@ -5688,6 +5809,36 @@ var plugin_default = {
         unsubscribe();
       }
     }
+    async function startFocused(config, current) {
+      if (voiceMode.paused) throw new Error("HL_ERROR:errBusy");
+      let owned = false;
+      try {
+        const scope = currentScope();
+        if (!host3.state.focusedSessionOwner.get() || !scope.profile) throw new Error("HL_ERROR:errNoFocusedChat");
+        if (!apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        const selected = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), config.input_device);
+        if (!current() || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        if (activity.active || !["idle", "error"].includes(controller.snapshot.status) || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
+        void playWakeCue(devices().output, ctx.storage.get("wake-cue-volume", 1));
+        ctx.storage.set("audio-devices", { ...devices(), input: selected.deviceId });
+        const saved = ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, null);
+        const selection = { provider: "codex", model: "gpt-live-1-codex", voice: saved?.provider === "codex" && saved.voice ? saved.voice : "cove" };
+        const names2 = config.generic?.names?.[scope.profile]?.filter(Boolean) ?? [];
+        if (!names2.length) names2.push(scope.profile);
+        callOwner = scope;
+        owned = true;
+        wakeNames = [...names2];
+        wakeCall = true;
+        wakeGreeting = { name: names2[0], phrase: config.generic?.phrase ?? "" };
+        await controller.start(selection);
+        if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
+      } catch (error) {
+        if (owned) stop();
+        host3.notify({ kind: "error", message: localizeError(t, error instanceof Error ? error.message : "HL_ERROR:errGeneric") });
+        if (!owned && !["idle", "error"].includes(controller.snapshot.status)) return;
+        throw error;
+      }
+    }
     wake = new WakeCoordinator({
       config: () => ctx.rest("/wake/config"),
       control: (owner, action, eventId) => ctx.rest("/wake/control", { method: "POST", body: { owner, action, ...eventId ? { eventId } : {} }, timeoutMs: 2e4 }),
@@ -5696,6 +5847,7 @@ var plugin_default = {
       busy: () => activity.active || !["idle", "error"].includes(controller.snapshot.status) || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean),
       failed: (error) => host3.notify({ kind: "error", message: localizeError(t, error instanceof Error ? error.message : "HL_ERROR:errGeneric") }),
       start: startWake,
+      startFocused,
       changed: () => listeners.forEach((fn) => fn())
     });
     ctx.onEvent("plugin.hermes-live.wake", (event) => {
@@ -5771,9 +5923,9 @@ var plugin_default = {
         listeners.add(fn);
         return () => listeners.delete(fn);
       }, () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
-      return /* @__PURE__ */ jsxs8("div", { style: { display: "grid", gap: 8 }, children: [
-        /* @__PURE__ */ jsx8(Button6, { variant: "secondary", disabled: voiceMode.busy, onClick: () => void changeVoiceMode(), children: c(voiceMode.busy ? voiceMode.intent === "pause" ? "pausingVoice" : "resumingVoice" : voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice") }),
-        /* @__PURE__ */ jsx8("p", { role: "status", style: { ...hint, margin: 0 }, children: c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : voiceMode.paused && !voiceMode.busy ? "pausedHelp" : "pauseHelp") })
+      return /* @__PURE__ */ jsxs9("div", { style: { display: "grid", gap: 8 }, children: [
+        /* @__PURE__ */ jsx9(Button7, { variant: "secondary", disabled: voiceMode.busy, onClick: () => void changeVoiceMode(), children: c(voiceMode.busy ? voiceMode.intent === "pause" ? "pausingVoice" : "resumingVoice" : voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice") }),
+        /* @__PURE__ */ jsx9("p", { role: "status", style: { ...hint, margin: 0 }, children: c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : voiceMode.paused && !voiceMode.busy ? "pausedHelp" : "pauseHelp") })
       ] });
     }
     function SetupPage() {
@@ -5783,9 +5935,9 @@ var plugin_default = {
         listeners.add(fn);
         return () => listeners.delete(fn);
       }, () => `${voiceMode.paused}:${voiceMode.busy}`);
-      return /* @__PURE__ */ jsxs8(Fragment3, { children: [
-        /* @__PURE__ */ jsx8("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: /* @__PURE__ */ jsx8(VoiceModeControls, {}) }),
-        /* @__PURE__ */ jsx8(
+      return /* @__PURE__ */ jsxs9(Fragment3, { children: [
+        /* @__PURE__ */ jsx9("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: /* @__PURE__ */ jsx9(VoiceModeControls, {}) }),
+        /* @__PURE__ */ jsx9(
           Setup,
           {
             suspended: voiceMode.paused || voiceMode.busy,
@@ -5847,7 +5999,7 @@ var plugin_default = {
         )
       ] });
     }
-    ctx.registerSettingsPage?.({ id: "setup", title: "Hermes Live", icon: "unmute", render: () => /* @__PURE__ */ jsx8(SetupPage, {}) });
+    ctx.registerSettingsPage?.({ id: "setup", title: "Hermes Live", icon: "unmute", render: () => /* @__PURE__ */ jsx9(SetupPage, {}) });
     function LiveButton() {
       const { t: t2, locale } = useLiveI18n();
       const c = setupCopy(locale);
@@ -5855,7 +6007,7 @@ var plugin_default = {
         listeners.add(fn);
         return () => listeners.delete(fn);
       }, () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
-      useEffect7(() => {
+      useEffect8(() => {
         if (booted) return;
         booted = true;
         if (!voiceMode.paused && ctx.storage.get("hands-free-enabled", false)) void wake.enable(true).then(prewarm);
@@ -5872,27 +6024,27 @@ var plugin_default = {
       const focusedOwner = useSyncExternalStore2((fn) => host3.state.focusedSessionOwner.subscribe(fn), () => host3.state.focusedSessionOwner.get());
       const scopeKey = `selection:${focusedOwner?.connectionId ?? ""}:${focusedOwner?.profile ?? ""}`;
       const savedSelection = () => ctx.storage.get(scopeKey, defaults);
-      const [tab, setTab] = useState7("call");
-      const [deviceChoice, setDevices] = useState7(devices);
-      const [backend, setBackend] = useState7("");
-      const [open, setOpen] = useState7(false);
-      const [catalog, setCatalog] = useState7([]);
-      const [loading, setLoading] = useState7(false);
-      const [error, setError] = useState7("");
-      const [draftSelection, setSelection] = useState7(savedSelection);
+      const [tab, setTab] = useState8("call");
+      const [deviceChoice, setDevices] = useState8(devices);
+      const [backend, setBackend] = useState8("");
+      const [open, setOpen] = useState8(false);
+      const [catalog, setCatalog] = useState8([]);
+      const [loading, setLoading] = useState8(false);
+      const [error, setError] = useState8("");
+      const [draftSelection, setSelection] = useState8(savedSelection);
       const selection = state.selection ?? draftSelection;
-      const [now, setNow] = useState7(Date.now());
-      const scroll = useRef5(null);
-      const mounted = useRef5(true);
-      const loadId = useRef5(0);
-      useEffect7(() => {
+      const [now, setNow] = useState8(Date.now());
+      const scroll = useRef6(null);
+      const mounted = useRef6(true);
+      const loadId = useRef6(0);
+      useEffect8(() => {
         mounted.current = true;
         return () => {
           mounted.current = false;
         };
       }, []);
       const active = !["idle", "error"].includes(state.status);
-      useEffect7(() => {
+      useEffect8(() => {
         const show = () => {
           setTab("call");
           setOpen(true);
@@ -5903,7 +6055,7 @@ var plugin_default = {
           if (openCallSettings === show) openCallSettings = null;
         };
       }, [scopeKey]);
-      useEffect7(() => {
+      useEffect8(() => {
         ++loadId.current;
         setSelection(savedSelection());
         setCatalog([]);
@@ -5912,18 +6064,18 @@ var plugin_default = {
         setLoading(false);
         setOpen(false);
       }, [scopeKey]);
-      useEffect7(() => {
+      useEffect8(() => {
         if (state.status === "error") {
           setOpen(true);
           void load();
         }
       }, [state.status]);
-      useEffect7(() => {
+      useEffect8(() => {
         if (!active) return;
         const timer = setInterval(() => setNow(Date.now()), 1e3);
         return () => clearInterval(timer);
       }, [active]);
-      useEffect7(() => {
+      useEffect8(() => {
         if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
       }, [state.transcript]);
       const load = async () => {
@@ -6005,10 +6157,10 @@ var plugin_default = {
         return value;
       };
       const label = state.muted && state.status === "listening" ? t2("muted") : { idle: t2("idle"), connecting: t2("preparing"), listening: t2("listening"), speaking: t2("speaking"), thinking: t2("thinking"), error: t2("errorStatus") }[state.status];
-      const wakeLabel = voiceMode.paused ? c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : "pausedVoice") : !wake.enabled ? t2("wakeOff") : wake.state === "armed" ? t2("wakeArmed", wake.config?.phrase ?? "\u2026") : t2(wake.state === "empty" ? "wakeEmpty" : wake.state === "warming" ? "wakeWarming" : wake.state === "calling" ? "wakeCalling" : wake.state === "rearming" ? "wakeRearming" : "wakeSuspended");
+      const wakeLabel = voiceMode.paused ? c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : "pausedVoice") : !wake.enabled ? t2("wakeOff") : wake.state === "armed" ? t2("wakeArmed", wake.config?.generic ? [wake.config.phrase, wake.config.generic.phrase].filter(Boolean).join(", ") : wake.config?.phrase ?? "\u2026") : t2(wake.state === "empty" ? "wakeEmpty" : wake.state === "warming" ? "wakeWarming" : wake.state === "calling" ? "wakeCalling" : wake.state === "rearming" ? "wakeRearming" : "wakeSuspended");
       const discStyle = { height: primarySize, width: primarySize, padding: 0, borderRadius: 999, boxShadow: "0 2px 8px #0003" };
-      return /* @__PURE__ */ jsxs8("span", { role: "group", "aria-label": t2("call"), style: { order: 1, display: "inline-flex", alignItems: "center", flexShrink: 0 }, children: [
-        /* @__PURE__ */ jsxs8(HoverControls, { label: t2("callSettings"), holdOpen: open, tip: active ? t2("actionTip", label, state.status === "connecting" ? t2("cancel") : t2("end")) : wakeLabel, primary: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: active ? "default" : "ghost", size: active ? "sm" : "icon", "aria-label": active ? state.status === "connecting" ? t2("cancelConnection") : t2("endCall") : t2("wakeToggle"), "aria-pressed": active || wake.enabled, "aria-busy": state.status === "connecting", disabled: voiceMode.busy, onClick: () => {
+      return /* @__PURE__ */ jsxs9("span", { role: "group", "aria-label": t2("call"), style: { order: 1, display: "inline-flex", alignItems: "center", flexShrink: 0 }, children: [
+        /* @__PURE__ */ jsxs9(HoverControls, { label: t2("callSettings"), holdOpen: open, tip: active ? t2("actionTip", label, state.status === "connecting" ? t2("cancel") : t2("end")) : wakeLabel, primary: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: active ? "default" : "ghost", size: active ? "sm" : "icon", "aria-label": active ? state.status === "connecting" ? t2("cancelConnection") : t2("endCall") : t2("wakeToggle"), "aria-pressed": active || wake.enabled, "aria-busy": state.status === "connecting", disabled: voiceMode.busy, onClick: () => {
           if (active) stop();
           else if (voiceMode.paused) void changeVoiceMode();
           else if (wake.enabled) {
@@ -6030,86 +6182,87 @@ var plugin_default = {
               openSetup();
             }
           })();
-        }, style: { height: active ? primarySize : controlSize, width: active ? void 0 : controlSize, padding: active ? "0 12px" : 0, gap: 6, borderRadius: 999, color: !active && wake.enabled ? "var(--dt-primary-solid)" : void 0 }, children: active ? /* @__PURE__ */ jsxs8(Fragment3, { children: [
-          /* @__PURE__ */ jsx8(CallWave, { state }),
-          /* @__PURE__ */ jsx8("span", { children: state.status === "connecting" ? t2("preparing") : t2("end") })
-        ] }) : /* @__PURE__ */ jsx8(Icon, { name: "wake" }) }), children: [
-          !active && /* @__PURE__ */ jsx8(Tip2, { label: t2("startTip", providerName(selection.provider), selection.voice), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "default", size: "icon", "aria-label": t2("start"), disabled: voiceMode.paused || voiceMode.busy, onClick: () => void start(), style: discStyle, children: /* @__PURE__ */ jsx8(icons.AudioLines, { className: icons.iconSize.sm }) }) }),
-          /* @__PURE__ */ jsx8(Tip2, { label: c(voiceMode.paused ? "resumeVoice" : "pauseVoice"), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "secondary", size: "icon", disabled: voiceMode.busy, "aria-label": c(voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice"), onClick: () => void changeVoiceMode(), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: voiceMode.paused ? "wake" : "muted" }) }) }),
-          active && /* @__PURE__ */ jsx8(Tip2, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: state.muted ? "default" : "secondary", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
-          /* @__PURE__ */ jsxs8(Popover2, { open, onOpenChange: (v) => {
+        }, style: { height: active ? primarySize : controlSize, width: active ? void 0 : controlSize, padding: active ? "0 12px" : 0, gap: 6, borderRadius: 999, color: !active && wake.enabled ? "var(--dt-primary-solid)" : void 0 }, children: active ? /* @__PURE__ */ jsxs9(Fragment3, { children: [
+          /* @__PURE__ */ jsx9(CallWave, { state }),
+          /* @__PURE__ */ jsx9("span", { children: state.status === "connecting" ? t2("preparing") : t2("end") })
+        ] }) : /* @__PURE__ */ jsx9(Icon, { name: "wake" }) }), children: [
+          !active && /* @__PURE__ */ jsx9(Tip2, { label: t2("startTip", providerName(selection.provider), selection.voice), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "default", size: "icon", "aria-label": t2("start"), disabled: voiceMode.paused || voiceMode.busy, onClick: () => void start(), style: discStyle, children: /* @__PURE__ */ jsx9(icons.AudioLines, { className: icons.iconSize.sm }) }) }),
+          /* @__PURE__ */ jsx9(Tip2, { label: c(voiceMode.paused ? "resumeVoice" : "pauseVoice"), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "secondary", size: "icon", disabled: voiceMode.busy, "aria-label": c(voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice"), onClick: () => void changeVoiceMode(), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: voiceMode.paused ? "wake" : "muted" }) }) }),
+          active && /* @__PURE__ */ jsx9(Tip2, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: state.muted ? "default" : "secondary", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
+          /* @__PURE__ */ jsxs9(Popover2, { open, onOpenChange: (v) => {
             setOpen(v);
             if (v) void load();
           }, children: [
-            /* @__PURE__ */ jsx8(Tip2, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx8(PopoverTrigger2, { asChild: true, children: /* @__PURE__ */ jsx8(Button6, { type: "button", variant: "secondary", size: "icon", "aria-label": t2("callSettings"), style: discStyle, children: /* @__PURE__ */ jsx8(Icon, { name: "settings" }) }) }) }),
-            /* @__PURE__ */ jsxs8(PopoverContent2, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
-              /* @__PURE__ */ jsxs8("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
-                /* @__PURE__ */ jsxs8("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
-                  /* @__PURE__ */ jsx8("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
-                  /* @__PURE__ */ jsx8(Button6, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(false), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx8(Icon, { name: "close" }) })
+            /* @__PURE__ */ jsx9(Tip2, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx9(PopoverTrigger2, { asChild: true, children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "secondary", size: "icon", "aria-label": t2("callSettings"), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: "settings" }) }) }) }),
+            /* @__PURE__ */ jsxs9(PopoverContent2, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
+              /* @__PURE__ */ jsxs9("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
+                /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
+                  /* @__PURE__ */ jsx9("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
+                  /* @__PURE__ */ jsx9(Button7, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(false), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx9(Icon, { name: "close" }) })
                 ] }),
-                /* @__PURE__ */ jsx8(VoiceModeControls, {}),
-                /* @__PURE__ */ jsx8("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx8(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "wake", "usage"].map((id) => ({ id, label: t2(id) })) }) })
+                /* @__PURE__ */ jsx9(VoiceModeControls, {}),
+                /* @__PURE__ */ jsx9("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx9(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "wake", "usage"].map((id) => ({ id, label: t2(id) })) }) })
               ] }),
-              /* @__PURE__ */ jsxs8("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
-                tab === "audio" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
-                  error && /* @__PURE__ */ jsx8("p", { role: "alert", children: setupError(locale, error) || localizeError(t2, error) }),
-                  /* @__PURE__ */ jsx8(DeviceSettings, { value: deviceChoice, active: active || voiceMode.paused || voiceMode.busy, onChange: (value) => void updateDevices(value) })
+              /* @__PURE__ */ jsxs9("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
+                tab === "audio" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                  error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, error) || localizeError(t2, error) }),
+                  /* @__PURE__ */ jsx9(DeviceSettings, { value: deviceChoice, active: active || voiceMode.paused || voiceMode.busy, onChange: (value) => void updateDevices(value) })
                 ] }),
-                tab === "wake" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
-                  /* @__PURE__ */ jsx8(Button6, { onClick: () => {
+                tab === "wake" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                  /* @__PURE__ */ jsx9(Button7, { onClick: () => {
                     setOpen(false);
                     openSetup();
                   }, children: setupCopy(locale)("title") }),
-                  wake.error && /* @__PURE__ */ jsx8("p", { role: "alert", children: setupError(locale, wake.error) || localizeError(t2, wake.error) }),
-                  /* @__PURE__ */ jsx8("p", { role: "status", style: { ...hint, margin: 0 }, children: wakeLabel }),
-                  /* @__PURE__ */ jsx8(WakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, scopeKey)
+                  wake.error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, wake.error) || localizeError(t2, wake.error) }),
+                  /* @__PURE__ */ jsx9("p", { role: "status", style: { ...hint, margin: 0 }, children: wakeLabel }),
+                  /* @__PURE__ */ jsx9(WakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, scopeKey),
+                  /* @__PURE__ */ jsx9(GenericWakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, `generic:${scopeKey}`)
                 ] }),
-                tab === "usage" && /* @__PURE__ */ jsx8(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
-                tab === "call" && /* @__PURE__ */ jsxs8(Fragment3, { children: [
-                  /* @__PURE__ */ jsx8(Button6, { variant: "ghost", onClick: () => {
+                tab === "usage" && /* @__PURE__ */ jsx9(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
+                tab === "call" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                  /* @__PURE__ */ jsx9(Button7, { variant: "ghost", onClick: () => {
                     setOpen(false);
                     openSetup();
                   }, children: setupCopy(locale)("title") }),
-                  /* @__PURE__ */ jsxs8("div", { style: { display: "grid", gap: 12 }, children: [
-                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: true }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
+                  /* @__PURE__ */ jsxs9("div", { style: { display: "grid", gap: 12 }, children: [
+                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: true }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
                       const p = catalog.find((p2) => p2.id === value);
                       if (p) change({ provider: p.id, model: p.models[0].id, voice: p.voices[0] });
                     } }),
-                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
-                    /* @__PURE__ */ jsx8(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
+                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
+                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
                   ] }),
-                  /* @__PURE__ */ jsxs8("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
+                  /* @__PURE__ */ jsxs9("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
                     loading ? t2("checking") : provider && !provider.available && !active ? t2("setupNeeded") : label,
-                    state.startedAt > 0 && /* @__PURE__ */ jsx8("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs8("bdi", { children: [
+                    state.startedAt > 0 && /* @__PURE__ */ jsx9("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs9("bdi", { children: [
                       formatNumber(locale, Math.floor(seconds / 60)),
                       ":",
                       new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds % 60)
                     ] }) })
                   ] }),
-                  (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs8("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
+                  (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs9("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
                     localizeError(t2, error || state.error || provider?.reason),
-                    error && /* @__PURE__ */ jsx8(Button6, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
+                    error && /* @__PURE__ */ jsx9(Button7, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
                   ] }),
-                  /* @__PURE__ */ jsx8(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
-                  state.transcript.length > 0 && /* @__PURE__ */ jsx8("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs8("p", { style: { margin: "0 0 8px" }, children: [
-                    /* @__PURE__ */ jsx8("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
+                  /* @__PURE__ */ jsx9(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
+                  state.transcript.length > 0 && /* @__PURE__ */ jsx9("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs9("p", { style: { margin: "0 0 8px" }, children: [
+                    /* @__PURE__ */ jsx9("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
                     fragment.text
                   ] }, i)) })
                 ] })
               ] }),
-              tab === "call" && /* @__PURE__ */ jsxs8("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
+              tab === "call" && /* @__PURE__ */ jsxs9("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
                 selection.provider === "codex" ? t2("subscriptionNotice") : t2("apiNotice"),
-                /* @__PURE__ */ jsx8("br", {}),
+                /* @__PURE__ */ jsx9("br", {}),
                 t2("endExisting")
               ] })
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx8("span", { role: "status", className: "sr-only", children: active ? label : state.error ? localizeError(t2, state.error) : wakeLabel })
+        /* @__PURE__ */ jsx9("span", { role: "status", className: "sr-only", children: active ? label : state.error ? localizeError(t2, state.error) : wakeLabel })
       ] });
     }
-    ctx.register({ id: "call", area: COMPOSER_AREAS.actions, order: 20, render: () => /* @__PURE__ */ jsx8(LiveButton, {}) });
+    ctx.register({ id: "call", area: COMPOSER_AREAS.actions, order: 20, render: () => /* @__PURE__ */ jsx9(LiveButton, {}) });
   }
 };
 export {
