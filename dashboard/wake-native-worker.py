@@ -25,8 +25,9 @@ def matches_phrase(text, phrase):
     return bool(value and command) and len(value)%len(command)==0 and command*(len(value)//len(command))==value
 
 # Tolerant fallback, used only when no exact phrase matches: Whisper often drops or mangles a short
-# leading "Hey" ("a jarvis", "e jarvis", "jarvis") or adds punctuation ("Hey, Jarvis?"). Spaces and
-# punctuation are ignored. A complete goodbye to any bot ("bye cora", or "um, bye cora": the goodbye
+# leading "Hey" ("a jarvis", "e jarvis", "jarvis") or adds punctuation ("Hey, Jarvis?"). Spaces and the
+# punctuation listed in loose() are ignored; other marks, such as brackets or a slash, are kept and do not
+# match. A complete goodbye to any bot ("bye cora", or "um, bye cora": the goodbye
 # check alone drops the leading fillers goodbye.ts drops) never wakes one. Otherwise the first tier
 # that fits any bot decides (one bot, or none if it fits several): the name after a whole greeting
 # ("Hey", "헤이"); then the name after up to 3 Latin letters in total, so a short word before the

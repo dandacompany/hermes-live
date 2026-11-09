@@ -3628,7 +3628,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     ] }),
     step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
-      /* @__PURE__ */ jsxs4("label", { children: [
+      !data?.legacy && /* @__PURE__ */ jsxs4("label", { children: [
         /* @__PURE__ */ jsx4("input", { type: "checkbox", checked: data?.greeting_required ?? false, disabled: block, onChange: (e) => {
           const required = e.target.checked;
           void action(async () => {
@@ -3639,7 +3639,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
         " ",
         c("greetingRequired")
       ] }),
-      /* @__PURE__ */ jsx4("p", { style: hint, children: c("greetingRequiredHint") }),
+      !data?.legacy && /* @__PURE__ */ jsx4("p", { style: hint, children: c("greetingRequiredHint") }),
       /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
       /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),
       /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => {
