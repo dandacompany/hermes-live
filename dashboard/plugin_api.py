@@ -384,10 +384,11 @@ def wake_config(*, preparing=False):
     provider=cfg.get('wake_provider','whisper')
     first=targets[0] if targets else {'target':'','phrases':[]}
     result={'target':first['target'],'phrase':', '.join(t['phrases'][0] for t in targets),
-            'targets':targets,'input_device':device[:200],'provider':provider}
+            'targets':targets,'input_device':device[:200],'provider':provider,
+            'greeting_language':registry_module.greeting_language(wake_greeting(cfg))}
     if provider == 'whisper':
         # Whisper must transcribe in the greeting's language, or "Hey" comes back as Hangul (and vice versa).
-        result['whisper_language'] = registry_module.greeting_language(wake_greeting(cfg))
+        result['whisper_language'] = result['greeting_language']
         # New installs use the bundled engine. Explicit working legacy paths are preserved.
         legacy = not cfg.get('wake_managed',False) and all(str(cfg.get('wake_whisper_'+k) or '').strip() for k in ('node','module','models','engine'))
         if not legacy:

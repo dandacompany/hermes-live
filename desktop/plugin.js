@@ -4771,7 +4771,8 @@ function codexContexts() {
   return [{ type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities + " Prior conversation stays in the connected Hermes chat. Delegate questions about prior conversation or unfinished work to Hermes and wait for its answer. Never replay, summarize, or continue previous turns merely because a call starts. Do not speak until the caller speaks or an explicit wake greeting arrives." }] }];
 }
 function codexGreeting(greeting) {
-  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly ${/^\s*헤이/u.test(greeting.phrase) ? "Korean" : "English"} greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools. Do not quote, summarize, or continue earlier conversation; after this one sentence, stop and listen.` }] };
+  const korean = greeting.language ? greeting.language === "ko" : /^\s*헤이/u.test(greeting.phrase);
+  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly ${korean ? "Korean" : "English"} greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools. Do not quote, summarize, or continue earlier conversation; after this one sentence, stop and listen.` }] };
 }
 function codexToolResult(id, result) {
   return { type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text: result }] };
@@ -5755,7 +5756,7 @@ var plugin_default = {
         callOwner = scope;
         wakeNames = [...config.names ?? []];
         wakeCall = true;
-        wakeGreeting = { name: config.names?.[0] || config.target, phrase: config.phrase };
+        wakeGreeting = { name: config.names?.[0] || config.target, phrase: config.phrase, language: config.greeting_language };
         await controller.start(selection);
         if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
       } catch (error) {

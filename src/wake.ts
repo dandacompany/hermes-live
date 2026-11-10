@@ -1,5 +1,5 @@
 export interface WakeTarget {target:string;display_name:string;names:string[];phrases:string[]}
-export interface WakeConfig {target:string;phrase:string;input_device:string;targets?:WakeTarget[];names?:string[]}
+export interface WakeConfig {target:string;phrase:string;input_device:string;targets?:WakeTarget[];names?:string[];greeting_language?:'en'|'ko'}
 export interface WakeStatus {state:string;owned:boolean;eventId:string|null;target:string|null;selection?:WakeTarget|null}
 export interface WakeEvent {owner:string;eventId:string;target:string}
 interface Dependencies {
