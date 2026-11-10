@@ -3312,7 +3312,8 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false), saves = useRef3(0), acked = useRef3(0);
+  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false);
+  const sent = useRef3(0), shown = useRef3(0), saving = useRef3(0), settled = useRef3(0), confirmed = useRef3(null);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3328,12 +3329,14 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
   const load = async () => {
     if (!local) return;
-    const seq = ++loads.current;
+    const seq = loads.current = ++sent.current;
     setLoading(true);
     setError("");
     try {
       const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
-      if (seq !== loads.current) return;
+      if (seq < shown.current) return;
+      shown.current = seq;
+      confirmed.current = !saving.current && seq > settled.current ? value.greeting ?? null : null;
       safe(() => {
         setData(value);
         setTargets(bots.targets);
@@ -3432,32 +3435,44 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
     await load();
   });
-  const saveGreeting = (greeting, draft = null) => void action(async () => {
-    const seq = ++saves.current;
-    let saved2;
+  const save = async (send, answered) => {
+    const seq = ++sent.current;
+    saving.current++;
+    confirmed.current = null;
+    let failure = null;
     try {
-      saved2 = await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } });
+      const value = await send(), newest = seq > shown.current;
+      if (newest) shown.current = seq;
+      answered(value, newest);
     } catch (e) {
-      throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
+      failure = e;
+    } finally {
+      saving.current--;
+      settled.current = sent.current;
     }
-    if (seq < acked.current) return;
-    acked.current = seq;
-    safe(() => {
-      setData((d) => d && { ...d, greeting: saved2.greeting });
-      setCustomGreeting((d) => d === draft ? null : d);
-    });
     await load();
-  });
+    if (failure) throw failure;
+  };
+  const saveGreeting = (greeting, draft = null) => void action(() => save(
+    () => ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } }).catch((e) => {
+      throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
+    }),
+    (saved2, newest) => safe(() => {
+      if (newest) setData((d) => d && { ...d, greeting: saved2.greeting });
+      setCustomGreeting((d) => d === draft ? null : d);
+    })
+  ));
   const saveDevice = () => action(async () => {
     const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
     if (!alive.current) return;
-    const value = await ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 });
-    if (!alive.current) return;
-    const next2 = { ...devices, input: choice.deviceId };
-    ctx.storage.set("audio-devices", next2);
-    setDevices(next2);
-    setData(value);
-    setNote(c("setupSaved"));
+    await save(() => ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 }), (value, newest) => {
+      if (!alive.current) return;
+      const next2 = { ...devices, input: choice.deviceId };
+      ctx.storage.set("audio-devices", next2);
+      setDevices(next2);
+      if (newest) setData(value);
+      setNote(c("setupSaved"));
+    });
   });
   const permission = () => action(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -3543,7 +3558,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     if (customGreeting === null || loading || composing.current) return;
     const value = customGreeting.trim();
     if (!value) return;
-    if (value === data?.greeting) {
+    if (value === confirmed.current) {
       setCustomGreeting(null);
       return;
     }
@@ -3672,7 +3687,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
           return;
         }
         setCustomGreeting(null);
-        if (g !== data?.greeting) saveGreeting(g);
+        if (g !== confirmed.current) saveGreeting(g);
       } }),
       customOpen && /* @__PURE__ */ jsxs4("label", { style: { display: "grid", gap: 4, ...hint }, children: [
         customLabel,

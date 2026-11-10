@@ -26,18 +26,23 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
- const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false),saves=useRef(0),acked=useRef(0);
+ const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false);
+ // Refreshes and saves are numbered in send order (sent). An answer is applied only if no answer to a later request has
+ // been applied (shown). confirmed is the greeting read by a refresh sent after the last save finished, with no save
+ // pending: only that value counts as already saved.
+ const sent=useRef(0),shown=useRef(0),saving=useRef(0),settled=useRef(0),confirmed=useRef<string|null>(null);
  useEffect(()=>registerStopTest?.(async()=>{cancel.current?.abort();await captureTask.current}),[registerStopTest]);
  useEffect(()=>{if(suspended)cancel.current?.abort()},[suspended]);
  const currentCall=useSyncExternalStore(subscribe,callState);
  const steps=setupSteps(mode),labels:SetupKey[]=['overview','bots','account','model','audio','test','done'];
  const safe=(fn:()=>void)=>{if(alive.current)fn()};
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
- // Only the latest refresh is applied; an older one that answers later, or fails, shows neither its data nor its error.
+ // A refresh answer is applied unless a later request's answer was applied first; only the latest refresh shows its error.
  const load=async()=>{
-  if(!local)return;const seq=++loads.current;setLoading(true);setError('');
+  if(!local)return;const seq=loads.current=++sent.current;setLoading(true);setError('');
   try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
-   if(seq!==loads.current)return;
+   if(seq<shown.current)return;shown.current=seq;
+   confirmed.current=!saving.current&&seq>settled.current?value.greeting??null:null;
    safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
@@ -62,20 +67,24 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  },1200);return()=>clearInterval(timer)},[data?.assets.progress?.state,login.state,local]);
  const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
+ // A save is answered in send order only by chance: the server may store overlapping saves in another order. So every
+ // save, answered, refused or failed, ends with a refresh, and its answer is applied only if it is the newest one so far.
+ const save=async<T,>(send:()=>Promise<T>,answered:(value:T,newest:boolean)=>void)=>{
+  const seq=++sent.current;saving.current++;confirmed.current=null;let failure:unknown=null;
+  try{const value=await send(),newest=seq>shown.current;if(newest)shown.current=seq;answered(value,newest)}
+  catch(e){failure=e}finally{saving.current--;settled.current=sent.current}
+  await load();if(failure)throw failure;
+ };
  // The PUT answer is the saved greeting: show it even if the refresh fails, and close only the draft this save sent.
- // Saves are numbered: an answer that arrives after a newer save's answer changes nothing and sends no refresh.
- const saveGreeting=(greeting:string,draft:string|null=null)=>void action(async()=>{
-  const seq=++saves.current;let saved:{greeting:string};
-  try{saved=await ctx.rest<{greeting:string}>('/setup/greeting',{method:'PUT',body:{greeting}})}catch(e){throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}
-  if(seq<acked.current)return;acked.current=seq;
-  safe(()=>{setData(d=>d&&{...d,greeting:saved.greeting});setCustomGreeting(d=>d===draft?null:d)});
-  await load();
- });
+ const saveGreeting=(greeting:string,draft:string|null=null)=>void action(()=>save(
+  ()=>ctx.rest<{greeting:string}>('/setup/greeting',{method:'PUT',body:{greeting}}).catch(e=>{throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}),
+  (saved,newest)=>safe(()=>{if(newest)setData(d=>d&&{...d,greeting:saved.greeting});setCustomGreeting(d=>d===draft?null:d)})));
  const saveDevice=()=>action(async()=>{
   const choice=selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(),device);
   if(!alive.current)return;
-  const value=await ctx.rest<SetupState>('/setup',{method:'PUT',body:{device},timeoutMs:30000});
-  if(!alive.current)return;const next={...devices,input:choice.deviceId};ctx.storage.set('audio-devices',next);setDevices(next);setData(value);setNote(c('setupSaved'));
+  await save(()=>ctx.rest<SetupState>('/setup',{method:'PUT',body:{device},timeoutMs:30000}),(value,newest)=>{
+   if(!alive.current)return;const next={...devices,input:choice.deviceId};ctx.storage.set('audio-devices',next);setDevices(next);if(newest)setData(value);setNote(c('setupSaved'));
+  });
  });
  const permission=()=>action(async()=>{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});stream.getTracks().forEach(t=>t.stop());await load()});
  const capture=async(kind:'mic'|'wake')=>{
@@ -114,7 +123,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  // A blur during an IME composition does not save; the next blur or Enter after the composition ends does.
  const commitGreeting=()=>{
   if(customGreeting===null||loading||composing.current)return;const value=customGreeting.trim();
-  if(!value)return;if(value===data?.greeting){setCustomGreeting(null);return}
+  if(!value)return;if(value===confirmed.current){setCustomGreeting(null);return}
   saveGreeting(value,customGreeting);
  };
  const progress=data?.assets.progress;
@@ -180,7 +189,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
-   <FieldSelect label={c('greeting')} value={!data?'…':customOpen?CUSTOM:data.greeting??'…'} options={data?[...greetings.map(g=>({value:g,label:g})),{value:CUSTOM,label:c('greetingCustom')}]:[{value:'…',label:'…'}]} disabled={block||!data} onChange={(g:string)=>{if(g===CUSTOM){setCustomGreeting('');return}setCustomGreeting(null);if(g!==data?.greeting)saveGreeting(g)}}/>
+   <FieldSelect label={c('greeting')} value={!data?'…':customOpen?CUSTOM:data.greeting??'…'} options={data?[...greetings.map(g=>({value:g,label:g})),{value:CUSTOM,label:c('greetingCustom')}]:[{value:'…',label:'…'}]} disabled={block||!data} onChange={(g:string)=>{if(g===CUSTOM){setCustomGreeting('');return}setCustomGreeting(null);if(g!==confirmed.current)saveGreeting(g)}}/>
    {customOpen&&<label style={{display:'grid',gap:4,...hint}}>{customLabel}<input aria-label={customLabel} value={customGreeting??data?.greeting??''} disabled={block} onChange={e=>setCustomGreeting(Array.from(e.target.value).slice(0,data?.greeting_max).join(''))} onFocus={()=>{composing.current=false}} onCompositionStart={()=>{composing.current=true}} onCompositionEnd={()=>{composing.current=false}} onBlur={commitGreeting} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing)e.currentTarget.blur()}} style={{width:'12em',color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>}
    {customGreeting!==null&&!customGreeting.trim()&&<p role="status" style={hint}>{c('greetingEmpty')}</p>}
    <p style={hint}>{c('greetingHint')}</p>
