@@ -3309,11 +3309,10 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [auth, setAuth] = useState3(null), [targets, setTargets] = useState3([]), [target, setTarget] = useState3("");
   const [loading, setLoading] = useState3(false), [error, setError] = useState3(""), [note, setNote] = useState3(""), [device, setDevice] = useState3(""), [level, setLevel] = useState3(0), [testing, setTesting] = useState3(false);
   const [login, setLogin] = useState3({ state: "idle" }), [devices, setDevices] = useState3(ctx.storage.get("audio-devices", { input: "", output: "" }));
-  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null);
+  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null), [saving, setSaving] = useState3(false);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false);
-  const sent = useRef3(0), shown = useRef3(0), saving = useRef3(0), settled = useRef3(0), confirmed = useRef3(null);
+  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false), episode = useRef3(0), confirmed = useRef3(null);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3329,14 +3328,13 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
   const load = async () => {
     if (!local) return;
-    const seq = loads.current = ++sent.current;
+    const seq = ++loads.current;
     setLoading(true);
     setError("");
     try {
-      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
-      if (seq < shown.current) return;
-      shown.current = seq;
-      confirmed.current = !saving.current && seq > settled.current ? value.greeting ?? null : null;
+      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots", { timeoutMs: 3e4 })]);
+      if (seq !== loads.current) return;
+      confirmed.current = value.greeting ?? null;
       safe(() => {
         setData(value);
         setTargets(bots.targets);
@@ -3435,44 +3433,35 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
     await load();
   });
-  const save = async (send, answered) => {
-    const seq = ++sent.current;
-    saving.current++;
-    confirmed.current = null;
-    let failure = null;
-    try {
-      const value = await send(), newest = seq > shown.current;
-      if (newest) shown.current = seq;
-      answered(value, newest);
-    } catch (e) {
-      failure = e;
-    } finally {
-      saving.current--;
-      settled.current = sent.current;
-    }
-    await load();
-    if (failure) throw failure;
+  const save = (fn) => {
+    setSaving(true);
+    return action(() => fn().finally(async () => {
+      confirmed.current = null;
+      if (alive.current) await load();
+    })).finally(() => safe(() => setSaving(false)));
   };
-  const saveGreeting = (greeting, draft = null) => void action(() => save(
-    () => ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } }).catch((e) => {
-      throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
-    }),
-    (saved2, newest) => safe(() => {
-      if (newest) setData((d) => d && { ...d, greeting: saved2.greeting });
-      setCustomGreeting((d) => d === draft ? null : d);
-    })
-  ));
-  const saveDevice = () => action(async () => {
+  const saveGreeting = (greeting) => {
+    const sent = episode.current;
+    void save(async () => {
+      const saved2 = await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting }, timeoutMs: 3e4 }).catch((e) => {
+        throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
+      });
+      safe(() => {
+        setData((d) => d && { ...d, greeting: saved2.greeting });
+        if (episode.current === sent) setCustomGreeting(null);
+      });
+    });
+  };
+  const saveDevice = () => save(async () => {
     const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
     if (!alive.current) return;
-    await save(() => ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 }), (value, newest) => {
-      if (!alive.current) return;
-      const next2 = { ...devices, input: choice.deviceId };
-      ctx.storage.set("audio-devices", next2);
-      setDevices(next2);
-      if (newest) setData(value);
-      setNote(c("setupSaved"));
-    });
+    const value = await ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 });
+    if (!alive.current) return;
+    const next2 = { ...devices, input: choice.deviceId };
+    ctx.storage.set("audio-devices", next2);
+    setDevices(next2);
+    setData(value);
+    setNote(c("setupSaved"));
   });
   const permission = () => action(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -3550,19 +3539,19 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       });
     }
   };
-  const block = suspended || loading || testing || active() || !["idle", "error"].includes(currentCall);
+  const block = suspended || loading || saving || testing || active() || !["idle", "error"].includes(currentCall);
   const selected = targets.find((t2) => t2.target === target);
   const greetings = data?.greetings ?? [], customSaved = data?.greeting !== void 0 && !greetings.includes(data.greeting), customOpen = customGreeting !== null || customSaved;
   const customLabel = formatMessage(c("greetingCustomLabel"), [data?.greeting_max ?? ""]);
   const commitGreeting = () => {
-    if (customGreeting === null || loading || composing.current) return;
+    if (customGreeting === null || block || composing.current) return;
     const value = customGreeting.trim();
     if (!value) return;
     if (value === confirmed.current) {
       setCustomGreeting(null);
       return;
     }
-    saveGreeting(value, customGreeting);
+    saveGreeting(value);
   };
   const progress = data?.assets.progress;
   const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
@@ -3682,6 +3671,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("greeting"), value: !data ? "\u2026" : customOpen ? CUSTOM : data.greeting ?? "\u2026", options: data ? [...greetings.map((g) => ({ value: g, label: g })), { value: CUSTOM, label: c("greetingCustom") }] : [{ value: "\u2026", label: "\u2026" }], disabled: block || !data, onChange: (g) => {
+        episode.current++;
         if (g === CUSTOM) {
           setCustomGreeting("");
           return;
@@ -3691,7 +3681,10 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       } }),
       customOpen && /* @__PURE__ */ jsxs4("label", { style: { display: "grid", gap: 4, ...hint }, children: [
         customLabel,
-        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join("")), onFocus: () => {
+        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => {
+          episode.current++;
+          setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join(""));
+        }, onFocus: () => {
           composing.current = false;
         }, onCompositionStart: () => {
           composing.current = true;
