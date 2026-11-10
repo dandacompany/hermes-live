@@ -3312,7 +3312,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null);
+  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3328,10 +3328,12 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
   const load = async () => {
     if (!local) return;
+    const seq = ++loads.current;
     setLoading(true);
     setError("");
     try {
       const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
+      if (seq !== loads.current) return;
       safe(() => {
         setData(value);
         setTargets(bots.targets);
@@ -3343,7 +3345,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
         }
       });
     } catch (e) {
-      fail(e);
+      if (seq === loads.current) fail(e);
     } finally {
       safe(() => setLoading(false));
     }
@@ -3428,14 +3430,18 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
     await load();
   });
-  const saveGreeting = (greeting) => void action(async () => {
+  const saveGreeting = (greeting, draft = null) => void action(async () => {
+    let saved2;
     try {
-      await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } });
+      saved2 = await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } });
     } catch (e) {
       throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
     }
+    safe(() => {
+      setData((d) => d && { ...d, greeting: saved2.greeting });
+      setCustomGreeting((d) => d === draft ? null : d);
+    });
     await load();
-    safe(() => setCustomGreeting(null));
   });
   const saveDevice = () => action(async () => {
     const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
@@ -3529,14 +3535,14 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const greetings = data?.greetings ?? [], customSaved = data?.greeting !== void 0 && !greetings.includes(data.greeting), customOpen = customGreeting !== null || customSaved;
   const customLabel = formatMessage(c("greetingCustomLabel"), [data?.greeting_max ?? ""]);
   const commitGreeting = () => {
-    if (customGreeting === null || loading) return;
+    if (customGreeting === null || loading || composing.current) return;
     const value = customGreeting.trim();
     if (!value) return;
     if (value === data?.greeting) {
       setCustomGreeting(null);
       return;
     }
-    saveGreeting(value);
+    saveGreeting(value, customGreeting);
   };
   const progress = data?.assets.progress;
   const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
@@ -3665,7 +3671,13 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       } }),
       customOpen && /* @__PURE__ */ jsxs4("label", { style: { display: "grid", gap: 4, ...hint }, children: [
         customLabel,
-        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join("")), onBlur: commitGreeting, onKeyDown: (e) => {
+        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join("")), onFocus: () => {
+          composing.current = false;
+        }, onCompositionStart: () => {
+          composing.current = true;
+        }, onCompositionEnd: () => {
+          composing.current = false;
+        }, onBlur: commitGreeting, onKeyDown: (e) => {
           if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur();
         }, style: { width: "12em", color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),

@@ -26,20 +26,22 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
- const captureTask=useRef<Promise<void>|null>(null);
+ const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false);
  useEffect(()=>registerStopTest?.(async()=>{cancel.current?.abort();await captureTask.current}),[registerStopTest]);
  useEffect(()=>{if(suspended)cancel.current?.abort()},[suspended]);
  const currentCall=useSyncExternalStore(subscribe,callState);
  const steps=setupSteps(mode),labels:SetupKey[]=['overview','bots','account','model','audio','test','done'];
  const safe=(fn:()=>void)=>{if(alive.current)fn()};
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
+ // Only the latest refresh is applied; an older one that answers later, or fails, changes nothing.
  const load=async()=>{
-  if(!local)return;setLoading(true);setError('');
+  if(!local)return;const seq=++loads.current;setLoading(true);setError('');
   try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
+   if(seq!==loads.current)return;
    safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
-  }catch(e){fail(e)}finally{safe(()=>setLoading(false))}
+  }catch(e){if(seq===loads.current)fail(e)}finally{safe(()=>setLoading(false))}
  };
  const checkAuth=async()=>{setLoading(true);try{const value=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:'codex'},timeoutMs:30000});safe(()=>setAuth(value.provider))}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
  const release=async()=>{const id=owner.current;owner.current=null;try{if(id)await ctx.rest('/setup/test',{method:'POST',body:{owner:id,action:'release'}})}catch{}finally{restore.current?.();restore.current=null}};
@@ -58,9 +60,12 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  },1200);return()=>clearInterval(timer)},[data?.assets.progress?.state,login.state,local]);
  const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
- const saveGreeting=(greeting:string)=>void action(async()=>{
-  try{await ctx.rest('/setup/greeting',{method:'PUT',body:{greeting}})}catch(e){throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}
-  await load();safe(()=>setCustomGreeting(null));
+ // The PUT answer is the saved greeting: show it even if the refresh fails, and close only the draft this save sent.
+ const saveGreeting=(greeting:string,draft:string|null=null)=>void action(async()=>{
+  let saved:{greeting:string};
+  try{saved=await ctx.rest<{greeting:string}>('/setup/greeting',{method:'PUT',body:{greeting}})}catch(e){throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}
+  safe(()=>{setData(d=>d&&{...d,greeting:saved.greeting});setCustomGreeting(d=>d===draft?null:d)});
+  await load();
  });
  const saveDevice=()=>action(async()=>{
   const choice=selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(),device);
@@ -102,10 +107,11 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  // Presets come from the backend; a saved greeting that is not one of them shows as Custom… with its text.
  const greetings=data?.greetings??[],customSaved=data?.greeting!==undefined&&!greetings.includes(data.greeting),customOpen=customGreeting!==null||customSaved;
  const customLabel=formatMessage(c('greetingCustomLabel'),[data?.greeting_max??'']);
+ // A blur during an IME composition does not save; the next blur or Enter after the composition ends does.
  const commitGreeting=()=>{
-  if(customGreeting===null||loading)return;const value=customGreeting.trim();
+  if(customGreeting===null||loading||composing.current)return;const value=customGreeting.trim();
   if(!value)return;if(value===data?.greeting){setCustomGreeting(null);return}
-  saveGreeting(value);
+  saveGreeting(value,customGreeting);
  };
  const progress=data?.assets.progress;
  const errorText=progress?.error?setupError(locale,'HL_SETUP:'+progress.error):data?.assets.error?setupError(locale,'HL_SETUP:'+data.assets.error):null;
@@ -171,7 +177,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
    <FieldSelect label={c('greeting')} value={!data?'…':customOpen?CUSTOM:data.greeting??'…'} options={data?[...greetings.map(g=>({value:g,label:g})),{value:CUSTOM,label:c('greetingCustom')}]:[{value:'…',label:'…'}]} disabled={block||!data} onChange={(g:string)=>{if(g===CUSTOM){setCustomGreeting('');return}setCustomGreeting(null);if(g!==data?.greeting)saveGreeting(g)}}/>
-   {customOpen&&<label style={{display:'grid',gap:4,...hint}}>{customLabel}<input aria-label={customLabel} value={customGreeting??data?.greeting??''} disabled={block} onChange={e=>setCustomGreeting(Array.from(e.target.value).slice(0,data?.greeting_max).join(''))} onBlur={commitGreeting} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing)e.currentTarget.blur()}} style={{width:'12em',color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>}
+   {customOpen&&<label style={{display:'grid',gap:4,...hint}}>{customLabel}<input aria-label={customLabel} value={customGreeting??data?.greeting??''} disabled={block} onChange={e=>setCustomGreeting(Array.from(e.target.value).slice(0,data?.greeting_max).join(''))} onFocus={()=>{composing.current=false}} onCompositionStart={()=>{composing.current=true}} onCompositionEnd={()=>{composing.current=false}} onBlur={commitGreeting} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing)e.currentTarget.blur()}} style={{width:'12em',color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>}
    {customGreeting!==null&&!customGreeting.trim()&&<p role="status" style={hint}>{c('greetingEmpty')}</p>}
    <p style={hint}>{c('greetingHint')}</p>
    <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>

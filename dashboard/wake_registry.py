@@ -25,10 +25,12 @@ LEGACY_GREETINGS=('안녕',)  # stripped from old single-target phrases only; ne
 HANGUL=re.compile(r'[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdf]')
 
 def valid_greeting(value):
-    """The trimmed greeting, or None. Commas would split the joined phrase list; a greeting that normalizes away would let the bare name wake."""
+    """The trimmed greeting, or None. Commas would split the joined phrase list; a greeting that normalizes away would let the bare name wake.
+    Control, format (Cf) and surrogate characters are refused: the JS matcher ignores U+FEFF, which normalized() keeps, and a
+    lone surrogate cannot be encoded in a response."""
     value=value.strip() if isinstance(value,str) else ''
     return value if (0<len(value)<=MAX_GREETING and bool(normalized(value)) and
-                     not any(c in ',，' or unicodedata.category(c)=='Cc' for c in value)) else None
+                     not any(c in ',，' or unicodedata.category(c) in ('Cc','Cf','Cs') for c in value)) else None
 
 def selected_greeting(value):
     return valid_greeting(value) or GREETINGS[0]
