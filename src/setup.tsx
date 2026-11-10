@@ -26,14 +26,14 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
- const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false);
+ const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false),saves=useRef(0),acked=useRef(0);
  useEffect(()=>registerStopTest?.(async()=>{cancel.current?.abort();await captureTask.current}),[registerStopTest]);
  useEffect(()=>{if(suspended)cancel.current?.abort()},[suspended]);
  const currentCall=useSyncExternalStore(subscribe,callState);
  const steps=setupSteps(mode),labels:SetupKey[]=['overview','bots','account','model','audio','test','done'];
  const safe=(fn:()=>void)=>{if(alive.current)fn()};
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
- // Only the latest refresh is applied; an older one that answers later, or fails, changes nothing.
+ // Only the latest refresh is applied; an older one that answers later, or fails, shows neither its data nor its error.
  const load=async()=>{
   if(!local)return;const seq=++loads.current;setLoading(true);setError('');
   try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
@@ -50,7 +50,9 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  useEffect(()=>{if(!local)return;const timer=setInterval(async()=>{
   if(polling.current)return;polling.current=true;
   try{
-   if(preparingModel(data?.assets)){const value=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});safe(()=>setData(value))}
+   // A model poll belongs to the refresh that was latest when it was sent: a refresh started after it supersedes its
+   // answer and its failure, so only a current answer can show the model as ready and end polling.
+   if(preparingModel(data?.assets)){const seq=loads.current,value=await ctx.rest<SetupState>('/setup',{timeoutMs:30000}).catch(e=>{if(seq===loads.current)throw e});if(value&&seq===loads.current)safe(()=>setData(value))}
    if(['starting','waiting'].includes(login.state)){
     const value=await ctx.rest<{state:string;url?:string}>('/setup/login');if(!alive.current)return;safe(()=>setLogin(value));
     if(value.url&&value.url!==openedLogin.current){openedLogin.current=value.url;await ctx.os?.openExternal(value.url)}
@@ -61,9 +63,11 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
  // The PUT answer is the saved greeting: show it even if the refresh fails, and close only the draft this save sent.
+ // Saves are numbered: an answer that arrives after a newer save's answer changes nothing and sends no refresh.
  const saveGreeting=(greeting:string,draft:string|null=null)=>void action(async()=>{
-  let saved:{greeting:string};
+  const seq=++saves.current;let saved:{greeting:string};
   try{saved=await ctx.rest<{greeting:string}>('/setup/greeting',{method:'PUT',body:{greeting}})}catch(e){throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}
+  if(seq<acked.current)return;acked.current=seq;
   safe(()=>{setData(d=>d&&{...d,greeting:saved.greeting});setCustomGreeting(d=>d===draft?null:d)});
   await load();
  });

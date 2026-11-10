@@ -3312,7 +3312,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false);
+  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false), saves = useRef3(0), acked = useRef3(0);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3393,8 +3393,10 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       polling.current = true;
       try {
         if (preparingModel(data?.assets)) {
-          const value = await ctx.rest("/setup", { timeoutMs: 3e4 });
-          safe(() => setData(value));
+          const seq = loads.current, value = await ctx.rest("/setup", { timeoutMs: 3e4 }).catch((e) => {
+            if (seq === loads.current) throw e;
+          });
+          if (value && seq === loads.current) safe(() => setData(value));
         }
         if (["starting", "waiting"].includes(login.state)) {
           const value = await ctx.rest("/setup/login");
@@ -3431,12 +3433,15 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     await load();
   });
   const saveGreeting = (greeting, draft = null) => void action(async () => {
+    const seq = ++saves.current;
     let saved2;
     try {
       saved2 = await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } });
     } catch (e) {
       throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
     }
+    if (seq < acked.current) return;
+    acked.current = seq;
     safe(() => {
       setData((d) => d && { ...d, greeting: saved2.greeting });
       setCustomGreeting((d) => d === draft ? null : d);

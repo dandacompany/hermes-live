@@ -24,13 +24,35 @@ MAX_GREETING=10
 LEGACY_GREETINGS=('안녕',)  # stripped from old single-target phrases only; never offered
 HANGUL=re.compile(r'[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdf]')
 
+JOINERS=('\u200c','\u200d')  # ZWNJ, ZWJ
+
+def _kept(c):
+    return c not in JOINERS and bool(normalized(c))
+
 def valid_greeting(value):
-    """The trimmed greeting, or None. Commas would split the joined phrase list; a greeting that normalizes away would let the bare name wake.
-    Control, format (Cf) and surrogate characters are refused: the JS matcher ignores U+FEFF, which normalized() keeps, and a
-    lone surrogate cannot be encoded in a response."""
+    """The trimmed greeting, or None.
+    Allowed: 1 to MAX_GREETING code points of any script, digits, spaces, punctuation, symbols and emoji. A combining
+    mark (Mn, Mc, Me, also a variation selector such as U+FE0F) must follow a character that normalized() keeps, another
+    mark included; ZWNJ U+200C and ZWJ U+200D must stand between two such characters that are not joiners, as in a
+    Persian or Indic word or an emoji ZWJ sequence. Refused:
+    - commas (ASCII and fullwidth), which would split the joined phrase list;
+    - control characters (Cc) and lone surrogates (Cs), which a response cannot encode;
+    - every other format character (Cf): U+FEFF (the JS matcher drops it as whitespace, normalized() keeps it),
+      zero-width space U+200B, word joiner U+2060, soft hyphen U+00AD, bidi marks, embeddings, overrides and isolates
+      (U+061C, U+200E, U+200F, U+202A-U+202E, U+2066-U+2069), tag characters and the rest;
+    - a mark or joiner at the start or after a space, a joiner or punctuation that normalized() drops; a joiner at the
+      end or before such a character;
+    - text that normalized() reduces to nothing, which would let the bare name wake.
+    For the characters left, normalized() and the JS matcher (/\\s/u) drop the same ones, so neither reduces an allowed
+    greeting to nothing and the bare name never wakes."""
     value=value.strip() if isinstance(value,str) else ''
-    return value if (0<len(value)<=MAX_GREETING and bool(normalized(value)) and
-                     not any(c in ',，' or unicodedata.category(c) in ('Cc','Cf','Cs') for c in value)) else None
+    if not (0<len(value)<=MAX_GREETING and bool(normalized(value))):return None
+    for i,c in enumerate(value):
+        kind=unicodedata.category(c)
+        if c in ',，' or kind in ('Cc','Cs') or (kind=='Cf' and c not in JOINERS):return None
+        if (c in JOINERS or kind[0]=='M') and not (i>0 and _kept(value[i-1])):return None
+        if c in JOINERS and not (i+1<len(value) and _kept(value[i+1])):return None
+    return value
 
 def selected_greeting(value):
     return valid_greeting(value) or GREETINGS[0]
