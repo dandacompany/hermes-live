@@ -2857,7 +2857,11 @@ var text = {
   cueVolume: ["Confirmation sound volume (0 = off)", "\uD655\uC778\uC74C \uC74C\uB7C9 (0 = \uB054)"],
   testWake: ["Test wake phrase", "\uD638\uCD9C\uC5B4 \uD14C\uC2A4\uD2B8"],
   greeting: ["Greeting", "\uD638\uCD9C \uC778\uC0AC\uB9D0"],
-  greetingHint: ["Hey listens in English; \uD5E4\uC774 listens in Korean. Applies to the next test or standby.", "Hey\uB294 \uC601\uC5B4\uB85C, \uD5E4\uC774\uB294 \uD55C\uAD6D\uC5B4\uB85C \uC778\uC2DD\uD569\uB2C8\uB2E4. \uB2E4\uC74C \uD14C\uC2A4\uD2B8\uB098 \uB300\uAE30\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4."],
+  greetingHint: ["Whisper listens in Korean when the greeting contains Hangul, otherwise in English. Applies to the next test or standby.", "\uC778\uC0AC\uB9D0\uC5D0 \uD55C\uAE00\uC774 \uC788\uC73C\uBA74 \uD55C\uAD6D\uC5B4\uB85C, \uC5C6\uC73C\uBA74 \uC601\uC5B4\uB85C \uC778\uC2DD\uD569\uB2C8\uB2E4. \uB2E4\uC74C \uD14C\uC2A4\uD2B8\uB098 \uB300\uAE30\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4."],
+  greetingCustom: ["Custom\u2026", "\uC9C1\uC811 \uC785\uB825\u2026"],
+  greetingCustomLabel: ["Custom greeting (up to {0} characters, no commas)", "\uC9C1\uC811 \uC785\uB825\uD55C \uC778\uC0AC\uB9D0 (\uCD5C\uB300 {0}\uC790, \uC27C\uD45C \uC81C\uC678)"],
+  greetingEmpty: ["Type a greeting first; the current one stays in use.", "\uC778\uC0AC\uB9D0\uC744 \uC785\uB825\uD558\uC138\uC694. \uADF8\uC804\uAE4C\uC9C0\uB294 \uC9C0\uAE08 \uC778\uC0AC\uB9D0\uC744 \uADF8\uB300\uB85C \uC501\uB2C8\uB2E4."],
+  greetingInvalid: ["This greeting cannot be used. Leave out commas and use more than punctuation.", "\uC774 \uC778\uC0AC\uB9D0\uC740 \uC4F8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC27C\uD45C\uB97C \uBE7C\uACE0 \uBB38\uC7A5\uBD80\uD638\uB9CC\uC73C\uB85C \uC4F0\uC9C0 \uB9C8\uC138\uC694."],
   testHint: ["This test only recognizes the name. It never starts a cloud call.", "\uC774 \uD14C\uC2A4\uD2B8\uB294 \uC774\uB984\uB9CC \uD655\uC778\uD569\uB2C8\uB2E4. \uD074\uB77C\uC6B0\uB4DC \uD1B5\uD654\uB97C \uC2DC\uC791\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
   recognized: ["Recognized", "\uC778\uC2DD\uD55C \uBD07"],
   notMatched: ["Speech received, but the wake phrase did not match. Try again or edit an alias.", "\uB9D0\uC18C\uB9AC\uB294 \uB4E4\uC5B4\uC654\uC9C0\uB9CC \uD638\uCD9C\uC5B4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uBD80\uB974\uAC70\uB098 \uBCC4\uCE6D\uC744 \uC218\uC815\uD558\uC138\uC694."],
@@ -2921,6 +2925,7 @@ function FieldSelect({ label, value, options, onChange, disabled = false }) {
 
 // src/wake-settings.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+var aliasNames = (value) => value.split(/[,，]/u).map((n) => n.trim()).filter(Boolean);
 function WakeSettings({ rest, changed, local }) {
   const { t, locale } = useLiveI18n();
   const c = setupCopy(locale);
@@ -2961,7 +2966,7 @@ function WakeSettings({ rest, changed, local }) {
     setError("");
     setSaved(false);
     try {
-      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: (aliases[b.profile] ?? "").split(/[,，]/u).map((n) => n.trim()).filter(Boolean) }));
+      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: aliasNames(aliases[b.profile] ?? "") }));
       if (bots.some((b) => b.aliases.length > 3)) throw new Error("HL_ERROR:errWakeRegistry");
       const value = await rest("/wake/bots", { method: "PUT", body: { revision: data.revision, bots } });
       if (alive.current && id === request.current) {
@@ -2995,7 +3000,7 @@ function WakeSettings({ rest, changed, local }) {
           setAliases({ ...aliases, [bot.profile]: e.target.value });
         }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),
-      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.phrases?.[0] ?? (data?.greeting ?? "Hey") + " " + (bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026")) : t("wakeSetup") }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.phrases?.[0] ?? (data?.greeting ?? "\u2026") + " " + (bot.display_name || aliasNames(aliases[bot.profile] ?? "")[0] || "\u2026")) : t("wakeSetup") }),
       !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
       bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
     ] }, bot.profile)),
@@ -3296,6 +3301,7 @@ async function playWakeCue(output = "", volume = 1) {
 
 // src/setup.tsx
 import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+var CUSTOM = ",custom";
 function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, active, hold, standby, listening, trial, stop, subscribe, callState, callSettings }) {
   const { locale, t } = useLiveI18n(), c = setupCopy(locale);
   const saved = ctx.storage.get(`setup:${scopeKey}`, { mode: "wake", step: 0 });
@@ -3303,7 +3309,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [auth, setAuth] = useState3(null), [targets, setTargets] = useState3([]), [target, setTarget] = useState3("");
   const [loading, setLoading] = useState3(false), [error, setError] = useState3(""), [note, setNote] = useState3(""), [device, setDevice] = useState3(""), [level, setLevel] = useState3(0), [testing, setTesting] = useState3(false);
   const [login, setLogin] = useState3({ state: "idle" }), [devices, setDevices] = useState3(ctx.storage.get("audio-devices", { input: "", output: "" }));
-  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1));
+  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
   const captureTask = useRef3(null);
@@ -3422,6 +3428,15 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
     await load();
   });
+  const saveGreeting = (greeting) => void action(async () => {
+    try {
+      await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting } });
+    } catch (e) {
+      throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
+    }
+    await load();
+    safe(() => setCustomGreeting(null));
+  });
   const saveDevice = () => action(async () => {
     const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
     if (!alive.current) return;
@@ -3511,6 +3526,18 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   };
   const block = suspended || loading || testing || active() || !["idle", "error"].includes(currentCall);
   const selected = targets.find((t2) => t2.target === target);
+  const greetings = data?.greetings ?? [], customSaved = data?.greeting !== void 0 && !greetings.includes(data.greeting), customOpen = customGreeting !== null || customSaved;
+  const customLabel = formatMessage(c("greetingCustomLabel"), [data?.greeting_max ?? ""]);
+  const commitGreeting = () => {
+    if (customGreeting === null || loading) return;
+    const value = customGreeting.trim();
+    if (!value) return;
+    if (value === data?.greeting) {
+      setCustomGreeting(null);
+      return;
+    }
+    saveGreeting(value);
+  };
   const progress = data?.assets.progress;
   const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
   const complete = mode === "call" ? Boolean(devices) : basicReady(data) && targets.length > 0 && Boolean(auth?.available) && Boolean(data?.legacy || data?.assets.prepared) && Boolean(data?.legacy || ctx.storage.get(`setup-mic:${device}`, false));
@@ -3628,10 +3655,21 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     ] }),
     step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
-      /* @__PURE__ */ jsx4(FieldSelect, { label: c("greeting"), value: data?.greeting ?? "Hey", options: [{ value: "Hey", label: "Hey" }, { value: "\uD5E4\uC774", label: "\uD5E4\uC774" }], disabled: block, onChange: (g) => void action(async () => {
-        await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting: g } });
-        await load();
-      }) }),
+      /* @__PURE__ */ jsx4(FieldSelect, { label: c("greeting"), value: !data ? "\u2026" : customOpen ? CUSTOM : data.greeting ?? "\u2026", options: data ? [...greetings.map((g) => ({ value: g, label: g })), { value: CUSTOM, label: c("greetingCustom") }] : [{ value: "\u2026", label: "\u2026" }], disabled: block || !data, onChange: (g) => {
+        if (g === CUSTOM) {
+          setCustomGreeting("");
+          return;
+        }
+        setCustomGreeting(null);
+        if (g !== data?.greeting) saveGreeting(g);
+      } }),
+      customOpen && /* @__PURE__ */ jsxs4("label", { style: { display: "grid", gap: 4, ...hint }, children: [
+        customLabel,
+        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join("")), onBlur: commitGreeting, onKeyDown: (e) => {
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur();
+        }, style: { width: "12em", color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
+      ] }),
+      customGreeting !== null && !customGreeting.trim() && /* @__PURE__ */ jsx4("p", { role: "status", style: hint, children: c("greetingEmpty") }),
       /* @__PURE__ */ jsx4("p", { style: hint, children: c("greetingHint") }),
       /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
       /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),

@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Button,host,type PluginContext} from '@hermes/plugin-sdk';
 import {useLiveI18n} from './i18n-react.ts';
-import {localizeError} from './i18n.ts';
+import {formatMessage,localizeError} from './i18n.ts';
 import {setupCopy,setupError,type SetupKey} from './setup-copy.ts';
 import {basicReady,preparingModel,setupSteps,type SetupState} from './setup-state.ts';
 import {WakeSettings} from './wake-settings.tsx';
@@ -15,6 +15,7 @@ import type {CatalogItem} from './types.ts';
 import type {WakeTarget} from './wake.ts';
 interface TestStatus {eventId:string|null;target:string|null;selection?:WakeTarget;diagnostics:{model_ready?:boolean;model_error?:string;peak?:number;segments?:number}}
 interface Props {suspended?:boolean;registerStopTest?:(fn:()=>Promise<void>)=>()=>void;ctx:PluginContext;local:boolean;scopeKey:string;active:()=>boolean;hold:()=>Promise<()=>void>;standby:()=>Promise<boolean>;listening:()=>boolean;trial:(target:string)=>Promise<void>;stop:()=>void;subscribe:(fn:()=>void)=>()=>void;callState:()=>string;callSettings:()=>void}
+const CUSTOM=',custom';// commas are never valid greetings, so this pulldown value cannot be a preset
 export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,active,hold,standby,listening,trial,stop,subscribe,callState,callSettings}:Props){
  const {locale,t}=useLiveI18n(),c=setupCopy(locale);
  const saved=ctx.storage.get<{mode:'wake'|'call';step:number}>(`setup:${scopeKey}`,{mode:'wake',step:0});
@@ -22,7 +23,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [auth,setAuth]=useState<CatalogItem|null>(null),[targets,setTargets]=useState<WakeTarget[]>([]),[target,setTarget]=useState('');
  const [loading,setLoading]=useState(false),[error,setError]=useState(''),[note,setNote]=useState(''),[device,setDevice]=useState(''),[level,setLevel]=useState(0),[testing,setTesting]=useState(false);
  const [login,setLogin]=useState<{state:string;url?:string}>({state:'idle'}),[devices,setDevices]=useState<AudioDevices>(ctx.storage.get('audio-devices',{input:'',output:''}));
- const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1));
+ const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
  const captureTask=useRef<Promise<void>|null>(null);
@@ -57,6 +58,10 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  },1200);return()=>clearInterval(timer)},[data?.assets.progress?.state,login.state,local]);
  const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
+ const saveGreeting=(greeting:string)=>void action(async()=>{
+  try{await ctx.rest('/setup/greeting',{method:'PUT',body:{greeting}})}catch(e){throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e}
+  await load();safe(()=>setCustomGreeting(null));
+ });
  const saveDevice=()=>action(async()=>{
   const choice=selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(),device);
   if(!alive.current)return;
@@ -94,6 +99,14 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  };
  const block=suspended||loading||testing||active()||!['idle','error'].includes(currentCall);
  const selected=targets.find(t=>t.target===target);
+ // Presets come from the backend; a saved greeting that is not one of them shows as Custom… with its text.
+ const greetings=data?.greetings??[],customSaved=data?.greeting!==undefined&&!greetings.includes(data.greeting),customOpen=customGreeting!==null||customSaved;
+ const customLabel=formatMessage(c('greetingCustomLabel'),[data?.greeting_max??'']);
+ const commitGreeting=()=>{
+  if(customGreeting===null||loading)return;const value=customGreeting.trim();
+  if(!value)return;if(value===data?.greeting){setCustomGreeting(null);return}
+  saveGreeting(value);
+ };
  const progress=data?.assets.progress;
  const errorText=progress?.error?setupError(locale,'HL_SETUP:'+progress.error):data?.assets.error?setupError(locale,'HL_SETUP:'+data.assets.error):null;
  const complete=mode==='call'?Boolean(devices):basicReady(data)&&targets.length>0&&Boolean(auth?.available)&&Boolean(data?.legacy||data?.assets.prepared)&&Boolean(data?.legacy||ctx.storage.get(`setup-mic:${device}`,false));
@@ -157,7 +170,9 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
-   <FieldSelect label={c('greeting')} value={data?.greeting??'Hey'} options={[{value:'Hey',label:'Hey'},{value:'헤이',label:'헤이'}]} disabled={block} onChange={(g:string)=>void action(async()=>{await ctx.rest('/setup/greeting',{method:'PUT',body:{greeting:g}});await load()})}/>
+   <FieldSelect label={c('greeting')} value={!data?'…':customOpen?CUSTOM:data.greeting??'…'} options={data?[...greetings.map(g=>({value:g,label:g})),{value:CUSTOM,label:c('greetingCustom')}]:[{value:'…',label:'…'}]} disabled={block||!data} onChange={(g:string)=>{if(g===CUSTOM){setCustomGreeting('');return}setCustomGreeting(null);if(g!==data?.greeting)saveGreeting(g)}}/>
+   {customOpen&&<label style={{display:'grid',gap:4,...hint}}>{customLabel}<input aria-label={customLabel} value={customGreeting??data?.greeting??''} disabled={block} onChange={e=>setCustomGreeting(Array.from(e.target.value).slice(0,data?.greeting_max).join(''))} onBlur={commitGreeting} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing)e.currentTarget.blur()}} style={{width:'12em',color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>}
+   {customGreeting!==null&&!customGreeting.trim()&&<p role="status" style={hint}>{c('greetingEmpty')}</p>}
    <p style={hint}>{c('greetingHint')}</p>
    <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>

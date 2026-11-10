@@ -332,8 +332,7 @@ def wake_settings():
 
 
 def wake_greeting(cfg):
-    value=str(cfg.get('wake_greeting') or 'Hey').strip()
-    return value if value in registry_module.GREETINGS else 'Hey'
+    return registry_module.selected_greeting(cfg.get('wake_greeting'))
 
 
 def bot_registry():
@@ -388,7 +387,7 @@ def wake_config(*, preparing=False):
             'targets':targets,'input_device':device[:200],'provider':provider}
     if provider == 'whisper':
         # Whisper must transcribe in the greeting's language, or "Hey" comes back as Hangul (and vice versa).
-        result['whisper_language'] = 'ko' if wake_greeting(cfg) == '헤이' else 'en'
+        result['whisper_language'] = registry_module.greeting_language(wake_greeting(cfg))
         # New installs use the bundled engine. Explicit working legacy paths are preserved.
         legacy = not cfg.get('wake_managed',False) and all(str(cfg.get('wake_whisper_'+k) or '').strip() for k in ('node','module','models','engine'))
         if not legacy:
@@ -478,7 +477,7 @@ def get_setup(response: Response):
     return {'assets':model,'audio':setup_devices(),'device':cfg.get('wake_input_device',''),
             'enabled':bool(cfg.get('wake_enabled',False)), 'legacy':all(cfg.get('wake_whisper_'+k) for k in ('node','module','models','engine')) and not cfg.get('wake_managed'),
             'configured':assets_module.read_json(setup_path()).get('configured',False),
-            'greeting':wake_greeting(cfg)}
+            **registry_module.greeting_view(wake_greeting(cfg))}
 
 class SetupRequest(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -502,17 +501,18 @@ def save_setup(body:SetupRequest,response:Response):
 
 class GreetingRequest(BaseModel):
     model_config=ConfigDict(extra='forbid')
-    greeting: str = Field(min_length=1,max_length=8)
+    greeting: str = Field(min_length=1,max_length=registry_module.MAX_GREETING)
 
 @router.put('/setup/greeting')
 def save_greeting(body:GreetingRequest,response:Response):
     response.headers['Cache-Control']='no-store'
-    if body.greeting not in registry_module.GREETINGS:raise HTTPException(400,'HL_SETUP:greeting')
+    greeting=registry_module.valid_greeting(body.greeting)
+    if greeting is None:raise HTTPException(400,'HL_SETUP:greeting')
     value=assets_module.read_json(setup_path())
-    value['wake']={**value.get('wake',{}),'wake_greeting':body.greeting}
+    value['wake']={**value.get('wake',{}),'wake_greeting':greeting}
     assets_module.atomic_json(setup_path(),value)
     # The wake runtime restarts its listener when the next arm or heartbeat sees the changed config.
-    return {'greeting':body.greeting}
+    return {'greeting':greeting}
 
 @router.post('/setup/model')
 def prepare_model(response:Response):

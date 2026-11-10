@@ -20,10 +20,34 @@ def valid_name(value):
             all(c.isalnum() or c in ' -_' for c in value.strip()) and bool(normalized(value)))
 
 GREETINGS=('Hey','헤이')
+MAX_GREETING=10
+LEGACY_GREETINGS=('안녕',)  # stripped from old single-target phrases only; never offered
+HANGUL=re.compile(r'[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdf]')
+
+def valid_greeting(value):
+    """The trimmed greeting, or None. Commas would split the joined phrase list; a greeting that normalizes away would let the bare name wake."""
+    value=value.strip() if isinstance(value,str) else ''
+    return value if (0<len(value)<=MAX_GREETING and bool(normalized(value)) and
+                     not any(c in ',，' or unicodedata.category(c)=='Cc' for c in value)) else None
+
+def selected_greeting(value):
+    return valid_greeting(value) or GREETINGS[0]
 
 def greeting_order(value):
-    first=value if value in GREETINGS else GREETINGS[0]
+    first=selected_greeting(value)
     return tuple(g+' ' for g in (first,*(g for g in GREETINGS if g!=first)))
+
+def greeting_language(value):
+    # Whisper language: Korean when the greeting has any Hangul syllable or jamo, else English. No auto-detect.
+    return 'ko' if HANGUL.search(selected_greeting(value)) else 'en'
+
+def greeting_view(value):
+    return {'greeting':selected_greeting(value),'greetings':list(GREETINGS),'greeting_max':MAX_GREETING}
+
+def wake_name(phrase):
+    """Name of a single-target phrase. A custom greeting is unknown here, so it stays part of the name."""
+    for g in (*GREETINGS,*LEGACY_GREETINGS):phrase=phrase.removeprefix(g+' ')
+    return phrase.strip()
 
 class WakeRegistry:
     def __init__(self, path, roster, legacy):
@@ -69,7 +93,7 @@ class WakeRegistry:
         material=json.dumps({'data':data,'roster':rows},ensure_ascii=False,sort_keys=True)
         # The selected greeting lets the settings preview a bot that has no saved name yet in the right language.
         return {'revision':hashlib.sha256(material.encode()).hexdigest()[:24],'bots':bots,'targets':targets,'errors':errors,
-                'greeting':greeting_order(self.legacy.get('greeting'))[0].strip()}
+                **greeting_view(self.legacy.get('greeting'))}
 
     def read(self):
         with self.locked():return self._view(self._load())
