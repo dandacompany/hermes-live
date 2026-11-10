@@ -70,7 +70,8 @@ def greeting_view(value):
 
 def wake_name(phrase):
     """Name of a single-target phrase. A custom greeting is unknown here, so it stays part of the name."""
-    for g in (*GREETINGS,*LEGACY_GREETINGS):phrase=phrase.removeprefix(g+' ')
+    for g in (*GREETINGS,*LEGACY_GREETINGS):
+        if phrase.startswith(g+' '):return phrase[len(g)+1:].strip()
     return phrase.strip()
 
 class WakeRegistry:

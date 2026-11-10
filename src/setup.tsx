@@ -26,24 +26,27 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null),[saving,setSaving]=useState(false);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
- const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),composing=useRef(false),episode=useRef(0),confirmed=useRef<string|null>(null);
+ const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),pending=useRef(0),composing=useRef(false),episode=useRef(0),confirmed=useRef<string|null>(null);
  useEffect(()=>registerStopTest?.(async()=>{cancel.current?.abort();await captureTask.current}),[registerStopTest]);
  useEffect(()=>{if(suspended)cancel.current?.abort()},[suspended]);
  const currentCall=useSyncExternalStore(subscribe,callState);
  const steps=setupSteps(mode),labels:SetupKey[]=['overview','bots','account','model','audio','test','done'];
  const safe=(fn:()=>void)=>{if(alive.current)fn()};
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
+ // Refreshes, readiness checks and actions can overlap; none may unblock the others.
+ const beginLoading=()=>{pending.current++;safe(()=>setLoading(true))};
+ const endLoading=()=>{pending.current--;if(!pending.current)safe(()=>setLoading(false))};
  // Only the latest refresh is applied or shows its error; the greeting it reads is the one confirmed as saved.
  const load=async()=>{
-  if(!local)return;const seq=++loads.current;setLoading(true);setError('');
+  if(!local)return;const seq=++loads.current;beginLoading();setError('');
   try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots',{timeoutMs:30000})]);
    if(seq!==loads.current)return;confirmed.current=value.greeting??null;
    safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
-  }catch(e){if(seq===loads.current)fail(e)}finally{safe(()=>setLoading(false))}
+  }catch(e){if(seq===loads.current)fail(e)}finally{endLoading()}
  };
- const checkAuth=async()=>{setLoading(true);try{const value=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:'codex'},timeoutMs:30000});safe(()=>setAuth(value.provider))}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
+ const checkAuth=async()=>{beginLoading();try{const value=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:'codex'},timeoutMs:30000});safe(()=>setAuth(value.provider))}catch(e){fail(e)}finally{endLoading()}};
  const release=async()=>{const id=owner.current;owner.current=null;try{if(id)await ctx.rest('/setup/test',{method:'POST',body:{owner:id,action:'release'}})}catch{}finally{restore.current?.();restore.current=null}};
  useEffect(()=>{alive.current=true;void load();void checkAuth();return()=>{alive.current=false;cancel.current?.abort();void release()}},[scopeKey,local]);
  useEffect(()=>{ctx.storage.set(`setup:${scopeKey}`,{mode,step});if(step===2)void checkAuth()},[step,mode]);
@@ -60,7 +63,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
    }
   }catch(e){fail(e)}finally{polling.current=false}
  },1200);return()=>clearInterval(timer)},[data?.assets.progress?.state,login.state,local]);
- const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
+ const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');beginLoading();try{await fn()}catch(e){fail(e)}finally{endLoading()}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
  // One save at a time: the greeting and microphone controls stay disabled until it and the refresh after it are done.
  // That refresh follows every save, answered, refused or failed; until it succeeds no greeting counts as saved.

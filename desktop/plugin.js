@@ -3312,7 +3312,7 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null), [saving, setSaving] = useState3(false);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null), loads = useRef3(0), composing = useRef3(false), episode = useRef3(0), confirmed = useRef3(null);
+  const captureTask = useRef3(null), loads = useRef3(0), pending = useRef3(0), composing = useRef3(false), episode = useRef3(0), confirmed = useRef3(null);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3326,10 +3326,18 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     if (alive.current) fn();
   };
   const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
+  const beginLoading = () => {
+    pending.current++;
+    safe(() => setLoading(true));
+  };
+  const endLoading = () => {
+    pending.current--;
+    if (!pending.current) safe(() => setLoading(false));
+  };
   const load = async () => {
     if (!local) return;
     const seq = ++loads.current;
-    setLoading(true);
+    beginLoading();
     setError("");
     try {
       const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots", { timeoutMs: 3e4 })]);
@@ -3348,18 +3356,18 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     } catch (e) {
       if (seq === loads.current) fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const checkAuth = async () => {
-    setLoading(true);
+    beginLoading();
     try {
       const value = await ctx.rest("/readiness", { method: "POST", body: { provider: "codex" }, timeoutMs: 3e4 });
       safe(() => setAuth(value.provider));
     } catch (e) {
       fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const release = async () => {
@@ -3420,13 +3428,13 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const action = async (fn) => {
     setError("");
     setNote("");
-    setLoading(true);
+    beginLoading();
     try {
       await fn();
     } catch (e) {
       fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const model = () => action(async () => {
