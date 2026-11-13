@@ -4462,7 +4462,143 @@ function voiceSubmission(session, text2, context, submissionId) {
 
 // src/plugin.tsx
 import { useEffect as useEffect7, useRef as useRef5, useState as useState7, useSyncExternalStore as useSyncExternalStore2 } from "react";
-import { Button as Button6, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+import { Button as Button6, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, ROUTES_AREA, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+
+// src/voice-command.ts
+var ACTIONS = /* @__PURE__ */ new Set(["start", "stop", "toggle"]);
+var PROFILE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+var NONCE = /^[A-Za-z0-9_-]{8,64}$/;
+var TOKEN = /^[A-Za-z0-9_-]{43}$/;
+var START_RETURN_TIMEOUT_MS = 4e3;
+function param(location, key) {
+  const at = location.indexOf("?");
+  if (at < 0) return null;
+  const values = new URLSearchParams(location.slice(at + 1)).getAll(key);
+  return values.length === 1 ? values[0] : null;
+}
+function parseVoiceToken(location) {
+  const token = param(location, "token");
+  return token && TOKEN.test(token) ? token : null;
+}
+function withoutVoiceToken(location) {
+  const at = location.indexOf("?");
+  if (at < 0) return location;
+  const params = new URLSearchParams(location.slice(at + 1));
+  params.delete("token");
+  const rest = params.toString();
+  return rest ? `${location.slice(0, at)}?${rest}` : location.slice(0, at);
+}
+function voiceCommandKey(location) {
+  return param(location, "nonce") ?? "";
+}
+function parseVoiceCommand(location) {
+  const one = (key) => param(location, key);
+  const action = one("action"), profile = one("profile"), nonce = one("nonce");
+  if (!action || !ACTIONS.has(action) || !profile || !PROFILE.test(profile) || !nonce || !NONCE.test(nonce)) return null;
+  return { action, profile, nonce };
+}
+function callPhase(status) {
+  if (status === "idle" || status === "error") return "off";
+  if (status === "connecting") return "connecting";
+  if (status === "listening" || status === "speaking" || status === "thinking") return "in_call";
+  return "unknown";
+}
+var VoiceCommandGate = class {
+  seen = [];
+  lastAt = -Infinity;
+  minIntervalMs;
+  memory;
+  constructor(minIntervalMs = 1500, memory = 128) {
+    this.minIntervalMs = minIntervalMs;
+    this.memory = memory;
+  }
+  decide(command, ctx, now) {
+    const no = (reason) => ({ ok: false, reason });
+    if (!command) return no("bad_request");
+    if (this.seen.includes(command.nonce)) return no("duplicate");
+    this.seen.push(command.nonce);
+    if (this.seen.length > this.memory) this.seen.shift();
+    const previous = this.lastAt;
+    this.lastAt = now;
+    if (now - previous < this.minIntervalMs) return no("too_soon");
+    if (!ctx.local) return no("remote");
+    const phase = callPhase(ctx.status);
+    if (phase === "unknown") return no("unknown");
+    if (phase === "connecting" || ctx.transitioning) return no("transitioning");
+    const op = command.action === "toggle" ? phase === "in_call" ? "stop" : "start" : command.action;
+    if (op === "stop") {
+      if (phase === "off") return no("already_off");
+      return ctx.callProfile === command.profile ? { ok: true, op } : no("wrong_bot");
+    }
+    if (phase === "in_call") return no("already_on");
+    if (ctx.paused) return no("paused");
+    if (ctx.busy) return no("busy");
+    if (!ctx.focused?.storedId) return no("no_chat");
+    if (ctx.focused.connection !== "local") return no("remote");
+    return ctx.focused.profile === command.profile ? { ok: true, op } : no("wrong_bot");
+  }
+};
+function decisionKey(ctx) {
+  const f = ctx.focused;
+  return JSON.stringify([ctx.local, callPhase(ctx.status), ctx.callProfile, ctx.paused, ctx.transitioning, ctx.busy, f ? [f.connection, f.profile, f.storedId] : null]);
+}
+function startFailure(error) {
+  const message = error instanceof Error ? error.message : "";
+  return message === "HL_ERROR:errBusy" ? "busy" : message === "HL_ERROR:errScope" ? "scope_changed" : "start_failed";
+}
+async function runVoiceCommand(deps, location) {
+  const command = parseVoiceCommand(location);
+  const ctx = deps.context();
+  const at = deps.now();
+  const finish = (outcome, reason) => {
+    const last = { nonce: command?.nonce ?? null, action: command?.action ?? null, profile: command?.profile ?? null, outcome, reason, at };
+    deps.record(last);
+    return last;
+  };
+  const back = ctx.focused?.storedId ?? null;
+  const reject = (reason) => {
+    deps.returnTo(back);
+    return finish("rejected", reason);
+  };
+  if (!command) return reject("bad_request");
+  const token = parseVoiceToken(location);
+  if (!token) return reject("bad_token");
+  if (!ctx.local) return reject("remote");
+  let valid;
+  try {
+    valid = await deps.verify(token);
+  } catch {
+    return reject("auth_unavailable");
+  }
+  if (!valid) return reject("bad_token");
+  const decision = deps.gate.decide(command, ctx, at);
+  if (!decision.ok) return reject(decision.reason);
+  if (decisionKey(deps.context()) !== decisionKey(ctx)) return reject("scope_changed");
+  if (decision.op === "stop") {
+    try {
+      deps.stop();
+    } catch {
+      deps.returnTo(back);
+      return finish("failed", "stop_failed");
+    }
+    deps.returnTo(back);
+    return finish("accepted", null);
+  }
+  const focused = ctx.focused;
+  deps.returnTo(back);
+  if (!await deps.waitFocused(focused, START_RETURN_TIMEOUT_MS)) return finish("rejected", "scope_changed");
+  const accepted = finish("accepted", null);
+  try {
+    await deps.start(focused);
+    return accepted;
+  } catch (error) {
+    return finish("failed", startFailure(error));
+  }
+}
+function voiceReport(status, callProfile, last, instance) {
+  const phase = callPhase(status);
+  return { v: 1, instance, status: phase, profile: phase === "connecting" || phase === "in_call" ? callProfile : null, last };
+}
 
 // src/goodbye.ts
 var normalize2 = (value) => value.normalize("NFKC").trim().toLowerCase().replace(/[\s,，.!。！]/gu, "");
@@ -5764,6 +5900,96 @@ var plugin_default = {
         listeners.forEach((fn) => fn());
       }
     };
+    const VOICE_ROUTE = "/hermes-live/voice";
+    const voiceGate = new VoiceCommandGate();
+    const voiceInstance = crypto.randomUUID();
+    let lastVoiceCommand = null;
+    const isLocal = () => !host3.state.connectionId.get() || host3.state.connectionId.get() === "local";
+    const focusedChat = () => {
+      const owner = host3.state.focusedSessionOwner.get();
+      return owner ? { connection: owner.connectionId, profile: owner.profile, storedId: host3.state.focusedStoredSessionId?.get() ?? null } : null;
+    };
+    const reportVoiceState = () => {
+      if (isLocal()) void ctx.rest("/voice/state", { method: "POST", body: voiceReport(controller.snapshot.status, callOwner?.profile ?? null, lastVoiceCommand, voiceInstance), timeoutMs: 5e3 }).catch(() => {
+      });
+    };
+    let reportedVoice = "";
+    listeners.add(() => {
+      const key = `${callPhase(controller.snapshot.status)}:${callOwner?.profile ?? ""}`;
+      if (key !== reportedVoice) {
+        reportedVoice = key;
+        reportVoiceState();
+      }
+    });
+    ctx.setInterval(reportVoiceState, 2e3);
+    const voiceDeps = {
+      gate: voiceGate,
+      now: () => Date.now(),
+      // Sent in the body (never the URL) to the local backend only; the runner refuses remote connections first.
+      verify: async (token) => (await ctx.rest("/voice/verify", { method: "POST", body: { token }, timeoutMs: 5e3 })).ok === true,
+      context: () => ({
+        local: isLocal(),
+        status: controller.snapshot.status,
+        callProfile: callOwner?.profile ?? null,
+        focused: focusedChat(),
+        paused: voiceMode.paused,
+        transitioning: voiceMode.busy || wake.state === "calling" && callPhase(controller.snapshot.status) === "off",
+        busy: activity.active
+      }),
+      stop,
+      returnTo: (storedId) => {
+        if (storedId) host3.navigate(`/${encodeURIComponent(storedId)}`);
+        else if (window.history.length > 1) window.history.back();
+        else host3.navigate("/");
+      },
+      waitFocused: async (focused, timeoutMs) => {
+        const deadline = Date.now() + timeoutMs;
+        const back = () => {
+          const now = focusedChat();
+          return !window.location.hash.startsWith(`#${VOICE_ROUTE}`) && now?.connection === focused.connection && now.profile === focused.profile && now.storedId === focused.storedId && Boolean(currentScope().session);
+        };
+        while (Date.now() < deadline) {
+          if (back()) return true;
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        return back();
+      },
+      start: async (focused) => {
+        const busy = () => voiceMode.paused || voiceMode.busy || activity.active || !["idle", "error"].includes(controller.snapshot.status);
+        if (busy()) throw new Error("HL_ERROR:errBusy");
+        if (!apiScopeMatches(currentScope())) {
+          if (host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
+          await host3.ensureAgent(null, focused.profile);
+        }
+        const scope = currentScope();
+        const now = focusedChat();
+        if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        if (busy()) throw new Error("HL_ERROR:errBusy");
+        callOwner = scope;
+        await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
+        if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
+      },
+      record: (last) => {
+        lastVoiceCommand = last;
+        reportVoiceState();
+      }
+    };
+    function VoiceCommandPage() {
+      const handled = useRef5(false);
+      useEffect7(() => {
+        if (handled.current) return;
+        handled.current = true;
+        const location = window.location.hash;
+        if (!location.includes("?")) {
+          voiceDeps.returnTo(focusedChat()?.storedId ?? null);
+          return;
+        }
+        window.history.replaceState(window.history.state, "", withoutVoiceToken(location));
+        void runVoiceCommand(voiceDeps, location);
+      }, []);
+      return null;
+    }
+    ctx.register({ id: "voice-command", area: ROUTES_AREA, data: { path: VOICE_ROUTE }, render: () => /* @__PURE__ */ jsx8(VoiceCommandPage, {}, voiceCommandKey(window.location.hash)) });
     function VoiceModeControls() {
       const { locale } = useLiveI18n();
       const c = setupCopy(locale);

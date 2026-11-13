@@ -19,7 +19,8 @@ import {defaultDevices,selectWakeMicrophone,canonicalMicrophoneLabel,type AudioD
 import {UsageLedger,emptyUsage,type UsageData} from './usage.ts';
 import {seedHistory,draftVoicePrompt,voiceSubmission,historyParams} from './context.ts';
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
-import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,host,icons,SegmentedControl} from '@hermes/plugin-sdk';
+import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,ROUTES_AREA,host,icons,SegmentedControl} from '@hermes/plugin-sdk';
+import {VoiceCommandGate,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
 import type {PluginContext,Route} from '@hermes/plugin-sdk';
 import {CallController} from './controller.ts';
 import {AudioEngine} from './audio.ts';
@@ -240,6 +241,62 @@ export default {
    },changed:()=>listeners.forEach(fn=>fn()),
   });
   const changeVoiceMode=async()=>{try{if(voiceMode.failed?voiceMode.intent==='resume':voiceMode.paused)await voiceMode.resume();else await voiceMode.pause()}catch{listeners.forEach(fn=>fn())}};
+
+  // External control: hermes://hermes-live/voice?action=start|stop|toggle&profile=<bot>&nonce=<id>&token=<voice-token>.
+  // Wake detection is untouched; this only reads its state to refuse mid-navigation commands.
+  const VOICE_ROUTE='/hermes-live/voice';
+  const voiceGate=new VoiceCommandGate();const voiceInstance=crypto.randomUUID();let lastVoiceCommand:LastCommand|null=null;
+  const isLocal=()=>!host.state.connectionId.get()||host.state.connectionId.get()==='local';
+  const focusedChat=():FocusedChat|null=>{const owner=host.state.focusedSessionOwner.get();return owner?{connection:owner.connectionId,profile:owner.profile,storedId:host.state.focusedStoredSessionId?.get()??null}:null};
+  // Remote backends would write the file on another machine; staying silent lets local readers see it as stale.
+  const reportVoiceState=()=>{if(isLocal())void ctx.rest('/voice/state',{method:'POST',body:voiceReport(controller.snapshot.status,callOwner?.profile??null,lastVoiceCommand,voiceInstance),timeoutMs:5000}).catch(()=>{})};
+  let reportedVoice='';
+  listeners.add(()=>{const key=`${callPhase(controller.snapshot.status)}:${callOwner?.profile??''}`;if(key!==reportedVoice){reportedVoice=key;reportVoiceState()}});
+  ctx.setInterval(reportVoiceState,2000);
+  const voiceDeps:RunnerDeps={
+   gate:voiceGate,now:()=>Date.now(),
+   // Sent in the body (never the URL) to the local backend only; the runner refuses remote connections first.
+   verify:async token=>(await ctx.rest<{ok?:boolean}>('/voice/verify',{method:'POST',body:{token},timeoutMs:5000})).ok===true,
+   context:()=>({local:isLocal(),status:controller.snapshot.status,callProfile:callOwner?.profile??null,focused:focusedChat(),paused:voiceMode.paused,
+    transitioning:voiceMode.busy||(wake.state==='calling'&&callPhase(controller.snapshot.status)==='off'),busy:activity.active}),
+   stop,
+   returnTo:storedId=>{if(storedId)host.navigate(`/${encodeURIComponent(storedId)}`);else if(window.history.length>1)window.history.back();else host.navigate('/')},
+   waitFocused:async(focused,timeoutMs)=>{
+    const deadline=Date.now()+timeoutMs;
+    const back=()=>{const now=focusedChat();return !window.location.hash.startsWith(`#${VOICE_ROUTE}`)&&now?.connection===focused.connection&&now.profile===focused.profile&&now.storedId===focused.storedId&&Boolean(currentScope().session)};
+    while(Date.now()<deadline){if(back())return true;await new Promise(r=>setTimeout(r,50))}
+    return back();
+   },
+   start:async focused=>{
+    const busy=()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status);
+    if(busy())throw new Error('HL_ERROR:errBusy');
+    if(!apiScopeMatches(currentScope())){
+     if(host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean))throw new Error('HL_ERROR:errBusy');
+     await host.ensureAgent(null,focused.profile);
+    }
+    const scope=currentScope();const now=focusedChat();
+    if(!now||now.connection!=='local'||now.profile!==focused.profile||now.storedId!==focused.storedId||!scope.session||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
+    if(busy())throw new Error('HL_ERROR:errBusy');
+    // Same path as the composer call button: the chat's saved provider and voice.
+    callOwner=scope;await controller.start(ctx.storage.get<Selection>(`selection:${scope.connection}:${scope.profile}`,defaults));
+    if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
+   },
+   record:last=>{lastVoiceCommand=last;reportVoiceState()},
+  };
+  function VoiceCommandPage(){
+   const handled=useRef(false);
+   useEffect(()=>{
+    if(handled.current)return;handled.current=true;
+    const location=window.location.hash;
+    // A bare restored route (Desktop remembers only the pathname) is not a command: just leave.
+    if(!location.includes('?')){voiceDeps.returnTo(focusedChat()?.storedId??null);return}
+    // Keep the token out of the history entry; Back must not replay an authenticated link.
+    window.history.replaceState(window.history.state,'',withoutVoiceToken(location));
+    void runVoiceCommand(voiceDeps,location);
+   },[]);
+   return null;
+  }
+  ctx.register({id:'voice-command',area:ROUTES_AREA,data:{path:VOICE_ROUTE},render:()=> <VoiceCommandPage key={voiceCommandKey(window.location.hash)}/>});
   function VoiceModeControls(){
    const {locale}=useLiveI18n();const c=setupCopy(locale);
    useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>`${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
