@@ -10,7 +10,8 @@ from pathlib import Path
 import re
 
 import httpx
-from fastapi import APIRouter, HTTPException, Response
+import time
+from fastapi import APIRouter, Body, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 
@@ -318,6 +319,42 @@ _assets_spec.loader.exec_module(assets_module)
 def setup_path():
     from hermes_constants import get_default_hermes_root
     return get_default_hermes_root()/'state/hermes-live/setup.json'
+
+
+_voice_state_spec=importlib.util.spec_from_file_location(__name__+'_voice_state',Path(__file__).with_name('voice_state.py'))
+voice_state=importlib.util.module_from_spec(_voice_state_spec)
+_voice_state_spec.loader.exec_module(voice_state)
+
+
+def voice_state_path():
+    # Shared by every profile backend so external readers see one file.
+    from hermes_constants import get_default_hermes_root
+    return get_default_hermes_root()/voice_state.STATE_RELATIVE
+
+
+def voice_token_path():
+    from hermes_constants import get_default_hermes_root
+    return get_default_hermes_root()/voice_state.TOKEN_RELATIVE
+
+
+@router.post('/voice/state')
+def report_voice_state(response: Response, payload: dict = Body(...)):
+    response.headers['Cache-Control']='no-store'
+    try:
+        # Create the link token early so external controllers can read it before their first command.
+        voice_state.ensure_token(voice_token_path())
+        result=voice_state.write_report(voice_state_path(),payload,int(time.time()*1000))
+    except ValueError:raise HTTPException(400,'Invalid voice state report') from None
+    except OSError:raise HTTPException(503,'Could not write voice state') from None
+    return {'written':result['written']}
+
+
+@router.post('/voice/verify')
+def verify_voice_token(response: Response, payload: dict = Body(...)):
+    response.headers['Cache-Control']='no-store'
+    if set(payload)!={'token'}:raise HTTPException(400,'Invalid voice token request')
+    try:return {'ok':voice_state.verify_token(voice_token_path(),payload['token'])}
+    except OSError:raise HTTPException(503,'Could not read voice token') from None
 
 
 def wake_settings():
