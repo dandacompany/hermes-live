@@ -72,7 +72,8 @@ class WhisperEngine:
         native = cfg.get('whisper_native')
         if native:
             command = [sys.executable, str(Path(__file__).with_name('wake-native-worker.py')),
-                       json.dumps({**native, 'targets':self.targets})]
+                       json.dumps({**native, 'targets':self.targets,
+                                   'greeting_required':bool(cfg.get('greeting_required', False))})]
             env = {'HOME':str(Path.home()),'PATH':'/usr/bin:/bin'}
         else:
             worker = Path(__file__).with_name('wake-whisper-worker.mjs')
