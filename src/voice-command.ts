@@ -84,54 +84,39 @@ export interface RunnerDeps {
 }
 
 /** Why an accepted start could not begin. Fixed codes only; never error text. */
-export type StartBlock='paused'|'transitioning'|'mic_busy'|'call_busy'|'leaving_busy'|'leaving_unknown'|'switch_failed';
-const START_BLOCKS=new Set<string>(['paused','transitioning','mic_busy','call_busy','leaving_busy','leaving_unknown','switch_failed']);
+export type StartBlock='paused'|'transitioning'|'mic_busy'|'call_busy'|'switch_failed';
+const START_BLOCKS=new Set<string>(['paused','transitioning','mic_busy','call_busy','switch_failed']);
 export class VoiceStartError extends Error{
  code:StartBlock;
  constructor(code:StartBlock){if(!START_BLOCKS.has(code))throw new Error('unknown start block');super(`HL_VOICE:${code}`);this.code=code}
 }
-/** State of the active gateway profile a start would leave; null when it was not (or need not be) asked. */
-export type LeavingState='idle'|'busy'|'unknown';
-export interface StartSnapshot {paused:boolean;transitioning:boolean;micBusy:boolean;status:string;needsSwitch:boolean;leaving:LeavingState|null}
-/**
- * Measured: switching the active gateway leaves other profiles' turns running and painting,
- * so busy chats elsewhere no longer block. What stays blocked is leaving an active profile that
- * has a live turn (or cannot be checked): the window's primary socket cannot be told apart
- * through the plugin SDK, and leaving a busy primary was not measured.
- */
+export interface StartSnapshot {paused:boolean;transitioning:boolean;micBusy:boolean;status:string}
 export function startBlocker(s:StartSnapshot):StartBlock|null{
  if(s.paused)return 'paused';
  if(s.transitioning)return 'transitioning';
  if(s.micBusy)return 'mic_busy';
  if(callPhase(s.status)!=='off')return 'call_busy';
- if(!s.needsSwitch)return null;
- if(s.leaving==='idle')return null;
- return s.leaving==='busy'?'leaving_busy':'leaving_unknown';
+ return null;
 }
 
-export const LEAVING_PROBE_TIMEOUT_MS=2000;
-const LIVE_STATUSES=new Set(['working','waiting','starting']);
-const KNOWN_STATUSES=new Set(['working','waiting','starting','idle']);
+export interface StartDeps {
+ snapshot:()=>StartSnapshot;needsSwitch:()=>boolean;switchTo:()=>Promise<void>;
+ confirmScope:()=>void;begin:()=>Promise<void>;
+}
 /**
- * Ask the profile being left whether any live session is mid-turn (session.active_list).
- * Reads only `sessions[].status`; every other field (titles, previews) is ignored.
- * Fails closed: malformed answers, errors and timeouts are 'unknown'.
+ * External start for the focused chat. Busy sessions elsewhere, including on the active
+ * gateway being left, deliberately do not block: switching was measured to keep other
+ * profiles' turns running and updating (leaving a busy primary-socket profile was not).
  */
-export async function probeLeaving(query:()=>Promise<unknown>,timeoutMs=LEAVING_PROBE_TIMEOUT_MS):Promise<LeavingState>{
- let timer:ReturnType<typeof setTimeout>|undefined;
- try{
-  const result=await Promise.race([query(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('timeout')),timeoutMs)})]);
-  const sessions=(result as {sessions?:unknown}|null)?.sessions;
-  if(!Array.isArray(sessions))return 'unknown';
-  let busy=false;
-  for(const row of sessions){
-   const status=(row as {status?:unknown}|null)?.status;
-   if(typeof status!=='string'||!KNOWN_STATUSES.has(status))return 'unknown';
-   if(LIVE_STATUSES.has(status))busy=true;
-  }
-  return busy?'busy':'idle';
- }catch{return 'unknown'}
- finally{if(timer)clearTimeout(timer)}
+export async function startForChat(deps:StartDeps):Promise<void>{
+ const block=()=>{const reason=startBlocker(deps.snapshot());if(reason)throw new VoiceStartError(reason)};
+ block();
+ if(deps.needsSwitch()){
+  try{await deps.switchTo()}catch{throw new VoiceStartError('switch_failed')}
+ }
+ deps.confirmScope();
+ block();
+ await deps.begin();
 }
 
 /** Every field the gate reads, reduced to what changes a decision (speaking/listening are one phase). */

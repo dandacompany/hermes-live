@@ -4538,7 +4538,7 @@ var VoiceCommandGate = class {
     return ctx.focused.profile === command.profile ? { ok: true, op } : no("wrong_bot");
   }
 };
-var START_BLOCKS = /* @__PURE__ */ new Set(["paused", "transitioning", "mic_busy", "call_busy", "leaving_busy", "leaving_unknown", "switch_failed"]);
+var START_BLOCKS = /* @__PURE__ */ new Set(["paused", "transitioning", "mic_busy", "call_busy", "switch_failed"]);
 var VoiceStartError = class extends Error {
   code;
   constructor(code) {
@@ -4552,33 +4552,24 @@ function startBlocker(s) {
   if (s.transitioning) return "transitioning";
   if (s.micBusy) return "mic_busy";
   if (callPhase(s.status) !== "off") return "call_busy";
-  if (!s.needsSwitch) return null;
-  if (s.leaving === "idle") return null;
-  return s.leaving === "busy" ? "leaving_busy" : "leaving_unknown";
+  return null;
 }
-var LEAVING_PROBE_TIMEOUT_MS = 2e3;
-var LIVE_STATUSES = /* @__PURE__ */ new Set(["working", "waiting", "starting"]);
-var KNOWN_STATUSES = /* @__PURE__ */ new Set(["working", "waiting", "starting", "idle"]);
-async function probeLeaving(query, timeoutMs = LEAVING_PROBE_TIMEOUT_MS) {
-  let timer;
-  try {
-    const result = await Promise.race([query(), new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
-    })]);
-    const sessions = result?.sessions;
-    if (!Array.isArray(sessions)) return "unknown";
-    let busy = false;
-    for (const row of sessions) {
-      const status = row?.status;
-      if (typeof status !== "string" || !KNOWN_STATUSES.has(status)) return "unknown";
-      if (LIVE_STATUSES.has(status)) busy = true;
+async function startForChat(deps) {
+  const block = () => {
+    const reason = startBlocker(deps.snapshot());
+    if (reason) throw new VoiceStartError(reason);
+  };
+  block();
+  if (deps.needsSwitch()) {
+    try {
+      await deps.switchTo();
+    } catch {
+      throw new VoiceStartError("switch_failed");
     }
-    return busy ? "busy" : "idle";
-  } catch {
-    return "unknown";
-  } finally {
-    if (timer) clearTimeout(timer);
   }
+  deps.confirmScope();
+  block();
+  await deps.begin();
 }
 function decisionKey(ctx) {
   const f = ctx.focused;
@@ -5997,35 +5988,22 @@ var plugin_default = {
         }
         return back();
       },
-      start: async (focused) => {
-        const block = (reason) => {
-          if (reason) throw new VoiceStartError(reason);
-        };
-        const blocker = (needsSwitch, leaving) => startBlocker({ paused: voiceMode.paused, transitioning: voiceMode.busy, micBusy: activity.active, status: controller.snapshot.status, needsSwitch, leaving });
-        block(blocker(false, null));
-        if (!apiScopeMatches(currentScope())) {
-          const leavingProfile = host3.state.profile.get() || "default";
-          const leavingConnection = host3.state.connectionId.get() || "local";
-          const leaving = await probeLeaving(async () => {
-            const route2 = (await host3.profileRoutes()).find((r) => r.connectionId === leavingConnection && r.profile === leavingProfile);
-            if (!route2) throw new Error("no route");
-            return host3.requestProfile(route2, "session.active_list", {});
-          });
-          block(blocker(true, leaving));
-          try {
-            await host3.ensureAgent(null, focused.profile);
-          } catch {
-            throw new VoiceStartError("switch_failed");
-          }
+      start: async (focused) => startForChat({
+        snapshot: () => ({ paused: voiceMode.paused, transitioning: voiceMode.busy, micBusy: activity.active, status: controller.snapshot.status }),
+        needsSwitch: () => !apiScopeMatches(currentScope()),
+        switchTo: () => host3.ensureAgent(null, focused.profile),
+        confirmScope: () => {
+          const scope = currentScope();
+          const now = focusedChat();
+          if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        },
+        begin: async () => {
+          const scope = currentScope();
+          callOwner = scope;
+          await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
+          if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
         }
-        const scope = currentScope();
-        const now = focusedChat();
-        if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
-        block(blocker(false, null));
-        callOwner = scope;
-        await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
-        if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
-      },
+      }),
       record: (last) => {
         lastVoiceCommand = last;
         reportVoiceState();
