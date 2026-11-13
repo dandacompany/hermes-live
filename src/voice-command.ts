@@ -3,7 +3,7 @@
 export type VoiceAction='start'|'stop'|'toggle';
 export interface VoiceCommand {action:VoiceAction;profile:string;nonce:string}
 export type CallPhase='off'|'connecting'|'in_call'|'unknown';
-export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed'|'stop_failed';
+export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed'|'stop_failed'|StartBlock;
 export interface FocusedChat {connection:string;profile:string;storedId:string|null}
 export interface GateContext {local:boolean;status:string;callProfile:string|null;focused:FocusedChat|null;paused:boolean;transitioning:boolean;busy:boolean}
 export type Decision={ok:true;op:'start'|'stop'}|{ok:false;reason:RejectReason};
@@ -83,6 +83,42 @@ export interface RunnerDeps {
  record:(last:LastCommand)=>void;
 }
 
+/** Why an accepted start could not begin. Fixed codes only; never error text. */
+export type StartBlock='paused'|'transitioning'|'mic_busy'|'call_busy'|'switch_failed';
+const START_BLOCKS=new Set<string>(['paused','transitioning','mic_busy','call_busy','switch_failed']);
+export class VoiceStartError extends Error{
+ code:StartBlock;
+ constructor(code:StartBlock){if(!START_BLOCKS.has(code))throw new Error('unknown start block');super(`HL_VOICE:${code}`);this.code=code}
+}
+export interface StartSnapshot {paused:boolean;transitioning:boolean;micBusy:boolean;status:string}
+export function startBlocker(s:StartSnapshot):StartBlock|null{
+ if(s.paused)return 'paused';
+ if(s.transitioning)return 'transitioning';
+ if(s.micBusy)return 'mic_busy';
+ if(callPhase(s.status)!=='off')return 'call_busy';
+ return null;
+}
+
+export interface StartDeps {
+ snapshot:()=>StartSnapshot;needsSwitch:()=>boolean;switchTo:()=>Promise<void>;
+ confirmScope:()=>void;begin:()=>Promise<void>;
+}
+/**
+ * External start for the focused chat. Busy sessions elsewhere, including on the active
+ * gateway being left, deliberately do not block: switching was measured to keep other
+ * profiles' turns running and updating (leaving a busy primary-socket profile was not).
+ */
+export async function startForChat(deps:StartDeps):Promise<void>{
+ const block=()=>{const reason=startBlocker(deps.snapshot());if(reason)throw new VoiceStartError(reason)};
+ block();
+ if(deps.needsSwitch()){
+  try{await deps.switchTo()}catch{throw new VoiceStartError('switch_failed')}
+ }
+ deps.confirmScope();
+ block();
+ await deps.begin();
+}
+
 /** Every field the gate reads, reduced to what changes a decision (speaking/listening are one phase). */
 function decisionKey(ctx:GateContext){
  const f=ctx.focused;
@@ -91,6 +127,7 @@ function decisionKey(ctx:GateContext){
 
 /** Fixed reason codes only: error text can carry paths or provider details and never reaches the state file. */
 function startFailure(error:unknown):RejectReason{
+ if(error instanceof VoiceStartError)return error.code;
  const message=error instanceof Error?error.message:'';
  return message==='HL_ERROR:errBusy'?'busy':message==='HL_ERROR:errScope'?'scope_changed':'start_failed';
 }

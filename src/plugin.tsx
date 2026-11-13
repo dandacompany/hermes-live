@@ -20,7 +20,7 @@ import {UsageLedger,emptyUsage,type UsageData} from './usage.ts';
 import {seedHistory,draftVoicePrompt,voiceSubmission,historyParams} from './context.ts';
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,ROUTES_AREA,host,icons,SegmentedControl} from '@hermes/plugin-sdk';
-import {VoiceCommandGate,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
+import {VoiceCommandGate,startForChat,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
 import type {PluginContext,Route} from '@hermes/plugin-sdk';
 import {CallController} from './controller.ts';
 import {AudioEngine} from './audio.ts';
@@ -267,20 +267,21 @@ export default {
     while(Date.now()<deadline){if(back())return true;await new Promise(r=>setTimeout(r,50))}
     return back();
    },
-   start:async focused=>{
-    const busy=()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status);
-    if(busy())throw new Error('HL_ERROR:errBusy');
-    if(!apiScopeMatches(currentScope())){
-     if(host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean))throw new Error('HL_ERROR:errBusy');
-     await host.ensureAgent(null,focused.profile);
-    }
-    const scope=currentScope();const now=focusedChat();
-    if(!now||now.connection!=='local'||now.profile!==focused.profile||now.storedId!==focused.storedId||!scope.session||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
-    if(busy())throw new Error('HL_ERROR:errBusy');
-    // Same path as the composer call button: the chat's saved provider and voice.
-    callOwner=scope;await controller.start(ctx.storage.get<Selection>(`selection:${scope.connection}:${scope.profile}`,defaults));
-    if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
-   },
+   start:async focused=>startForChat({
+    snapshot:()=>({paused:voiceMode.paused,transitioning:voiceMode.busy,micBusy:activity.active,status:controller.snapshot.status}),
+    needsSwitch:()=>!apiScopeMatches(currentScope()),
+    switchTo:()=>host.ensureAgent(null,focused.profile),
+    confirmScope:()=>{
+     const scope=currentScope();const now=focusedChat();
+     if(!now||now.connection!=='local'||now.profile!==focused.profile||now.storedId!==focused.storedId||!scope.session||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
+    },
+    begin:async()=>{
+     // Same path as the composer call button: the chat's saved provider and voice.
+     const scope=currentScope();
+     callOwner=scope;await controller.start(ctx.storage.get<Selection>(`selection:${scope.connection}:${scope.profile}`,defaults));
+     if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
+    },
+   }),
    record:last=>{lastVoiceCommand=last;reportVoiceState()},
   };
   function VoiceCommandPage(){

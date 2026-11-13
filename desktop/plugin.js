@@ -4538,11 +4538,45 @@ var VoiceCommandGate = class {
     return ctx.focused.profile === command.profile ? { ok: true, op } : no("wrong_bot");
   }
 };
+var START_BLOCKS = /* @__PURE__ */ new Set(["paused", "transitioning", "mic_busy", "call_busy", "switch_failed"]);
+var VoiceStartError = class extends Error {
+  code;
+  constructor(code) {
+    if (!START_BLOCKS.has(code)) throw new Error("unknown start block");
+    super(`HL_VOICE:${code}`);
+    this.code = code;
+  }
+};
+function startBlocker(s) {
+  if (s.paused) return "paused";
+  if (s.transitioning) return "transitioning";
+  if (s.micBusy) return "mic_busy";
+  if (callPhase(s.status) !== "off") return "call_busy";
+  return null;
+}
+async function startForChat(deps) {
+  const block = () => {
+    const reason = startBlocker(deps.snapshot());
+    if (reason) throw new VoiceStartError(reason);
+  };
+  block();
+  if (deps.needsSwitch()) {
+    try {
+      await deps.switchTo();
+    } catch {
+      throw new VoiceStartError("switch_failed");
+    }
+  }
+  deps.confirmScope();
+  block();
+  await deps.begin();
+}
 function decisionKey(ctx) {
   const f = ctx.focused;
   return JSON.stringify([ctx.local, callPhase(ctx.status), ctx.callProfile, ctx.paused, ctx.transitioning, ctx.busy, f ? [f.connection, f.profile, f.storedId] : null]);
 }
 function startFailure(error) {
+  if (error instanceof VoiceStartError) return error.code;
   const message = error instanceof Error ? error.message : "";
   return message === "HL_ERROR:errBusy" ? "busy" : message === "HL_ERROR:errScope" ? "scope_changed" : "start_failed";
 }
@@ -5954,21 +5988,22 @@ var plugin_default = {
         }
         return back();
       },
-      start: async (focused) => {
-        const busy = () => voiceMode.paused || voiceMode.busy || activity.active || !["idle", "error"].includes(controller.snapshot.status);
-        if (busy()) throw new Error("HL_ERROR:errBusy");
-        if (!apiScopeMatches(currentScope())) {
-          if (host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
-          await host3.ensureAgent(null, focused.profile);
+      start: async (focused) => startForChat({
+        snapshot: () => ({ paused: voiceMode.paused, transitioning: voiceMode.busy, micBusy: activity.active, status: controller.snapshot.status }),
+        needsSwitch: () => !apiScopeMatches(currentScope()),
+        switchTo: () => host3.ensureAgent(null, focused.profile),
+        confirmScope: () => {
+          const scope = currentScope();
+          const now = focusedChat();
+          if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
+        },
+        begin: async () => {
+          const scope = currentScope();
+          callOwner = scope;
+          await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
+          if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
         }
-        const scope = currentScope();
-        const now = focusedChat();
-        if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
-        if (busy()) throw new Error("HL_ERROR:errBusy");
-        callOwner = scope;
-        await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
-        if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
-      },
+      }),
       record: (last) => {
         lastVoiceCommand = last;
         reportVoiceState();
