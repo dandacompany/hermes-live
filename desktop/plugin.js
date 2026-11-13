@@ -4538,6 +4538,14 @@ var VoiceCommandGate = class {
     return ctx.focused.profile === command.profile ? { ok: true, op } : no("wrong_bot");
   }
 };
+function decisionKey(ctx) {
+  const f = ctx.focused;
+  return JSON.stringify([ctx.local, callPhase(ctx.status), ctx.callProfile, ctx.paused, ctx.transitioning, ctx.busy, f ? [f.connection, f.profile, f.storedId] : null]);
+}
+function startFailure(error) {
+  const message = error instanceof Error ? error.message : "";
+  return message === "HL_ERROR:errBusy" ? "busy" : message === "HL_ERROR:errScope" ? "scope_changed" : "start_failed";
+}
 async function runVoiceCommand(deps, location) {
   const command = parseVoiceCommand(location);
   const ctx = deps.context();
@@ -4565,8 +4573,14 @@ async function runVoiceCommand(deps, location) {
   if (!valid) return reject("bad_token");
   const decision = deps.gate.decide(command, ctx, at);
   if (!decision.ok) return reject(decision.reason);
+  if (decisionKey(deps.context()) !== decisionKey(ctx)) return reject("scope_changed");
   if (decision.op === "stop") {
-    deps.stop();
+    try {
+      deps.stop();
+    } catch {
+      deps.returnTo(back);
+      return finish("failed", "stop_failed");
+    }
     deps.returnTo(back);
     return finish("accepted", null);
   }
@@ -4577,8 +4591,8 @@ async function runVoiceCommand(deps, location) {
   try {
     await deps.start(focused);
     return accepted;
-  } catch {
-    return finish("failed", "start_failed");
+  } catch (error) {
+    return finish("failed", startFailure(error));
   }
 }
 function voiceReport(status, callProfile, last, instance) {

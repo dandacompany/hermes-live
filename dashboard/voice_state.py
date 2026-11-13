@@ -26,7 +26,7 @@ STALE_AFTER_MS=6000
 STATUSES={'off','connecting','in_call','unknown'}
 ACTIONS={'start','stop','toggle'}
 OUTCOMES={'accepted','rejected','failed'}
-REASONS={'bad_request','bad_token','auth_unavailable','duplicate','too_soon','remote','transitioning','unknown','already_on','already_off','paused','busy','no_chat','wrong_bot','scope_changed','start_failed'}
+REASONS={'bad_request','bad_token','auth_unavailable','duplicate','too_soon','remote','transitioning','unknown','already_on','already_off','paused','busy','no_chat','wrong_bot','scope_changed','start_failed','stop_failed'}
 _PROFILE=re.compile(r'[a-z0-9][a-z0-9_-]{0,63}')
 _NONCE=re.compile(r'[A-Za-z0-9_-]{8,64}')
 _INSTANCE=re.compile(r'[A-Za-z0-9-]{8,64}')
@@ -36,22 +36,24 @@ _LAST_KEYS={'nonce','action','profile','outcome','reason','at'}
 def _match(pattern,value):return isinstance(value,str) and pattern.fullmatch(value) is not None
 def _optional(pattern,value):return value is None or _match(pattern,value)
 def _int(value):return type(value) is int and value>=0
+# JSON can carry lists/objects; check the type before set membership so they fail validation (400), not hashing (500).
+def _member(value,allowed):return isinstance(value,str) and value in allowed
 
 def validate_last(last):
     if last is None:return None
     if not isinstance(last,dict) or set(last)!=_LAST_KEYS:raise ValueError('invalid last command')
     if not _optional(_NONCE,last['nonce']) or not _optional(_PROFILE,last['profile']):raise ValueError('invalid last command')
-    if last['action'] is not None and last['action'] not in ACTIONS:raise ValueError('invalid last command')
-    if last['outcome'] not in OUTCOMES or not _int(last['at']):raise ValueError('invalid last command')
+    if last['action'] is not None and not _member(last['action'],ACTIONS):raise ValueError('invalid last command')
+    if not _member(last['outcome'],OUTCOMES) or not _int(last['at']):raise ValueError('invalid last command')
     reason=last['reason']
-    if (reason is None)!=(last['outcome']=='accepted') or (reason is not None and reason not in REASONS):raise ValueError('invalid last command')
+    if (reason is None)!=(last['outcome']=='accepted') or (reason is not None and not _member(reason,REASONS)):raise ValueError('invalid last command')
     return dict(last)
 
 def validate_report(payload):
     if not isinstance(payload,dict) or set(payload)!=_REPORT_KEYS:raise ValueError('invalid report')
     if type(payload['v']) is not int or payload['v']!=1 or not _match(_INSTANCE,payload['instance']):raise ValueError('invalid report')
     status=payload['status'];profile=payload['profile']
-    if status not in STATUSES:raise ValueError('invalid report')
+    if not _member(status,STATUSES):raise ValueError('invalid report')
     if status in ('connecting','in_call'):
         if not _match(_PROFILE,profile):raise ValueError('invalid report')
     elif profile is not None:raise ValueError('invalid report')

@@ -3,7 +3,7 @@
 export type VoiceAction='start'|'stop'|'toggle';
 export interface VoiceCommand {action:VoiceAction;profile:string;nonce:string}
 export type CallPhase='off'|'connecting'|'in_call'|'unknown';
-export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed';
+export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed'|'stop_failed';
 export interface FocusedChat {connection:string;profile:string;storedId:string|null}
 export interface GateContext {local:boolean;status:string;callProfile:string|null;focused:FocusedChat|null;paused:boolean;transitioning:boolean;busy:boolean}
 export type Decision={ok:true;op:'start'|'stop'}|{ok:false;reason:RejectReason};
@@ -83,6 +83,18 @@ export interface RunnerDeps {
  record:(last:LastCommand)=>void;
 }
 
+/** Every field the gate reads, reduced to what changes a decision (speaking/listening are one phase). */
+function decisionKey(ctx:GateContext){
+ const f=ctx.focused;
+ return JSON.stringify([ctx.local,callPhase(ctx.status),ctx.callProfile,ctx.paused,ctx.transitioning,ctx.busy,f?[f.connection,f.profile,f.storedId]:null]);
+}
+
+/** Fixed reason codes only: error text can carry paths or provider details and never reaches the state file. */
+function startFailure(error:unknown):RejectReason{
+ const message=error instanceof Error?error.message:'';
+ return message==='HL_ERROR:errBusy'?'busy':message==='HL_ERROR:errScope'?'scope_changed':'start_failed';
+}
+
 export async function runVoiceCommand(deps:RunnerDeps,location:string):Promise<LastCommand>{
  const command=parseVoiceCommand(location);const ctx=deps.context();const at=deps.now();
  const finish=(outcome:LastCommand['outcome'],reason:RejectReason|null)=>{
@@ -102,13 +114,19 @@ export async function runVoiceCommand(deps:RunnerDeps,location:string):Promise<L
  if(!valid)return reject('bad_token');
  const decision=deps.gate.decide(command,ctx,at);
  if(!decision.ok)return reject(decision.reason);
- if(decision.op==='stop'){deps.stop();deps.returnTo(back);return finish('accepted',null)}
+ // The decision uses the state at arrival; if it changed while the token was verified
+ // (for example another bot's call started), act on nothing rather than on a stale owner.
+ if(decisionKey(deps.context())!==decisionKey(ctx))return reject('scope_changed');
+ if(decision.op==='stop'){
+  try{deps.stop()}catch{deps.returnTo(back);return finish('failed','stop_failed')}
+  deps.returnTo(back);return finish('accepted',null);
+ }
  const focused=ctx.focused!;
  // Leave the command page before starting so the call is owned by the chat itself.
  deps.returnTo(back);
  if(!await deps.waitFocused(focused,START_RETURN_TIMEOUT_MS))return finish('rejected','scope_changed');
  const accepted=finish('accepted',null);
- try{await deps.start(focused);return accepted}catch{return finish('failed','start_failed')}
+ try{await deps.start(focused);return accepted}catch(error){return finish('failed',startFailure(error))}
 }
 
 export function voiceReport(status:string,callProfile:string|null,last:LastCommand|null,instance:string):VoiceReport{
