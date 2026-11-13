@@ -23,3 +23,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Local wake recognition
+
+The packaged whisper.cpp v1.9.5 engine is MIT licensed (Copyright Georgi Gerganov and contributors). Its license is included in `dashboard/resources/whisper/darwin-arm64/LICENSE`. Source: https://github.com/ggml-org/whisper.cpp/tree/v1.9.5 . The authenticated loopback patch and build recipe are included in `scripts/build-whisper.mjs`. Whisper model weights are downloaded separately, verified, and shared across local bots.

@@ -14,3 +14,5 @@ CLAUDE.md
 GEMINI.md
 scripts/*
 !scripts/build.mjs
+
+!scripts/build-whisper.mjs

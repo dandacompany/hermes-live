@@ -107,7 +107,7 @@ class AppServer:
                     elif 'id' in message:
                         # Never approve a backing-agent operation. Voice work belongs to Hermes.
                         self.send({'id':message['id'],'error':{'code':-32601,'message':'Voice-only client does not execute server tool requests'}})
-                    elif str(message.get('method','')).startswith('thread/realtime/'):
+                    elif str(message.get('method','')).startswith(('thread/realtime/', 'account/login/')):
                         self.events.append(message)
                         self.events = self.events[-128:]
                     self.condition.notify_all()
@@ -211,41 +211,87 @@ class Sessions:
         self.lock = threading.RLock()
         self.calls = {}
         self.cancelled = {}
+        self.warm = None
+        self.closed = False
+
+    def _prepare(self, server):
+        server.start()
+        account_status(server)
+        effective = server.request('config/read', {'includeLayers':False,'cwd':server.workdir.name}).get('config') or {}
+        # Read only names from effective config; never return or log config values.
+        disabled_mcp = {name:{'enabled':False} for name in (effective.get('mcp_servers') or {})}
+        thread = server.request('thread/start', {
+            'cwd':server.workdir.name, 'modelProvider':'openai', 'ephemeral':True,
+            'approvalPolicy':'never', 'sandbox':'read-only',
+            'baseInstructions':SKIP, 'developerInstructions':SKIP,
+            'dynamicTools':[], 'environments':[], 'experimentalRawEvents':False,
+            'config':{'web_search':'disabled','mcp_servers':disabled_mcp,
+                  'features':{'shell_tool':False,'multi_agent':False,'plugins':False,'apps':False,'hooks':False}}})
+        thread_id = (thread.get('thread') or {}).get('id')
+        if not thread_id:
+            raise BrokerError('Codex 음성 세션을 만들지 못했습니다.')
+        return thread_id
+
+    def prewarm(self):
+        """Keep one unused, tool-isolated thread. No SDP, microphone or voice connection."""
+        self.reap()
+        with self.lock:
+            if self.closed:
+                return {'state':'off'}
+            if self.warm is not None:
+                self.warm['expires'] = self.clock()+45
+                return {'state':'ready' if self.warm['ready'] else 'warming'}
+            server = self.factory()
+            item = {'server':server, 'thread':None, 'ready':False,
+                    'created':self.clock(), 'expires':self.clock()+45}
+            self.warm = item
+            def prepare():
+                try:
+                    thread_id = self._prepare(server)
+                    with self.lock:
+                        if self.warm is item and not self.closed and item['expires']>self.clock():
+                            item.update(thread=thread_id, ready=True)
+                            return
+                except Exception:
+                    pass  # Warmup is optional; never expose upstream auth/context.
+                with self.lock:
+                    if self.warm is item:self.warm = None
+                server.close()
+            worker = threading.Thread(target=prepare, name='hermes-live-prewarm', daemon=True)
+            item['worker'] = worker
+            worker.start()
+            return {'state':'warming'}
 
     def reap(self):
         with self.lock:
             expired = [key for key, call in self.calls.items() if call['expires'] < self.clock()]
             self.cancelled = {key:expiry for key,expiry in self.cancelled.items() if expiry > self.clock()}
+            old = self.warm if self.warm and (self.warm['expires']<=self.clock() or self.clock()-self.warm['created']>=300 or self.warm['server'].closed) else None
+            if old:self.warm = None
+        if old:old['server'].close()
         for key in expired:
             self.stop(key)
 
     def start(self, call_id, voice, offer, model="gpt-live-1-codex", persona=PERSONA):
         self.reap()
         with self.lock:
-            if call_id in self.cancelled or call_id in self.calls:
+            if self.closed or call_id in self.cancelled or call_id in self.calls:
                 raise BrokerError('종료되었거나 중복된 통화입니다.')
             if len(self.calls) >= 2:
                 raise BrokerError('진행 중인 Codex 통화를 먼저 종료하세요.')
-            server = self.factory()
-            call = {'server':server, 'expires':self.clock()+100, 'thread':None}
+            prepared = self.warm if self.warm and self.warm['ready'] else None
+            if prepared:self.warm = None  # An unused thread is transferred to exactly one call.
+            server = prepared['server'] if prepared else self.factory()
+            from hermes_constants import get_hermes_home
+            call = {'server':server, 'home':str(get_hermes_home()), 'ready':False, 'expires':self.clock()+100, 'thread':prepared['thread'] if prepared else None}
             self.calls[call_id] = call
         try:
-            server.start()
-            account_status(server)
-            effective = server.request('config/read', {'includeLayers':False,'cwd':server.workdir.name}).get('config') or {}
-            # Read only names from effective config; never return or log config values.
-            disabled_mcp = {name:{'enabled':False} for name in (effective.get('mcp_servers') or {})}
-            thread = server.request('thread/start', {
-                'cwd':server.workdir.name, 'modelProvider':'openai', 'ephemeral':True,
-                'approvalPolicy':'never', 'sandbox':'read-only',
-                'baseInstructions':SKIP, 'developerInstructions':SKIP,
-                'dynamicTools':[], 'environments':[], 'experimentalRawEvents':False,
-                'config':{'web_search':'disabled','mcp_servers':disabled_mcp,
-                          'features':{'shell_tool':False,'multi_agent':False,'plugins':False,'apps':False,'hooks':False}}})
-            thread_id = (thread.get('thread') or {}).get('id')
-            if not thread_id:
-                raise BrokerError('Codex 음성 세션을 만들지 못했습니다.')
-            call['thread'] = thread_id
+            if call['thread'] is None:
+                call['thread'] = self._prepare(server)
+            else:
+                # Never trust standby's old account check after login/logout changes.
+                account_status(server)
+            thread_id = call['thread']
             server.request('thread/realtime/start', {
                 'threadId':thread_id,'transport':{'type':'webrtc','sdp':offer},
                 'outputModality':'audio','version':'v3','voice':voice,'model':model,
@@ -255,11 +301,18 @@ class Sessions:
             with self.lock:
                 if self.calls.get(call_id) is not call:
                     raise BrokerError('취소된 통화입니다.')
-                call['expires'] = self.clock()+45
+                call['expires'] = self.clock()+45;call['ready']=True
             return {'answer':answer,'callId':call_id,'engine':'codex','handoff':'client'}
         except Exception:
             self.stop(call_id)
             raise
+
+    def active(self,call_id):
+        from hermes_constants import get_hermes_home
+        with self.lock:
+            call=self.calls.get(call_id)
+            return bool(call and call.get('ready') and call.get('home')==str(get_hermes_home())
+                        and call['expires']>self.clock() and not call['server'].closed)
 
     def heartbeat(self, call_id):
         self.reap()
@@ -280,7 +333,10 @@ class Sessions:
 
     def close(self):
         with self.lock:
+            self.closed = True
             ids = list(self.calls)
+            prepared, self.warm = self.warm, None
+        if prepared:prepared['server'].close()
         for key in ids:
             self.stop(key)
 
@@ -323,3 +379,73 @@ def usage_snapshot(server_factory=AppServer):
         return {'plan': account['plan'], 'windows': windows, 'checkedAt': int(time.time())}
     finally:
         server.close()
+
+class LoginFlow:
+    """Codex owns OAuth. Only a short-lived official authorization URL reaches the UI."""
+    def __init__(self, factory=AppServer):
+        self.factory=factory; self.lock=threading.RLock(); self.server=None
+        self.value={'state':'idle'}; self.generation=0
+
+    def status(self):
+        with self.lock: return dict(self.value)
+
+    def start(self):
+        from urllib.parse import urlparse
+        with self.lock:
+            if self.value['state'] in ('starting','waiting'): return dict(self.value)
+            self.generation+=1; generation=self.generation
+            self.value={'state':'starting'}
+        def run():
+            server=self.factory(); login_id=None
+            try:
+                server.start()
+                with self.lock:
+                    if generation!=self.generation: return
+                    self.server=server
+                result=server.request('account/login/start',{'type':'chatgpt'},20)
+                url=result.get('authUrl',''); login_id=result.get('loginId')
+                parsed=urlparse(url)
+                if parsed.scheme!='https' or parsed.hostname not in ('auth.openai.com','auth0.openai.com','chatgpt.com') or not login_id:
+                    raise BrokerError('unsupported login')
+                with self.lock:
+                    if generation!=self.generation: return
+                    self.value={'state':'waiting','url':url}
+                deadline=time.monotonic()+300
+                while time.monotonic()<deadline:
+                    with self.lock:
+                        if generation!=self.generation: return
+                    with server.condition:
+                        events=list(server.events)
+                    event=next((e['params'] for e in events if e.get('method')=='account/login/completed' and e.get('params',{}).get('loginId')==login_id),None)
+                    if event is not None:
+                        if not event.get('success'): raise BrokerError('login failed')
+                        account_status(server)
+                        with self.lock:
+                            if generation==self.generation:self.value={'state':'complete'}
+                        return
+                    if server.closed: raise BrokerError('login stopped')
+                    time.sleep(.25)
+                with self.lock:
+                    if generation==self.generation:self.value={'state':'expired'}
+            except Exception:
+                with self.lock:
+                    if generation==self.generation:self.value={'state':'error'}
+            finally:
+                if login_id:
+                    try: server.request('account/login/cancel',{'loginId':login_id},3)
+                    except Exception: pass
+                server.close()
+                with self.lock:
+                    if self.server is server:self.server=None
+        threading.Thread(target=run,daemon=True,name='hermes-live-login').start()
+        return self.status()
+
+    def cancel(self):
+        with self.lock:
+            self.generation+=1;self.value={'state':'cancelled'}
+            server=self.server;self.server=None
+        if server:server.close()
+        return self.status()
+
+login_flow=LoginFlow()
+atexit.register(login_flow.cancel)

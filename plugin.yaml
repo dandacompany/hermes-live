@@ -1,6 +1,9 @@
 name: hermes-live
-version: 0.9.2
-requires_hermes: '>=0.22.5'
+version: 0.12.0
+requires_hermes: '>=0.23.0'
+python_dependencies:
+  - 'numpy>=2,<3; platform_system == "Darwin"'
+  - 'sounddevice>=0.5,<0.6; platform_system == "Darwin"'
 description: Gemini, Grok, Qwen, and Codex subscription live voice calls beside the Hermes Desktop composer.
 author: Dante Labs
 config_schema:
@@ -37,3 +40,45 @@ config_schema:
     default: singapore
     choices: [singapore, beijing]
     description: Qwen region. Must match the API key region.
+  wake_enabled:
+    type: bool
+    default: false
+    description: Allow local hands-free calling. Choose bots in the Desktop Wake settings tab.
+  wake_target:
+    type: str
+    default: ''
+    description: Legacy profile used to seed the bot selection on first use.
+  wake_phrase:
+    type: str
+    default: 헤이 루미
+    description: Legacy phrase; name-based calls use the bot display name and configured aliases.
+  wake_input_device:
+    type: str
+    default: ''
+    description: Exact local microphone name. A missing device never falls back.
+  wake_provider:
+    type: str
+    default: whisper
+    choices: [sherpa, whisper]
+    description: Local wake recognition engine.
+  wake_whisper_node:
+    type: str
+    default: ''
+    description: Absolute path to the existing Node executable.
+  wake_whisper_module:
+    type: str
+    default: ''
+    description: Legacy adapter override. New installations use the bundled runtime.
+  wake_whisper_models:
+    type: str
+    default: ''
+    description: Existing multilingual Whisper model cache.
+  wake_whisper_engine:
+    type: str
+    default: ''
+    description: Existing authenticated whisper.cpp engine directory.
+  wake_whisper_model:
+    type: str
+    default: small
+    choices: [base, small, large-v3-turbo, large-v3]
+    description: Multilingual model. Prepare or download it in the Hermes Live setup page.
