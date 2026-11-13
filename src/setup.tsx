@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Button,host,type PluginContext} from '@hermes/plugin-sdk';
 import {useLiveI18n} from './i18n-react.ts';
-import {localizeError} from './i18n.ts';
+import {formatMessage,localizeError} from './i18n.ts';
 import {setupCopy,setupError,type SetupKey} from './setup-copy.ts';
 import {basicReady,preparingModel,setupSteps,type SetupState} from './setup-state.ts';
 import {WakeSettings} from './wake-settings.tsx';
@@ -15,6 +15,7 @@ import type {CatalogItem} from './types.ts';
 import type {WakeTarget} from './wake.ts';
 interface TestStatus {eventId:string|null;target:string|null;selection?:WakeTarget;diagnostics:{model_ready?:boolean;model_error?:string;peak?:number;segments?:number}}
 interface Props {suspended?:boolean;registerStopTest?:(fn:()=>Promise<void>)=>()=>void;ctx:PluginContext;local:boolean;scopeKey:string;active:()=>boolean;hold:()=>Promise<()=>void>;standby:()=>Promise<boolean>;listening:()=>boolean;trial:(target:string)=>Promise<void>;stop:()=>void;subscribe:(fn:()=>void)=>()=>void;callState:()=>string;callSettings:()=>void}
+const CUSTOM=',custom';// commas are never valid greetings, so this pulldown value cannot be a preset
 export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,active,hold,standby,listening,trial,stop,subscribe,callState,callSettings}:Props){
  const {locale,t}=useLiveI18n(),c=setupCopy(locale);
  const saved=ctx.storage.get<{mode:'wake'|'call';step:number}>(`setup:${scopeKey}`,{mode:'wake',step:0});
@@ -22,32 +23,39 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
  const [auth,setAuth]=useState<CatalogItem|null>(null),[targets,setTargets]=useState<WakeTarget[]>([]),[target,setTarget]=useState('');
  const [loading,setLoading]=useState(false),[error,setError]=useState(''),[note,setNote]=useState(''),[device,setDevice]=useState(''),[level,setLevel]=useState(0),[testing,setTesting]=useState(false);
  const [login,setLogin]=useState<{state:string;url?:string}>({state:'idle'}),[devices,setDevices]=useState<AudioDevices>(ctx.storage.get('audio-devices',{input:'',output:''}));
- const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1));
+ const [volume,setVolume]=useState(ctx.storage.get('wake-cue-volume',1)),[customGreeting,setCustomGreeting]=useState<string|null>(null),[saving,setSaving]=useState(false);
  const [auto,setAuto]=useState(ctx.storage.get('hands-free-enabled',false));
  const alive=useRef(true),cancel=useRef<AbortController|null>(null),owner=useRef<string|null>(null),restore=useRef<(()=>void)|null>(null),polling=useRef(false),openedLogin=useRef(''),initial=useRef(true);
- const captureTask=useRef<Promise<void>|null>(null);
+ const captureTask=useRef<Promise<void>|null>(null),loads=useRef(0),pending=useRef(0),composing=useRef(false),episode=useRef(0),confirmed=useRef<string|null>(null);
  useEffect(()=>registerStopTest?.(async()=>{cancel.current?.abort();await captureTask.current}),[registerStopTest]);
  useEffect(()=>{if(suspended)cancel.current?.abort()},[suspended]);
  const currentCall=useSyncExternalStore(subscribe,callState);
  const steps=setupSteps(mode),labels:SetupKey[]=['overview','bots','account','model','audio','test','done'];
  const safe=(fn:()=>void)=>{if(alive.current)fn()};
  const fail=(e:unknown)=>safe(()=>setError(setupError(locale,e)||localizeError(t,e)));
+ // Refreshes, readiness checks and actions can overlap; none may unblock the others.
+ const beginLoading=()=>{pending.current++;safe(()=>setLoading(true))};
+ const endLoading=()=>{pending.current--;if(!pending.current)safe(()=>setLoading(false))};
+ // Only the latest refresh is applied or shows its error; the greeting it reads is the one confirmed as saved.
  const load=async()=>{
-  if(!local)return;setLoading(true);setError('');
-  try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
+  if(!local)return;const seq=++loads.current;beginLoading();setError('');
+  try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots',{timeoutMs:30000})]);
+   if(seq!==loads.current)return;confirmed.current=value.greeting??null;
    safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
     if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
    });
-  }catch(e){fail(e)}finally{safe(()=>setLoading(false))}
+  }catch(e){if(seq===loads.current)fail(e)}finally{endLoading()}
  };
- const checkAuth=async()=>{setLoading(true);try{const value=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:'codex'},timeoutMs:30000});safe(()=>setAuth(value.provider))}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
+ const checkAuth=async()=>{beginLoading();try{const value=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:'codex'},timeoutMs:30000});safe(()=>setAuth(value.provider))}catch(e){fail(e)}finally{endLoading()}};
  const release=async()=>{const id=owner.current;owner.current=null;try{if(id)await ctx.rest('/setup/test',{method:'POST',body:{owner:id,action:'release'}})}catch{}finally{restore.current?.();restore.current=null}};
  useEffect(()=>{alive.current=true;void load();void checkAuth();return()=>{alive.current=false;cancel.current?.abort();void release()}},[scopeKey,local]);
  useEffect(()=>{ctx.storage.set(`setup:${scopeKey}`,{mode,step});if(step===2)void checkAuth()},[step,mode]);
  useEffect(()=>{if(!local)return;const timer=setInterval(async()=>{
   if(polling.current)return;polling.current=true;
   try{
-   if(preparingModel(data?.assets)){const value=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});safe(()=>setData(value))}
+   // A model poll belongs to the refresh that was latest when it was sent: a refresh started after it supersedes its
+   // answer and its failure, so only a current answer can show the model as ready and end polling.
+   if(preparingModel(data?.assets)){const seq=loads.current,value=await ctx.rest<SetupState>('/setup',{timeoutMs:30000}).catch(e=>{if(seq===loads.current)throw e});if(value&&seq===loads.current)safe(()=>setData(value))}
    if(['starting','waiting'].includes(login.state)){
     const value=await ctx.rest<{state:string;url?:string}>('/setup/login');if(!alive.current)return;safe(()=>setLogin(value));
     if(value.url&&value.url!==openedLogin.current){openedLogin.current=value.url;await ctx.os?.openExternal(value.url)}
@@ -55,9 +63,19 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
    }
   }catch(e){fail(e)}finally{polling.current=false}
  },1200);return()=>clearInterval(timer)},[data?.assets.progress?.state,login.state,local]);
- const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');setLoading(true);try{await fn()}catch(e){fail(e)}finally{safe(()=>setLoading(false))}};
+ const action=async(fn:()=>Promise<unknown>)=>{setError('');setNote('');beginLoading();try{await fn()}catch(e){fail(e)}finally{endLoading()}};
  const model=()=>action(async()=>{await ctx.rest('/setup/model',{method:'POST',timeoutMs:30000});await load()});
- const saveDevice=()=>action(async()=>{
+ // One save at a time: the greeting and microphone controls stay disabled until it and the refresh after it are done.
+ // That refresh follows every save, answered, refused or failed; until it succeeds no greeting counts as saved.
+ const save=(fn:()=>Promise<void>)=>{setSaving(true);
+  return action(()=>fn().finally(async()=>{confirmed.current=null;if(alive.current)await load()})).finally(()=>safe(()=>setSaving(false)))};
+ // The PUT answer is the saved greeting, shown even if the refresh fails. It closes the custom draft only if that is
+ // still the editing episode it sent: choosing in the pulldown or typing starts a new one.
+ const saveGreeting=(greeting:string)=>{const sent=episode.current;void save(async()=>{
+  const saved=await ctx.rest<{greeting:string}>('/setup/greeting',{method:'PUT',body:{greeting},timeoutMs:30000}).catch(e=>{throw String(e).includes('HL_SETUP:greeting')?new Error('HL_SETUP:greetingInvalid'):e});
+  safe(()=>{setData(d=>d&&{...d,greeting:saved.greeting});if(episode.current===sent)setCustomGreeting(null)});
+ })};
+ const saveDevice=()=>save(async()=>{
   const choice=selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(),device);
   if(!alive.current)return;
   const value=await ctx.rest<SetupState>('/setup',{method:'PUT',body:{device},timeoutMs:30000});
@@ -92,8 +110,17 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
    safe(()=>setNote(c('testExpired')));
   }catch(e){if(!abort.signal.aborted)fail(e)}finally{await release();cancel.current=null;safe(()=>{setTesting(false);setLevel(0)})}
  };
- const block=suspended||loading||testing||active()||!['idle','error'].includes(currentCall);
+ const block=suspended||loading||saving||testing||active()||!['idle','error'].includes(currentCall);
  const selected=targets.find(t=>t.target===target);
+ // Presets come from the backend; a saved greeting that is not one of them shows as Custom… with its text.
+ const greetings=data?.greetings??[],customSaved=data?.greeting!==undefined&&!greetings.includes(data.greeting),customOpen=customGreeting!==null||customSaved;
+ const customLabel=formatMessage(c('greetingCustomLabel'),[data?.greeting_max??'']);
+ // A blur during an IME composition does not save; the next blur or Enter after the composition ends does.
+ const commitGreeting=()=>{
+  if(customGreeting===null||block||composing.current)return;const value=customGreeting.trim();
+  if(!value)return;if(value===confirmed.current){setCustomGreeting(null);return}
+  saveGreeting(value);
+ };
  const progress=data?.assets.progress;
  const errorText=progress?.error?setupError(locale,'HL_SETUP:'+progress.error):data?.assets.error?setupError(locale,'HL_SETUP:'+data.assets.error):null;
  const complete=mode==='call'?Boolean(devices):basicReady(data)&&targets.length>0&&Boolean(auth?.available)&&Boolean(data?.legacy||data?.assets.prepared)&&Boolean(data?.legacy||ctx.storage.get(`setup-mic:${device}`,false));
@@ -157,6 +184,10 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   </div>}
   {step===5&&local&&<div style={panel}>
    <FieldSelect label={c('bots')} value={target} options={targets.map(t=>({value:t.target,label:t.display_name}))} disabled={block} onChange={setTarget}/>
+   <FieldSelect label={c('greeting')} value={!data?'…':customOpen?CUSTOM:data.greeting??'…'} options={data?[...greetings.map(g=>({value:g,label:g})),{value:CUSTOM,label:c('greetingCustom')}]:[{value:'…',label:'…'}]} disabled={block||!data} onChange={(g:string)=>{episode.current++;if(g===CUSTOM){setCustomGreeting('');return}setCustomGreeting(null);if(g!==confirmed.current)saveGreeting(g)}}/>
+   {customOpen&&<label style={{display:'grid',gap:4,...hint}}>{customLabel}<input aria-label={customLabel} value={customGreeting??data?.greeting??''} disabled={block} onChange={e=>{episode.current++;setCustomGreeting(Array.from(e.target.value).slice(0,data?.greeting_max).join(''))}} onFocus={()=>{composing.current=false}} onCompositionStart={()=>{composing.current=true}} onCompositionEnd={()=>{composing.current=false}} onBlur={commitGreeting} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing)e.currentTarget.blur()}} style={{width:'12em',color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>}
+   {customGreeting!==null&&!customGreeting.trim()&&<p role="status" style={hint}>{c('greetingEmpty')}</p>}
+   <p style={hint}>{c('greetingHint')}</p>
    <strong style={{fontSize:23}}>{selected?.phrases[0]??'…'}</strong><p style={hint}>{c('testHint')}</p>
    <Button disabled={block||!basicReady(data)||!selected} onClick={()=>{captureTask.current=capture('wake')}}>{c('testWake')}</Button>
    <p style={hint}>{c('trialHint')}</p>

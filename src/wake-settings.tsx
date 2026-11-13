@@ -6,8 +6,9 @@ import {host} from '@hermes/plugin-sdk';
 import {setupCopy} from './setup-copy.ts';
 import {settingsHref} from './auth.ts';
 import {hint,divider} from './ui.tsx';
-interface Bot {profile:string;display_name:string;enabled:boolean;ready:boolean;aliases:string[];error:string}
-interface Registry {revision:string;bots:Bot[]}
+interface Bot {profile:string;display_name:string;enabled:boolean;ready:boolean;aliases:string[];error:string;phrases?:string[]}
+interface Registry {revision:string;bots:Bot[];greeting?:string}
+const aliasNames=(value:string)=>value.split(/[,，]/u).map(n=>n.trim()).filter(Boolean);
 export function WakeSettings({rest,changed,local}:{rest:PluginContext['rest'];changed:()=>void;local:boolean}){
  const {t,locale}=useLiveI18n();const c=setupCopy(locale);const [data,setData]=useState<Registry|null>(null),[aliases,setAliases]=useState<Record<string,string>>({});
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[saved,setSaved]=useState(false);
@@ -23,7 +24,7 @@ export function WakeSettings({rest,changed,local}:{rest:PluginContext['rest'];ch
  const save=async()=>{
   if(!data||busy)return;const id=++request.current;setBusy(true);setError('');setSaved(false);
   try{
-   const bots=data.bots.map(b=>({profile:b.profile,enabled:b.enabled,aliases:(aliases[b.profile]??'').split(/[,，]/u).map(n=>n.trim()).filter(Boolean)}));
+   const bots=data.bots.map(b=>({profile:b.profile,enabled:b.enabled,aliases:aliasNames(aliases[b.profile]??'')}));
    if(bots.some(b=>b.aliases.length>3))throw new Error('HL_ERROR:errWakeRegistry');
    const value=await rest<Registry>('/wake/bots',{method:'PUT',body:{revision:data.revision,bots}});
    if(alive.current&&id===request.current){accept(value);setSaved(true);changed()}
@@ -37,7 +38,7 @@ export function WakeSettings({rest,changed,local}:{rest:PluginContext['rest'];ch
   {data?.bots.map(bot=><div key={bot.profile} style={{display:'grid',gap:8,paddingBottom:12,borderBottom:divider}}>
    <label style={{display:'flex',gap:8,alignItems:'center'}}><input type="checkbox" checked={bot.enabled} disabled={busy||(!bot.ready&&!bot.enabled)} onChange={e=>{const enabled=e.target.checked;setSaved(false);setData({...data,bots:data.bots.map(b=>b.profile===bot.profile?{...b,enabled}:b)})}}/><strong>{bot.display_name||bot.profile}</strong></label>
    <label style={{display:'grid',gap:4,...hint}}>{t('wakeAliases')}<input aria-label={t('wakeAliasesFor',bot.display_name||bot.profile)} value={aliases[bot.profile]??''} disabled={busy||!bot.ready} maxLength={126} onChange={e=>{setSaved(false);setAliases({...aliases,[bot.profile]:e.target.value})}} placeholder={t('wakeAliasesHint')} style={{color:'var(--dt-foreground)',background:'var(--dt-background)',border:divider,borderRadius:4,padding:'6px 8px',fontSize:12}}/></label>
-   <div style={hint}>{bot.ready?t('wakeExample',bot.display_name||(aliases[bot.profile]??'').split(',')[0]||'…'):t('wakeSetup')}</div>
+   <div style={hint}>{bot.ready?t('wakeExample',bot.phrases?.[0]??((data?.greeting??'…')+' '+(bot.display_name||aliasNames(aliases[bot.profile]??'')[0]||'…'))):t('wakeSetup')}</div>
    {!bot.ready&&<Button size="sm" variant="ghost" onClick={()=>host.navigate(settingsHref(bot.profile))}>{c('manage')}</Button>}
    {bot.error&&<div role="status" style={hint}>{t(bot.error==='duplicate'?'wakeDuplicate':bot.error==='name'?'wakeNameRequired':'wakeSetup')}</div>}
   </div>)}

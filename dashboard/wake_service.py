@@ -6,11 +6,14 @@ import time
 from uuid import uuid4
 from copy import deepcopy
 
+_registry_spec=importlib.util.spec_from_file_location('_lumi_wake_registry',Path(__file__).with_name('wake_registry.py'))
+registry=importlib.util.module_from_spec(_registry_spec);_registry_spec.loader.exec_module(registry)
+
 class WakeConflict(RuntimeError):pass
 
 def targets_for(config):
     if 'targets' in config:return config['targets']
-    name=config['phrase'].removeprefix('헤이 ').removeprefix('Hey ').removeprefix('안녕 ').strip()
+    name=registry.wake_name(config['phrase'])
     return [{'target':config['target'],'names':[name],'phrases':[config['phrase']],'display_name':name}]
 
 class WakeService:

@@ -2,6 +2,7 @@
 import base64
 from collections import deque
 import fcntl
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,10 @@ import subprocess
 import sys
 import threading
 import time
+
+_registry_spec = importlib.util.spec_from_file_location('_lumi_wake_registry', Path(__file__).with_name('wake_registry.py'))
+registry = importlib.util.module_from_spec(_registry_spec)
+_registry_spec.loader.exec_module(registry)
 
 class UtteranceGate:
     """Bounded energy gate: keep short utterances, discard long speech until silence."""
@@ -62,7 +67,7 @@ class WhisperEngine:
         self.pending = None
         self.matched = False
         self.last_target = None
-        self.targets = cfg.get('targets') or [{'target':cfg['target'],'names':[cfg['phrase'].removeprefix('헤이 ').removeprefix('Hey ').removeprefix('안녕 ')],'phrases':[cfg['phrase']]}]
+        self.targets = cfg.get('targets') or [{'target':cfg['target'],'names':[registry.wake_name(cfg['phrase'])],'phrases':[cfg['phrase']]}]
         self.ready = False
         self.error = ''
         self.closed = False
@@ -72,13 +77,14 @@ class WhisperEngine:
         native = cfg.get('whisper_native')
         if native:
             command = [sys.executable, str(Path(__file__).with_name('wake-native-worker.py')),
-                       json.dumps({**native, 'targets':self.targets})]
+                       json.dumps({**native, 'targets':self.targets, 'language':cfg.get('whisper_language','en')})]
             env = {'HOME':str(Path.home()),'PATH':'/usr/bin:/bin'}
         else:
             worker = Path(__file__).with_name('wake-whisper-worker.mjs')
             node = cfg['whisper_node']
             options = {'module':cfg['whisper_module'],'models':cfg['whisper_models'],
-                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets}
+                       'engine':cfg['whisper_engine'],'model':cfg['whisper_model'],'targets':self.targets,
+                       'language':cfg.get('whisper_language','en')}
             command = [node,str(worker),json.dumps(options)]
             env = {'HOME':str(Path.home()),'PATH':str(Path(node).parent)+':/usr/bin:/bin'}
         self.proc = subprocess.Popen(command,stdin=subprocess.PIPE,

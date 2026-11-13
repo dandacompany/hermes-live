@@ -185,7 +185,7 @@ export default {
     transition.seal();
     if(!valid()||!sameScope(scope,currentScope())||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
     if(activity.active)throw new Error('HL_ERROR:errBusy');
-    callOwner=scope;wakeNames=[...(config.names??[])];wakeCall=true;wakeGreeting={name:config.names?.[0]||config.target,phrase:config.phrase};await controller.start(selection);
+    callOwner=scope;wakeNames=[...(config.names??[])];wakeCall=true;wakeGreeting={name:config.names?.[0]||config.target,phrase:config.phrase,language:config.greeting_language};await controller.start(selection);
     if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
    }catch(error){stop();host.notify({kind:'error',message:localizeError(t,error instanceof Error?error.message:'HL_ERROR:errGeneric')});throw error}
    finally{unsubscribe()}

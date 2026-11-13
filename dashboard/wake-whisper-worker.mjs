@@ -6,7 +6,7 @@ const cfg=JSON.parse(process.argv[2]);
 const targets=cfg.targets;const vocabulary=[...new Set(targets.flatMap(t=>t.names))];
 const {LocalWhisper}=await import(pathToFileURL(cfg.module).href);
 const local=new LocalWhisper(cfg.models,cfg.engine),cancel=new AbortController();
-const options={kind:'local',localModel:cfg.model,language:'ko',timeoutMs:15000};
+const options={kind:'local',localModel:cfg.model,language:cfg.language||'en',timeoutMs:15000};
 const send=value=>process.stdout.write(JSON.stringify(value)+'\n');
 let closing=false;
 async function close(){if(closing)return;closing=true;cancel.abort();await local.close();}

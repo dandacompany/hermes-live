@@ -15,12 +15,12 @@ var en = {
   errBotsView: "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.",
   wake: "Wake",
   wakeEmpty: "Choose a bot in Wake settings",
-  wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+  wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
   wakeLocalOnly: "Name calling is available only on this Mac.",
   wakeAliases: "Spoken aliases (up to 3)",
   wakeAliasesFor: "Spoken aliases for {0}",
   wakeAliasesHint: "Separate aliases with commas",
-  wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+  wakeExample: "Say \u201C{0}\u201D",
   wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
   wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
   wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -307,12 +307,12 @@ var translations_default = {
     wakeWarming: "\uB85C\uCEEC \uC74C\uC131 \uC778\uC2DD \uC900\uBE44 \uC911\u2026",
     wake: "\uC774\uB984 \uD638\uCD9C",
     wakeEmpty: "\uC774\uB984 \uD638\uCD9C \uC124\uC815\uC5D0\uC11C \uBD07\uC744 \uC120\uD0DD\uD558\uC138\uC694",
-    wakeDescription: "\uC774 \uB9E5\uC758 \uBD07\uC744 \uCF1C\uBA74 \u201C\uD5E4\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uD1B5\uD654\uD569\uB2C8\uB2E4. \uBCC0\uACBD\uC740 \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4. \u201CBye {\uC774\uB984}\u201D \uB610\uB294 \u201C\uBC14\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uC885\uB8CC\uD569\uB2C8\uB2E4.",
+    wakeDescription: "\uC774 \uB9E5\uC758 \uBD07\uC744 \uCF1C\uBA74 \u201C\uD5E4\uC774 {\uC774\uB984}\u201D \uB610\uB294 \u201CHey {\uC774\uB984}\u201D\uC73C\uB85C \uD1B5\uD654\uD569\uB2C8\uB2E4(\uC124\uC815\uC758 \uD14C\uC2A4\uD2B8 \uB2E8\uACC4\uC5D0\uC11C \uC120\uD0DD). \uBCC0\uACBD\uC740 \uB2E4\uC74C \uD1B5\uD654\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4. \u201CBye {\uC774\uB984}\u201D \uB610\uB294 \u201C\uBC14\uC774 {\uC774\uB984}\u201D\uC73C\uB85C \uC885\uB8CC\uD569\uB2C8\uB2E4.",
     wakeLocalOnly: "\uC774\uB984 \uD638\uCD9C\uC740 \uC774 \uB9E5\uC758 \uB85C\uCEEC \uBD07\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
     wakeAliases: "\uBD80\uB97C \uB54C \uC4F8 \uBCC4\uCE6D (\uCD5C\uB300 3\uAC1C)",
     wakeAliasesFor: "{0} \uD638\uCD9C \uBCC4\uCE6D",
     wakeAliasesHint: "\uC27C\uD45C\uB85C \uAD6C\uBD84\uD574 \uC785\uB825",
-    wakeExample: "\uD638\uCD9C\uC5B4: \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "\uD638\uCD9C\uC5B4: \u201C{0}\u201D",
     wakeSetup: "\uC774 \uBD07\uC5D0\uC11C Hermes Live\uB97C \uBA3C\uC800 \uCF1C\uC138\uC694. \uAD6C\uB3C5 \uB85C\uADF8\uC778\uC740 \uC5F0\uACB0\uD560 \uB54C \uD655\uC778\uD569\uB2C8\uB2E4.",
     wakeDuplicate: "\uB2E4\uB978 \uD65C\uC131 \uBD07\uACFC \uC774\uB984\uC774 \uACB9\uCE69\uB2C8\uB2E4. \uBCC4\uCE6D\uC744 \uBC14\uAFB8\uAC70\uB098 \uD55C \uBD07\uC744 \uAEBC \uC8FC\uC138\uC694.",
     wakeNameRequired: "\uBD07 \uD45C\uC2DC \uC774\uB984\uC774\uB098 \uD638\uCD9C \uBCC4\uCE6D\uC744 \uC9C0\uC815\uD558\uC138\uC694.",
@@ -461,12 +461,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -615,12 +615,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -769,12 +769,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -923,12 +923,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1077,12 +1077,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1231,12 +1231,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1385,12 +1385,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1539,12 +1539,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1693,12 +1693,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -1847,12 +1847,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2001,12 +2001,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2155,12 +2155,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2309,12 +2309,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2463,12 +2463,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2617,12 +2617,12 @@ var translations_default = {
     wakeWarming: "Preparing local speech recognition\u2026",
     wake: "Wake",
     wakeEmpty: "Choose a bot in Wake settings",
-    wakeDescription: "Enable local bots to call with \u201C\uD5E4\uC774 {name}\u201D. Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
+    wakeDescription: "Enable local bots to call with \u201CHey {name}\u201D (or \u201C\uD5E4\uC774 {name}\u201D; pick the greeting on the setup Test step). Changes apply to the next call. End with \u201CBye {name}\u201D or \u201C\uBC14\uC774 {name}\u201D.",
     wakeLocalOnly: "Name calling is available only on this Mac.",
     wakeAliases: "Spoken aliases (up to 3)",
     wakeAliasesFor: "Spoken aliases for {0}",
     wakeAliasesHint: "Separate aliases with commas",
-    wakeExample: "Say \u201C\uD5E4\uC774 {0}\u201D",
+    wakeExample: "Say \u201C{0}\u201D",
     wakeSetup: "Enable Hermes Live for this bot first. Subscription login is checked when connecting.",
     wakeDuplicate: "This name overlaps another enabled bot. Change an alias or disable one bot.",
     wakeNameRequired: "Set a bot display name or a spoken alias.",
@@ -2856,6 +2856,12 @@ var text = {
   cue: ["Play confirmation sound", "\uD655\uC778\uC74C \uB4E4\uC5B4\uBCF4\uAE30"],
   cueVolume: ["Confirmation sound volume (0 = off)", "\uD655\uC778\uC74C \uC74C\uB7C9 (0 = \uB054)"],
   testWake: ["Test wake phrase", "\uD638\uCD9C\uC5B4 \uD14C\uC2A4\uD2B8"],
+  greeting: ["Greeting", "\uD638\uCD9C \uC778\uC0AC\uB9D0"],
+  greetingHint: ["Whisper listens in Korean when the greeting contains Hangul, otherwise in English. Applies to the next test or standby.", "\uC778\uC0AC\uB9D0\uC5D0 \uD55C\uAE00\uC774 \uC788\uC73C\uBA74 \uD55C\uAD6D\uC5B4\uB85C, \uC5C6\uC73C\uBA74 \uC601\uC5B4\uB85C \uC778\uC2DD\uD569\uB2C8\uB2E4. \uB2E4\uC74C \uD14C\uC2A4\uD2B8\uB098 \uB300\uAE30\uBD80\uD130 \uC801\uC6A9\uB429\uB2C8\uB2E4."],
+  greetingCustom: ["Custom\u2026", "\uC9C1\uC811 \uC785\uB825\u2026"],
+  greetingCustomLabel: ["Custom greeting (up to {0} characters, no commas)", "\uC9C1\uC811 \uC785\uB825\uD55C \uC778\uC0AC\uB9D0 (\uCD5C\uB300 {0}\uC790, \uC27C\uD45C \uC81C\uC678)"],
+  greetingEmpty: ["Type a greeting first; the current one stays in use.", "\uC778\uC0AC\uB9D0\uC744 \uC785\uB825\uD558\uC138\uC694. \uADF8\uC804\uAE4C\uC9C0\uB294 \uC9C0\uAE08 \uC778\uC0AC\uB9D0\uC744 \uADF8\uB300\uB85C \uC501\uB2C8\uB2E4."],
+  greetingInvalid: ["This greeting cannot be used. Leave out commas and use more than punctuation.", "\uC774 \uC778\uC0AC\uB9D0\uC740 \uC4F8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC27C\uD45C\uB97C \uBE7C\uACE0 \uBB38\uC7A5\uBD80\uD638\uB9CC\uC73C\uB85C \uC4F0\uC9C0 \uB9C8\uC138\uC694."],
   testHint: ["This test only recognizes the name. It never starts a cloud call.", "\uC774 \uD14C\uC2A4\uD2B8\uB294 \uC774\uB984\uB9CC \uD655\uC778\uD569\uB2C8\uB2E4. \uD074\uB77C\uC6B0\uB4DC \uD1B5\uD654\uB97C \uC2DC\uC791\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."],
   recognized: ["Recognized", "\uC778\uC2DD\uD55C \uBD07"],
   notMatched: ["Speech received, but the wake phrase did not match. Try again or edit an alias.", "\uB9D0\uC18C\uB9AC\uB294 \uB4E4\uC5B4\uC654\uC9C0\uB9CC \uD638\uCD9C\uC5B4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uBD80\uB974\uAC70\uB098 \uBCC4\uCE6D\uC744 \uC218\uC815\uD558\uC138\uC694."],
@@ -2919,6 +2925,7 @@ function FieldSelect({ label, value, options, onChange, disabled = false }) {
 
 // src/wake-settings.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+var aliasNames = (value) => value.split(/[,，]/u).map((n) => n.trim()).filter(Boolean);
 function WakeSettings({ rest, changed, local }) {
   const { t, locale } = useLiveI18n();
   const c = setupCopy(locale);
@@ -2959,7 +2966,7 @@ function WakeSettings({ rest, changed, local }) {
     setError("");
     setSaved(false);
     try {
-      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: (aliases[b.profile] ?? "").split(/[,，]/u).map((n) => n.trim()).filter(Boolean) }));
+      const bots = data.bots.map((b) => ({ profile: b.profile, enabled: b.enabled, aliases: aliasNames(aliases[b.profile] ?? "") }));
       if (bots.some((b) => b.aliases.length > 3)) throw new Error("HL_ERROR:errWakeRegistry");
       const value = await rest("/wake/bots", { method: "PUT", body: { revision: data.revision, bots } });
       if (alive.current && id === request.current) {
@@ -2993,7 +3000,7 @@ function WakeSettings({ rest, changed, local }) {
           setAliases({ ...aliases, [bot.profile]: e.target.value });
         }, placeholder: t("wakeAliasesHint"), style: { color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
       ] }),
-      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.display_name || (aliases[bot.profile] ?? "").split(",")[0] || "\u2026") : t("wakeSetup") }),
+      /* @__PURE__ */ jsx2("div", { style: hint, children: bot.ready ? t("wakeExample", bot.phrases?.[0] ?? (data?.greeting ?? "\u2026") + " " + (bot.display_name || aliasNames(aliases[bot.profile] ?? "")[0] || "\u2026")) : t("wakeSetup") }),
       !bot.ready && /* @__PURE__ */ jsx2(Button, { size: "sm", variant: "ghost", onClick: () => host.navigate(settingsHref(bot.profile)), children: c("manage") }),
       bot.error && /* @__PURE__ */ jsx2("div", { role: "status", style: hint, children: t(bot.error === "duplicate" ? "wakeDuplicate" : bot.error === "name" ? "wakeNameRequired" : "wakeSetup") })
     ] }, bot.profile)),
@@ -3294,6 +3301,7 @@ async function playWakeCue(output = "", volume = 1) {
 
 // src/setup.tsx
 import { Fragment, jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+var CUSTOM = ",custom";
 function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, active, hold, standby, listening, trial, stop, subscribe, callState, callSettings }) {
   const { locale, t } = useLiveI18n(), c = setupCopy(locale);
   const saved = ctx.storage.get(`setup:${scopeKey}`, { mode: "wake", step: 0 });
@@ -3301,10 +3309,10 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const [auth, setAuth] = useState3(null), [targets, setTargets] = useState3([]), [target, setTarget] = useState3("");
   const [loading, setLoading] = useState3(false), [error, setError] = useState3(""), [note, setNote] = useState3(""), [device, setDevice] = useState3(""), [level, setLevel] = useState3(0), [testing, setTesting] = useState3(false);
   const [login, setLogin] = useState3({ state: "idle" }), [devices, setDevices] = useState3(ctx.storage.get("audio-devices", { input: "", output: "" }));
-  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1));
+  const [volume, setVolume] = useState3(ctx.storage.get("wake-cue-volume", 1)), [customGreeting, setCustomGreeting] = useState3(null), [saving, setSaving] = useState3(false);
   const [auto, setAuto] = useState3(ctx.storage.get("hands-free-enabled", false));
   const alive = useRef3(true), cancel = useRef3(null), owner = useRef3(null), restore = useRef3(null), polling = useRef3(false), openedLogin = useRef3(""), initial = useRef3(true);
-  const captureTask = useRef3(null);
+  const captureTask = useRef3(null), loads = useRef3(0), pending = useRef3(0), composing = useRef3(false), episode = useRef3(0), confirmed = useRef3(null);
   useEffect3(() => registerStopTest?.(async () => {
     cancel.current?.abort();
     await captureTask.current;
@@ -3318,12 +3326,23 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     if (alive.current) fn();
   };
   const fail = (e) => safe(() => setError(setupError(locale, e) || localizeError(t, e)));
+  const beginLoading = () => {
+    pending.current++;
+    safe(() => setLoading(true));
+  };
+  const endLoading = () => {
+    pending.current--;
+    if (!pending.current) safe(() => setLoading(false));
+  };
   const load = async () => {
     if (!local) return;
-    setLoading(true);
+    const seq = ++loads.current;
+    beginLoading();
     setError("");
     try {
-      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
+      const [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots", { timeoutMs: 3e4 })]);
+      if (seq !== loads.current) return;
+      confirmed.current = value.greeting ?? null;
       safe(() => {
         setData(value);
         setTargets(bots.targets);
@@ -3335,20 +3354,20 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
         }
       });
     } catch (e) {
-      fail(e);
+      if (seq === loads.current) fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const checkAuth = async () => {
-    setLoading(true);
+    beginLoading();
     try {
       const value = await ctx.rest("/readiness", { method: "POST", body: { provider: "codex" }, timeoutMs: 3e4 });
       safe(() => setAuth(value.provider));
     } catch (e) {
       fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const release = async () => {
@@ -3383,8 +3402,10 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       polling.current = true;
       try {
         if (preparingModel(data?.assets)) {
-          const value = await ctx.rest("/setup", { timeoutMs: 3e4 });
-          safe(() => setData(value));
+          const seq = loads.current, value = await ctx.rest("/setup", { timeoutMs: 3e4 }).catch((e) => {
+            if (seq === loads.current) throw e;
+          });
+          if (value && seq === loads.current) safe(() => setData(value));
         }
         if (["starting", "waiting"].includes(login.state)) {
           const value = await ctx.rest("/setup/login");
@@ -3407,20 +3428,39 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
   const action = async (fn) => {
     setError("");
     setNote("");
-    setLoading(true);
+    beginLoading();
     try {
       await fn();
     } catch (e) {
       fail(e);
     } finally {
-      safe(() => setLoading(false));
+      endLoading();
     }
   };
   const model = () => action(async () => {
     await ctx.rest("/setup/model", { method: "POST", timeoutMs: 3e4 });
     await load();
   });
-  const saveDevice = () => action(async () => {
+  const save = (fn) => {
+    setSaving(true);
+    return action(() => fn().finally(async () => {
+      confirmed.current = null;
+      if (alive.current) await load();
+    })).finally(() => safe(() => setSaving(false)));
+  };
+  const saveGreeting = (greeting) => {
+    const sent = episode.current;
+    void save(async () => {
+      const saved2 = await ctx.rest("/setup/greeting", { method: "PUT", body: { greeting }, timeoutMs: 3e4 }).catch((e) => {
+        throw String(e).includes("HL_SETUP:greeting") ? new Error("HL_SETUP:greetingInvalid") : e;
+      });
+      safe(() => {
+        setData((d) => d && { ...d, greeting: saved2.greeting });
+        if (episode.current === sent) setCustomGreeting(null);
+      });
+    });
+  };
+  const saveDevice = () => save(async () => {
     const choice = selectWakeMicrophone(await navigator.mediaDevices.enumerateDevices(), device);
     if (!alive.current) return;
     const value = await ctx.rest("/setup", { method: "PUT", body: { device }, timeoutMs: 3e4 });
@@ -3507,8 +3547,20 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
       });
     }
   };
-  const block = suspended || loading || testing || active() || !["idle", "error"].includes(currentCall);
+  const block = suspended || loading || saving || testing || active() || !["idle", "error"].includes(currentCall);
   const selected = targets.find((t2) => t2.target === target);
+  const greetings = data?.greetings ?? [], customSaved = data?.greeting !== void 0 && !greetings.includes(data.greeting), customOpen = customGreeting !== null || customSaved;
+  const customLabel = formatMessage(c("greetingCustomLabel"), [data?.greeting_max ?? ""]);
+  const commitGreeting = () => {
+    if (customGreeting === null || block || composing.current) return;
+    const value = customGreeting.trim();
+    if (!value) return;
+    if (value === confirmed.current) {
+      setCustomGreeting(null);
+      return;
+    }
+    saveGreeting(value);
+  };
   const progress = data?.assets.progress;
   const errorText = progress?.error ? setupError(locale, "HL_SETUP:" + progress.error) : data?.assets.error ? setupError(locale, "HL_SETUP:" + data.assets.error) : null;
   const complete = mode === "call" ? Boolean(devices) : basicReady(data) && targets.length > 0 && Boolean(auth?.available) && Boolean(data?.legacy || data?.assets.prepared) && Boolean(data?.legacy || ctx.storage.get(`setup-mic:${device}`, false));
@@ -3626,6 +3678,32 @@ function Setup({ suspended = false, registerStopTest, ctx, local, scopeKey, acti
     ] }),
     step === 5 && local && /* @__PURE__ */ jsxs4("div", { style: panel, children: [
       /* @__PURE__ */ jsx4(FieldSelect, { label: c("bots"), value: target, options: targets.map((t2) => ({ value: t2.target, label: t2.display_name })), disabled: block, onChange: setTarget }),
+      /* @__PURE__ */ jsx4(FieldSelect, { label: c("greeting"), value: !data ? "\u2026" : customOpen ? CUSTOM : data.greeting ?? "\u2026", options: data ? [...greetings.map((g) => ({ value: g, label: g })), { value: CUSTOM, label: c("greetingCustom") }] : [{ value: "\u2026", label: "\u2026" }], disabled: block || !data, onChange: (g) => {
+        episode.current++;
+        if (g === CUSTOM) {
+          setCustomGreeting("");
+          return;
+        }
+        setCustomGreeting(null);
+        if (g !== confirmed.current) saveGreeting(g);
+      } }),
+      customOpen && /* @__PURE__ */ jsxs4("label", { style: { display: "grid", gap: 4, ...hint }, children: [
+        customLabel,
+        /* @__PURE__ */ jsx4("input", { "aria-label": customLabel, value: customGreeting ?? data?.greeting ?? "", disabled: block, onChange: (e) => {
+          episode.current++;
+          setCustomGreeting(Array.from(e.target.value).slice(0, data?.greeting_max).join(""));
+        }, onFocus: () => {
+          composing.current = false;
+        }, onCompositionStart: () => {
+          composing.current = true;
+        }, onCompositionEnd: () => {
+          composing.current = false;
+        }, onBlur: commitGreeting, onKeyDown: (e) => {
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur();
+        }, style: { width: "12em", color: "var(--dt-foreground)", background: "var(--dt-background)", border: divider, borderRadius: 4, padding: "6px 8px", fontSize: 12 } })
+      ] }),
+      customGreeting !== null && !customGreeting.trim() && /* @__PURE__ */ jsx4("p", { role: "status", style: hint, children: c("greetingEmpty") }),
+      /* @__PURE__ */ jsx4("p", { style: hint, children: c("greetingHint") }),
       /* @__PURE__ */ jsx4("strong", { style: { fontSize: 23 }, children: selected?.phrases[0] ?? "\u2026" }),
       /* @__PURE__ */ jsx4("p", { style: hint, children: c("testHint") }),
       /* @__PURE__ */ jsx4(Button3, { disabled: block || !basicReady(data) || !selected, onClick: () => {
@@ -4863,7 +4941,8 @@ function codexContexts() {
   return [{ type: "session.context.append", content: [{ type: "input_text", text: hermesCapabilities + " Prior conversation stays in the connected Hermes chat. Delegate questions about prior conversation or unfinished work to Hermes and wait for its answer. Never replay, summarize, or continue previous turns merely because a call starts. Do not speak until the caller speaks or an explicit wake greeting arrives." }] }];
 }
 function codexGreeting(greeting) {
-  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly Korean greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools. Do not quote, summarize, or continue earlier conversation; after this one sentence, stop and listen.` }] };
+  const korean = greeting.language ? greeting.language === "ko" : /^\s*헤이/u.test(greeting.phrase);
+  return { type: "session.context.append", content: [{ type: "input_text", text: `The caller has just greeted you using the wake phrase ${JSON.stringify(greeting.phrase)}. Your bot name is ${JSON.stringify(greeting.name)}. Respond now with one brief, friendly ${korean ? "Korean" : "English"} greeting that identifies you by name, then wait for the caller. This is a greeting only: do not delegate or use tools. Do not quote, summarize, or continue earlier conversation; after this one sentence, stop and listen.` }] };
 }
 function codexToolResult(id, result) {
   return { type: "delegation.context.append", delegation_item_id: id, content: [{ type: "input_text", text: result }] };
@@ -5847,7 +5926,7 @@ var plugin_default = {
         callOwner = scope;
         wakeNames = [...config.names ?? []];
         wakeCall = true;
-        wakeGreeting = { name: config.names?.[0] || config.target, phrase: config.phrase };
+        wakeGreeting = { name: config.names?.[0] || config.target, phrase: config.phrase, language: config.greeting_language };
         await controller.start(selection);
         if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
       } catch (error) {
