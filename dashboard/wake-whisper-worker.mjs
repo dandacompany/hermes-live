@@ -3,7 +3,7 @@ import {createInterface} from 'node:readline';
 import {pathToFileURL} from 'node:url';
 import {matchWakeTarget} from './wake-phrase.mjs';
 const cfg=JSON.parse(process.argv[2]);
-const targets=cfg.targets;const vocabulary=[...new Set(targets.flatMap(t=>t.names))];
+const targets=cfg.targets;const vocabulary=[...new Set(Array.from({length:Math.max(0,...targets.map(t=>t.names.length))},(_,i)=>targets.flatMap(t=>t.names.slice(i,i+1))).flat())];
 const {LocalWhisper}=await import(pathToFileURL(cfg.module).href);
 const local=new LocalWhisper(cfg.models,cfg.engine),cancel=new AbortController();
 const options={kind:'local',localModel:cfg.model,language:'ko',timeoutMs:15000};

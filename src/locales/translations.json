@@ -140,7 +140,8 @@
     "wakeEmpty": "이름 호출 설정에서 봇을 선택하세요",
     "wakeDescription": "이 맥의 봇을 켜면 “헤이 {이름}”으로 통화합니다. 변경은 다음 통화부터 적용됩니다. “Bye {이름}” 또는 “바이 {이름}”으로 종료합니다.",
     "wakeLocalOnly": "이름 호출은 이 맥의 로컬 봇에서 사용할 수 있습니다.",
-    "wakeAliases": "부를 때 쓸 별칭 (최대 3개)",
+    "wakeAliases": "부를 때 쓸 별칭 (최대 5개)",
+    "wakeAutoNames": "이미 포함됨: {0}",
     "wakeAliasesFor": "{0} 호출 별칭",
     "wakeAliasesHint": "쉼표로 구분해 입력",
     "wakeExample": "호출어: “헤이 {0}”",
@@ -150,7 +151,7 @@
     "wakeSaved": "저장했습니다. 다음 통화부터 적용됩니다.",
     "wakeSave": "호출할 봇 저장",
     "errWakeChanged": "봇 목록이 바뀌었습니다. 새로고침 후 다시 저장하세요.",
-    "errWakeRegistry": "별칭 수(최대 3개), 중복 이름, 선택한 봇의 설정을 확인하세요.",
+    "errWakeRegistry": "별칭 수(최대 5개), 중복 이름, 선택한 봇의 설정을 확인하세요.",
     "errBotsView": "호출한 봇을 열려면 Hermes Desktop에서 Bots를 켜세요. Bots 화면을 사용할 수 없으면 Desktop을 업데이트하세요."
   },
   "ja": {
@@ -294,7 +295,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -304,7 +306,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "zh": {
@@ -448,7 +450,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -458,7 +461,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "zh-hant": {
@@ -602,7 +605,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -612,7 +616,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "fr": {
@@ -756,7 +760,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -766,7 +771,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "de": {
@@ -910,7 +915,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -920,7 +926,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "es": {
@@ -1064,7 +1070,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1074,7 +1081,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "it": {
@@ -1218,7 +1225,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1228,7 +1236,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "pt": {
@@ -1372,7 +1380,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1382,7 +1391,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "ru": {
@@ -1526,7 +1535,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1536,7 +1546,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "uk": {
@@ -1680,7 +1690,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1690,7 +1701,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "tr": {
@@ -1834,7 +1845,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1844,7 +1856,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "ar": {
@@ -1988,7 +2000,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -1998,7 +2011,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "af": {
@@ -2142,7 +2155,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -2152,7 +2166,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "hu": {
@@ -2296,7 +2310,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -2306,7 +2321,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   },
   "ga": {
@@ -2450,7 +2465,8 @@
     "wakeEmpty": "Choose a bot in Wake settings",
     "wakeDescription": "Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
     "wakeLocalOnly": "Name calling is available only on this Mac.",
-    "wakeAliases": "Spoken aliases (up to 3)",
+    "wakeAliases": "Spoken aliases (up to 5)",
+    "wakeAutoNames": "Already included: {0}",
     "wakeAliasesFor": "Spoken aliases for {0}",
     "wakeAliasesHint": "Separate aliases with commas",
     "wakeExample": "Say “헤이 {0}”",
@@ -2460,7 +2476,7 @@
     "wakeSaved": "Saved. Changes apply to the next call.",
     "wakeSave": "Save bot selection",
     "errWakeChanged": "The bot list changed. Refresh and apply your changes again.",
-    "errWakeRegistry": "Check aliases (up to 3), duplicate names, and each selected bot’s setup.",
+    "errWakeRegistry": "Check aliases (up to 5), duplicate names, and each selected bot’s setup.",
     "errBotsView": "Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable."
   }
 }

@@ -50,7 +50,7 @@ If upgrading from a manually configured wake engine, open **Wake model**, rechec
 
 ## Call a bot by name
 
-Select bots in setup or **Live call settings → Wake**. Each selected bot uses its current Bots title in `헤이 {name}` / `Hey {name}` with up to three spoken aliases. Duplicate enabled names are rejected; newly discovered bots remain off. Say `Bye {name}` / `바이 {name}` to end and return to standby. Calling another selected name during a call switches bots. The current call keeps its name snapshot even if settings change.
+Select bots in setup or **Live call settings → Wake**. Each selected bot answers to `헤이 {name}` / `Hey {name}` for its current Bots title (or profile display name) and its profile name, both added automatically, plus up to five custom spoken aliases that do not count the automatic names. An automatic name is added only if it is a valid wake name (at most 40 characters of letters, digits, spaces, `-` or `_`); an invalid one, or one that repeats the other, is skipped, and the Wake settings list the names that were added. The generic `default` profile name is not added on its own: `default` needs a title or an alias to be selectable. Duplicate enabled names are rejected; newly discovered bots remain off. Say `Bye {name}` / `바이 {name}` to end and return to standby. Calling another selected name during a call switches bots. The current call keeps its name snapshot even if settings change.
 
 After setup, use the small ear icon to toggle listening and hover/focus to reveal Live/settings controls. A match plays the chosen local cue, opens the matching bot in Bots, and starts its Codex subscription call with a short first greeting. Preparing, connected, and listening are distinct states.
 
