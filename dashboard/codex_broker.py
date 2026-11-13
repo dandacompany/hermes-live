@@ -27,13 +27,25 @@ def binary():
     return shutil.which('codex') or next((str(p) for p in [Path('/opt/homebrew/bin/codex'), Path.home()/'.local/bin/codex', Path('/usr/local/bin/codex')] if p.is_file()), None)
 
 
-def child_env():
-    env = os.environ.copy()
-    for key in tuple(env):
-        if not (key in {'OPENAI_BASE_URL', 'BWS_ACCESS_TOKEN'} or key.endswith(('_API_KEY', '_API_KEY_FOR_LIVE'))):
-            continue
-        env.pop(key, None)
-    return env
+# The vendor CLI gets an allowlisted environment, never a copy of Hermes's process
+# environment: bot tokens, provider keys and other secrets Hermes loaded stay behind.
+ENV_ALLOW = frozenset({
+    'PATH', 'HOME', 'USER', 'LOGNAME', 'SHELL', 'LANG', 'LANGUAGE', 'TZ', 'TMPDIR', 'TMP', 'TEMP',
+    'CODEX_HOME', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_RUNTIME_DIR',
+    'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY',
+    'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy',
+    'SSL_CERT_FILE', 'SSL_CERT_DIR', 'REQUESTS_CA_BUNDLE', 'CURL_CA_BUNDLE', 'NODE_EXTRA_CA_CERTS',
+    'CODEX_CA_CERTIFICATE',
+    # Windows process basics.
+    'SYSTEMROOT', 'SYSTEMDRIVE', 'WINDIR', 'COMSPEC', 'PATHEXT', 'USERPROFILE', 'APPDATA',
+    'LOCALAPPDATA', 'PROGRAMDATA', 'PROGRAMFILES', 'USERNAME', 'HOMEDRIVE', 'HOMEPATH',
+})
+
+
+def child_env(source=None):
+    source = os.environ if source is None else source
+    return {key: value for key, value in source.items()
+            if key in ENV_ALLOW or key.startswith('LC_')}
 
 
 class BrokerError(RuntimeError):

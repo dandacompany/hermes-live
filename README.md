@@ -251,7 +251,7 @@ Hermes Live is licensed under the [MIT License](LICENSE). Required third-party n
 
 ## Consultation integration
 
-Version 0.9.1 adds a versioned, voice-only integration for [Hermes Consult](https://github.com/dandacompany/hermes-consult). Install both plugins for website subscription consultations. The integration creates an isolated session registry, accepts provider-owned consultation instructions, and keeps shell, MCP, apps, plugins and hooks disabled. Existing Desktop calls keep their default persona.
+Version 0.9.1 adds a versioned, voice-only integration for [Hermes Consult](https://github.com/dandacompany/hermes-consult). Install both plugins for website subscription consultations. The integration creates an isolated session registry, accepts provider-owned consultation instructions, and keeps shell, MCP, apps, plugins and hooks disabled. Existing Desktop calls keep their default persona. Since 0.9.2 the Codex app-server receives an allowlisted environment (`PATH`, `HOME`, `USER`, locale `LANG`/`LC_*`, temp directories, `CODEX_HOME`/XDG directories, proxy and CA variables) instead of a copy of Hermes's environment, so bot tokens and other secrets Hermes loaded never reach it.
 
 ---
 Built by [Dante Labs](https://dante-labs.com) · [YouTube @dante-labs](https://youtube.com/@dante-labs) · [Email](mailto:dante@dante-labs.com) · [Discord](https://discord.com/invite/rXyy5e9ujs) · [Support](https://buymeacoffee.com/dante.labs)
