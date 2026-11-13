@@ -29,7 +29,8 @@ export class WakeConfirmation {
  }
  delta(text:string){
   if(!text||!this.segment)return;
-  if(this.pending){this.pending.abort();this.pending=null;++this.generation;this.deps.trace('continued_speech',{length:this.text.length});this.deps.state('')}
+  // An aborted check reached no verdict: let tick() verify the updated text once it settles.
+  if(this.pending){this.pending.abort();this.pending=null;this.attempt=false;++this.generation;this.deps.trace('continued_speech',{length:this.text.length});this.deps.state('')}
   this.lastDelta=this.now();this.text+=text;
   if(this.text.length>128){this.clear('too_long');return}
  }

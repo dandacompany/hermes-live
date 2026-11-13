@@ -4399,7 +4399,7 @@ var WakeConfirmation = class {
     (!frame || now - this.lastPcm > 600) && (this.reset("capture_gap"), !frame) || (this.lastPcm = now, this.gate.feed(frame, now));
   }
   delta(text2) {
-    if (!(!text2 || !this.segment) && (this.pending && (this.pending.abort(), this.pending = null, ++this.generation, this.deps.trace("continued_speech", { length: this.text.length }), this.deps.state("")), this.lastDelta = this.now(), this.text += text2, this.text.length > 128)) {
+    if (!(!text2 || !this.segment) && (this.pending && (this.pending.abort(), this.pending = null, this.attempt = !1, ++this.generation, this.deps.trace("continued_speech", { length: this.text.length }), this.deps.state("")), this.lastDelta = this.now(), this.text += text2, this.text.length > 128)) {
       this.clear("too_long");
       return;
     }
