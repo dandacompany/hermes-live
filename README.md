@@ -270,7 +270,3 @@ Version 0.9.1 adds a versioned, voice-only integration for [Hermes Consult](http
 
 ---
 Built by [Dante Labs](https://dante-labs.com) · [YouTube @dante-labs](https://youtube.com/@dante-labs) · [Email](mailto:dante@dante-labs.com) · [Discord](https://discord.com/invite/rXyy5e9ujs) · [Support](https://buymeacoffee.com/dante.labs)
-
-Local 0.10.3: the resting control is a hands-free ear toggle; hover or keyboard focus reveals Live start and settings. Bots wake navigation accepts the newly created runtime session instead of waiting for an ID-less draft. Real microphone retest is pending.
-
-Local 0.10.4: cross-bot navigation mounts the target Bot chat before activating its gateway and tolerates only source/target restoration during that transition. With hands-free enabled, a completed user utterance matching another enabled bot’s wake phrase ends the current call and starts that bot; calling the current name keeps the call. Target selection is revalidated, assistant/partial/tool text cannot trigger a switch, and any running task in the previous call is interrupted on its own route before switching.
