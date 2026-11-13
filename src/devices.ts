@@ -16,9 +16,13 @@ export function audioDeviceError(error:unknown){
  return error instanceof Error?error.message:"HL_ERROR:errAudio";
 }
 
-/** macOS and Chromium name the same USB mic differently; never select an alias or fallback. */
+// Chromium on macOS appends a transport suffix to Core Audio device names: a USB
+// "(vid:pid)" or a transport type such as "(Built-in)" or "(Bluetooth)". The backend
+// lists the bare names, so strip exactly the suffixes Chromium can add.
+const transportSuffix=/\s+\((?:[0-9a-f]{4}:[0-9a-f]{4}|Built-in|Aggregate|AutoAggregate|Virtual|PCI|FireWire|Bluetooth|Bluetooth LE|HDMI|DisplayPort|AirPlay|AVB|Thunderbolt)\)$/i;
+/** macOS and Chromium name the same mic differently; never select an alias or fallback. */
 export function selectWakeMicrophone(devices:readonly MediaDeviceInfo[],name:string):MediaDeviceInfo {
- const canonical=(label:string)=>label.trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i,'');
+ const canonical=(label:string)=>label.trim().replace(transportSuffix,'');
  const concrete=new Map(devices.filter(d=>d.kind==='audioinput'&&d.deviceId&&!['default','communications'].includes(d.deviceId)).map(d=>[d.deviceId,d]));
  // Apple Virtualization exposes one input under different Core Audio/Chromium names.
  // Restrict this alias to that exact pair and one concrete input; never guess a USB mic.
@@ -28,4 +32,4 @@ export function selectWakeMicrophone(devices:readonly MediaDeviceInfo[],name:str
  return [...matches.values()][0]!;
 }
 
-export function canonicalMicrophoneLabel(label:string){return label.replace(/^(Default|기본값)\s*-\s*/i,'').trim().replace(/\s+\([0-9a-f]{4}:[0-9a-f]{4}\)$/i,'')}
+export function canonicalMicrophoneLabel(label:string){return label.replace(/^(Default|기본값)\s*-\s*/i,'').trim().replace(transportSuffix,'')}
