@@ -20,7 +20,7 @@ import {UsageLedger,emptyUsage,type UsageData} from './usage.ts';
 import {seedHistory,draftVoicePrompt,voiceSubmission,historyParams} from './context.ts';
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,ROUTES_AREA,host,icons,SegmentedControl} from '@hermes/plugin-sdk';
-import {VoiceCommandGate,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
+import {VoiceCommandGate,VoiceStartError,startBlocker,probeLeaving,type LeavingState,type StartBlock,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
 import type {PluginContext,Route} from '@hermes/plugin-sdk';
 import {CallController} from './controller.ts';
 import {AudioEngine} from './audio.ts';
@@ -268,15 +268,23 @@ export default {
     return back();
    },
    start:async focused=>{
-    const busy=()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status);
-    if(busy())throw new Error('HL_ERROR:errBusy');
+    const block=(reason:StartBlock|null)=>{if(reason)throw new VoiceStartError(reason)};
+    const blocker=(needsSwitch:boolean,leaving:LeavingState|null)=>startBlocker({paused:voiceMode.paused,transitioning:voiceMode.busy,micBusy:activity.active,status:controller.snapshot.status,needsSwitch,leaving});
+    block(blocker(false,null));
     if(!apiScopeMatches(currentScope())){
-     if(host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean))throw new Error('HL_ERROR:errBusy');
-     await host.ensureAgent(null,focused.profile);
+     // Only when a switch is needed: ask the profile being left (status only, 2 s, fails closed).
+     const leavingProfile=host.state.profile.get()||'default';const leavingConnection=host.state.connectionId.get()||'local';
+     const leaving=await probeLeaving(async()=>{
+      const route=(await host.profileRoutes()).find(r=>r.connectionId===leavingConnection&&r.profile===leavingProfile);
+      if(!route)throw new Error('no route');
+      return host.requestProfile(route,'session.active_list',{});
+     });
+     block(blocker(true,leaving));
+     try{await host.ensureAgent(null,focused.profile)}catch{throw new VoiceStartError('switch_failed')}
     }
     const scope=currentScope();const now=focusedChat();
     if(!now||now.connection!=='local'||now.profile!==focused.profile||now.storedId!==focused.storedId||!scope.session||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
-    if(busy())throw new Error('HL_ERROR:errBusy');
+    block(blocker(false,null));
     // Same path as the composer call button: the chat's saved provider and voice.
     callOwner=scope;await controller.start(ctx.storage.get<Selection>(`selection:${scope.connection}:${scope.profile}`,defaults));
     if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);

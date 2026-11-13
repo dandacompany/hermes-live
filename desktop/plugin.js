@@ -4538,11 +4538,54 @@ var VoiceCommandGate = class {
     return ctx.focused.profile === command.profile ? { ok: true, op } : no("wrong_bot");
   }
 };
+var START_BLOCKS = /* @__PURE__ */ new Set(["paused", "transitioning", "mic_busy", "call_busy", "leaving_busy", "leaving_unknown", "switch_failed"]);
+var VoiceStartError = class extends Error {
+  code;
+  constructor(code) {
+    if (!START_BLOCKS.has(code)) throw new Error("unknown start block");
+    super(`HL_VOICE:${code}`);
+    this.code = code;
+  }
+};
+function startBlocker(s) {
+  if (s.paused) return "paused";
+  if (s.transitioning) return "transitioning";
+  if (s.micBusy) return "mic_busy";
+  if (callPhase(s.status) !== "off") return "call_busy";
+  if (!s.needsSwitch) return null;
+  if (s.leaving === "idle") return null;
+  return s.leaving === "busy" ? "leaving_busy" : "leaving_unknown";
+}
+var LEAVING_PROBE_TIMEOUT_MS = 2e3;
+var LIVE_STATUSES = /* @__PURE__ */ new Set(["working", "waiting", "starting"]);
+var KNOWN_STATUSES = /* @__PURE__ */ new Set(["working", "waiting", "starting", "idle"]);
+async function probeLeaving(query, timeoutMs = LEAVING_PROBE_TIMEOUT_MS) {
+  let timer;
+  try {
+    const result = await Promise.race([query(), new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
+    })]);
+    const sessions = result?.sessions;
+    if (!Array.isArray(sessions)) return "unknown";
+    let busy = false;
+    for (const row of sessions) {
+      const status = row?.status;
+      if (typeof status !== "string" || !KNOWN_STATUSES.has(status)) return "unknown";
+      if (LIVE_STATUSES.has(status)) busy = true;
+    }
+    return busy ? "busy" : "idle";
+  } catch {
+    return "unknown";
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 function decisionKey(ctx) {
   const f = ctx.focused;
   return JSON.stringify([ctx.local, callPhase(ctx.status), ctx.callProfile, ctx.paused, ctx.transitioning, ctx.busy, f ? [f.connection, f.profile, f.storedId] : null]);
 }
 function startFailure(error) {
+  if (error instanceof VoiceStartError) return error.code;
   const message = error instanceof Error ? error.message : "";
   return message === "HL_ERROR:errBusy" ? "busy" : message === "HL_ERROR:errScope" ? "scope_changed" : "start_failed";
 }
@@ -5955,16 +5998,30 @@ var plugin_default = {
         return back();
       },
       start: async (focused) => {
-        const busy = () => voiceMode.paused || voiceMode.busy || activity.active || !["idle", "error"].includes(controller.snapshot.status);
-        if (busy()) throw new Error("HL_ERROR:errBusy");
+        const block = (reason) => {
+          if (reason) throw new VoiceStartError(reason);
+        };
+        const blocker = (needsSwitch, leaving) => startBlocker({ paused: voiceMode.paused, transitioning: voiceMode.busy, micBusy: activity.active, status: controller.snapshot.status, needsSwitch, leaving });
+        block(blocker(false, null));
         if (!apiScopeMatches(currentScope())) {
-          if (host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
-          await host3.ensureAgent(null, focused.profile);
+          const leavingProfile = host3.state.profile.get() || "default";
+          const leavingConnection = host3.state.connectionId.get() || "local";
+          const leaving = await probeLeaving(async () => {
+            const route2 = (await host3.profileRoutes()).find((r) => r.connectionId === leavingConnection && r.profile === leavingProfile);
+            if (!route2) throw new Error("no route");
+            return host3.requestProfile(route2, "session.active_list", {});
+          });
+          block(blocker(true, leaving));
+          try {
+            await host3.ensureAgent(null, focused.profile);
+          } catch {
+            throw new VoiceStartError("switch_failed");
+          }
         }
         const scope = currentScope();
         const now = focusedChat();
         if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
-        if (busy()) throw new Error("HL_ERROR:errBusy");
+        block(blocker(false, null));
         callOwner = scope;
         await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults));
         if (controller.snapshot.status === "error") throw new Error(controller.snapshot.error);

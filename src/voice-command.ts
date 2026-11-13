@@ -3,7 +3,7 @@
 export type VoiceAction='start'|'stop'|'toggle';
 export interface VoiceCommand {action:VoiceAction;profile:string;nonce:string}
 export type CallPhase='off'|'connecting'|'in_call'|'unknown';
-export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed'|'stop_failed';
+export type RejectReason='bad_request'|'bad_token'|'auth_unavailable'|'duplicate'|'too_soon'|'remote'|'transitioning'|'unknown'|'already_on'|'already_off'|'paused'|'busy'|'no_chat'|'wrong_bot'|'scope_changed'|'start_failed'|'stop_failed'|StartBlock;
 export interface FocusedChat {connection:string;profile:string;storedId:string|null}
 export interface GateContext {local:boolean;status:string;callProfile:string|null;focused:FocusedChat|null;paused:boolean;transitioning:boolean;busy:boolean}
 export type Decision={ok:true;op:'start'|'stop'}|{ok:false;reason:RejectReason};
@@ -83,6 +83,57 @@ export interface RunnerDeps {
  record:(last:LastCommand)=>void;
 }
 
+/** Why an accepted start could not begin. Fixed codes only; never error text. */
+export type StartBlock='paused'|'transitioning'|'mic_busy'|'call_busy'|'leaving_busy'|'leaving_unknown'|'switch_failed';
+const START_BLOCKS=new Set<string>(['paused','transitioning','mic_busy','call_busy','leaving_busy','leaving_unknown','switch_failed']);
+export class VoiceStartError extends Error{
+ code:StartBlock;
+ constructor(code:StartBlock){if(!START_BLOCKS.has(code))throw new Error('unknown start block');super(`HL_VOICE:${code}`);this.code=code}
+}
+/** State of the active gateway profile a start would leave; null when it was not (or need not be) asked. */
+export type LeavingState='idle'|'busy'|'unknown';
+export interface StartSnapshot {paused:boolean;transitioning:boolean;micBusy:boolean;status:string;needsSwitch:boolean;leaving:LeavingState|null}
+/**
+ * Measured: switching the active gateway leaves other profiles' turns running and painting,
+ * so busy chats elsewhere no longer block. What stays blocked is leaving an active profile that
+ * has a live turn (or cannot be checked): the window's primary socket cannot be told apart
+ * through the plugin SDK, and leaving a busy primary was not measured.
+ */
+export function startBlocker(s:StartSnapshot):StartBlock|null{
+ if(s.paused)return 'paused';
+ if(s.transitioning)return 'transitioning';
+ if(s.micBusy)return 'mic_busy';
+ if(callPhase(s.status)!=='off')return 'call_busy';
+ if(!s.needsSwitch)return null;
+ if(s.leaving==='idle')return null;
+ return s.leaving==='busy'?'leaving_busy':'leaving_unknown';
+}
+
+export const LEAVING_PROBE_TIMEOUT_MS=2000;
+const LIVE_STATUSES=new Set(['working','waiting','starting']);
+const KNOWN_STATUSES=new Set(['working','waiting','starting','idle']);
+/**
+ * Ask the profile being left whether any live session is mid-turn (session.active_list).
+ * Reads only `sessions[].status`; every other field (titles, previews) is ignored.
+ * Fails closed: malformed answers, errors and timeouts are 'unknown'.
+ */
+export async function probeLeaving(query:()=>Promise<unknown>,timeoutMs=LEAVING_PROBE_TIMEOUT_MS):Promise<LeavingState>{
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try{
+  const result=await Promise.race([query(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('timeout')),timeoutMs)})]);
+  const sessions=(result as {sessions?:unknown}|null)?.sessions;
+  if(!Array.isArray(sessions))return 'unknown';
+  let busy=false;
+  for(const row of sessions){
+   const status=(row as {status?:unknown}|null)?.status;
+   if(typeof status!=='string'||!KNOWN_STATUSES.has(status))return 'unknown';
+   if(LIVE_STATUSES.has(status))busy=true;
+  }
+  return busy?'busy':'idle';
+ }catch{return 'unknown'}
+ finally{if(timer)clearTimeout(timer)}
+}
+
 /** Every field the gate reads, reduced to what changes a decision (speaking/listening are one phase). */
 function decisionKey(ctx:GateContext){
  const f=ctx.focused;
@@ -91,6 +142,7 @@ function decisionKey(ctx:GateContext){
 
 /** Fixed reason codes only: error text can carry paths or provider details and never reaches the state file. */
 function startFailure(error:unknown):RejectReason{
+ if(error instanceof VoiceStartError)return error.code;
  const message=error instanceof Error?error.message:'';
  return message==='HL_ERROR:errBusy'?'busy':message==='HL_ERROR:errScope'?'scope_changed':'start_failed';
 }
