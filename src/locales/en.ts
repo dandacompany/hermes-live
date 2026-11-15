@@ -6,7 +6,7 @@ export const en = {
  errBotsView:'Enable Bots in Hermes Desktop to open a called bot. Update Desktop if the Bots view is unavailable.',
  wake:"Wake",
  wakeEmpty:"Choose a bot in Wake settings",
- wakeDescription:"Enable local bots to call with “헤이 {name}”. Changes apply to the next call. End with “Bye {name}” or “바이 {name}”.",
+ wakeDescription:"Enable local bots to call them by saying “헤이” followed by the bot's name. Changes apply to the next call. End by saying “Bye” or “바이” followed by the name.",
  wakeLocalOnly:"Name calling is available only on this Mac.",
  wakeAliases:"Spoken aliases (up to 3)",
  wakeAliasesFor:"Spoken aliases for {0}",
