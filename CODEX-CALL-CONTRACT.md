@@ -79,7 +79,7 @@ Failures answer `{"detail": "<Korean text>", "code": "<code>"}` with `Cache-Cont
 | `invalid_request` | 400 | Unknown model or voice, or the offer does not start with `v=0` |
 | `call_unavailable` | 400 | The `callId` is already in use, was stopped less than 120 s ago, or the backend is shutting down |
 | `call_limit` | 400 | Two calls are already in progress |
-| `call_cancelled` | 400 | The call was stopped while it was being set up |
+| `call_cancelled` | 400 | The call was stopped (`/codex/stop`, expiry or shutdown) while it was being set up; `detail` is the text of the step that was interrupted |
 | `cli_missing` | 400 | The Codex CLI is not installed on the backend |
 | `sign_in_required` | 400 | Codex is signed out or signed in with an API key instead of a ChatGPT subscription |
 | `provider_refused` | 400 | The Codex app-server returned an error for a request |

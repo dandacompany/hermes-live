@@ -312,7 +312,12 @@ class Sessions:
                     raise BrokerError('취소된 통화입니다.', 'call_cancelled')
                 call['expires'] = self.clock()+45;call['ready']=True
             return {'answer':answer,'callId':call_id,'engine':'codex','handoff':'client'}
-        except Exception:
+        except Exception as exc:
+            with self.lock:
+                stopped = self.calls.get(call_id) is not call
+            # A stop, expiry or shutdown during setup closes the server; report that, not the side effect.
+            if stopped and isinstance(exc, BrokerError):
+                exc.code = 'call_cancelled'
             self.stop(call_id)
             raise
 
