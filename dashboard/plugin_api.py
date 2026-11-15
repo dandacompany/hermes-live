@@ -12,6 +12,7 @@ import re
 import httpx
 import time
 from fastapi import APIRouter, Body, HTTPException, Response, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 
@@ -273,6 +274,14 @@ def codex_prewarm(response: Response):
     return codex.sessions.prewarm()
 
 
+CODEX_SESSION_ERROR_CODES = codex.ERROR_CODES | {'invalid_request', 'session_failed'}
+
+
+def codex_session_error(status, detail, code):
+    # `detail` keeps the exact text Desktop already matches; `code` is the stable value for other clients.
+    return JSONResponse({'detail':detail,'code':code}, status_code=status, headers={'Cache-Control':'no-store'})
+
+
 @router.post('/codex/session')
 def codex_session(body: CodexSessionRequest, response: Response):
     response.headers['Cache-Control'] = 'no-store'
@@ -281,10 +290,12 @@ def codex_session(body: CodexSessionRequest, response: Response):
         if not body.offer.startswith('v=0'):
             raise ValueError('WebRTC 연결 정보가 올바르지 않습니다.')
         return codex.sessions.start(str(body.callId), body.voice, body.offer, body.model)
-    except (ValueError, codex.BrokerError) as exc:
-        raise HTTPException(400, str(exc)) from None
+    except codex.BrokerError as exc:
+        return codex_session_error(400, str(exc), exc.code)
+    except ValueError as exc:
+        return codex_session_error(400, str(exc), 'invalid_request')
     except Exception:
-        raise HTTPException(502, 'Codex 음성 연결에 실패했습니다. CLI와 구독 상태를 확인하세요.') from None
+        return codex_session_error(502, 'Codex 음성 연결에 실패했습니다. CLI와 구독 상태를 확인하세요.', 'session_failed')
 
 
 @router.post('/codex/heartbeat')
