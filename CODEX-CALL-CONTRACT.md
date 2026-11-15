@@ -130,7 +130,7 @@ Subscription usage of the same Codex account that places calls. Each request sta
 | Desktop heartbeat | every 10 s, 8 s timeout |
 | Stopped `callId` memory | 120 s |
 | Concurrent calls | two calls at a time per loaded copy of the backend module (`Sessions` in `dashboard/codex_broker.py`); how many copies a host loads is up to the host |
-| App-server request timeouts | 15 s to initialize, 10 s to read the account, 25 s for other requests |
+| App-server request timeouts | 15 s to initialize, 10 s to read the account, 20 s to read usage rate limits (`/codex/usage`), 25 s for other requests |
 | WebRTC answer from Codex | 40 s |
 
 A heartbeat during setup also sets the expiry to 45 s from now.
