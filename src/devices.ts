@@ -20,7 +20,7 @@ export function audioDeviceError(error:unknown){
 // "(vid:pid)" or a transport type such as "(Built-in)" or "(Bluetooth)". The backend
 // lists the bare names, so strip exactly the suffixes Chromium can add.
 const transportSuffix=/\s+\((?:[0-9a-f]{4}:[0-9a-f]{4}|Built-in|Aggregate|AutoAggregate|Virtual|PCI|FireWire|Bluetooth|Bluetooth LE|HDMI|DisplayPort|AirPlay|AVB|Thunderbolt)\)$/i;
-/** macOS and Chromium name the same mic differently; never select an alias or fallback. */
+/** macOS and Chromium name the same mic differently; never select a fallback. The only alias is the Apple Virtualization pair below. */
 export function selectWakeMicrophone(devices:readonly MediaDeviceInfo[],name:string):MediaDeviceInfo {
  const canonical=(label:string)=>label.trim().replace(transportSuffix,'');
  const concrete=new Map(devices.filter(d=>d.kind==='audioinput'&&d.deviceId&&!['default','communications'].includes(d.deviceId)).map(d=>[d.deviceId,d]));

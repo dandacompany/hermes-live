@@ -1,4 +1,4 @@
-> **Hermes Live 0.12.0** — name calling requires Apple Silicon macOS. Hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
+> **Hermes Live 0.12.1** — name calling requires Apple Silicon macOS. Hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
 
 # hermes-live
 
@@ -10,6 +10,17 @@ A plugin that adds a Live call button next to the Hermes Desktop composer withou
 
 Hover or focus the ear icon to reveal call and settings controls. Calling a selected name opens that bot in the Bots tab before starting the call. Enable Bots in Desktop; existing Sessions tabs are preserved.
 
+## What's new in 0.12.1
+
+- **Codex call contract for other clients.** [`CODEX-CALL-CONTRACT.md`](CODEX-CALL-CONTRACT.md) (contract version 1) documents the readiness, session, heartbeat, stop and usage routes, their timing, and the data-channel messages Desktop handles. `/codex/session` failures now carry a stable `code` beside the unchanged `detail` text (#21, #22).
+- **Wake detection keeps listening after one failed transcription.** Only three failures in a row restart the local engine (#15).
+- **Pausing Live voice always releases the wake microphone**, even when ending the call or saving the pause fails first (#16).
+- **External voice control:** a command handled by a window that does not own the live call still publishes its `last` result in `voice-state.json`, and `last` keeps the newest result (#20).
+- **Unloading the plugin always closes Codex sessions**, even when another cleanup step fails (#19).
+- The wake settings description no longer shows a literal `{name}`. Wake strings that were English copies in 15 languages were removed, so the same English text now comes from the fallback (#13, #14).
+- Developer diagnostics answer 404 instead of 500 when the marker is removed while the backend runs (#12).
+- Documentation: whisper.cpp copyright holder and engine signing identity, Korean README version dates, and code comments (#23–#26).
+
 ## What's new in 0.12.0
 
 - **External voice control link.** Another local app, such as a hardware key launcher, can start, stop or toggle the Live call of the chat that is open in Desktop:
@@ -18,7 +29,7 @@ Hover or focus the ear icon to reveal call and settings controls. Calling a sele
   - `start` runs only when the chat open in Desktop belongs to `profile` on a local connection, so open that bot's chat first. `stop` ends only a call owned by `profile`. Reused nonces, links within 1.5 seconds, connecting or unknown call states and remote connections are refused.
   - Readers can follow `~/.hermes/state/hermes-live/voice-state.json`: `status` (`off`, `connecting`, `in_call`, `unknown`), the call's `profile`, `updatedAt`, and the `last` command result with a fixed `reason` code. It is refreshed on every change and every 2 seconds; treat it as unknown when `updatedAt` is more than 6 seconds old.
   - Known limitation: a start may switch Desktop's active gateway away from a profile that is mid-turn. Measurements showed such turns keep running and their chats keep updating; leaving a busy profile served by the window's primary connection was not measured.
-- **Opt-in developer diagnostics** for voice recognition and handoff, with controls and a resumable monitoring API. They exist only in local developer builds (`node scripts/build.mjs --dev-diagnostics`) with a `.dev-diagnostics` marker in the plugin folder; the distributed bundle and backend ship with them off.
+- **Opt-in developer diagnostics** for voice recognition and handoff, with controls and a resumable monitoring API. The Desktop panel and event reporting exist only in a local developer bundle (`node scripts/build.mjs --dev-diagnostics`). The backend diagnostic routes are mounted whenever a `.dev-diagnostics` marker file is in the plugin folder when the backend starts, whichever bundle is installed; if the marker is removed later they answer 404 until the next restart. The distributed bundle is built without diagnostics and the plugin ships without the marker.
 - **New wake acknowledgment sound**: a brighter crystal chime (generation details in `src/assets/README.md`).
 - **In-call wake confirmation.** During a Codex call, when the live transcript shows a bot-switch command but the completed transcript stalls, the captured utterance is checked with the local Whisper model and the switch happens only when both agree. A completed transcript always takes precedence.
 - **Built-in and Bluetooth microphones** now match during wake setup: Chromium's transport suffixes such as `(Built-in)` and `(Bluetooth)` are ignored, as the USB `(vid:pid)` suffix already was. Thanks @mbac (#2).
@@ -102,7 +113,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone --branch v0.12.0 https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.12.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -111,7 +122,7 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-Use the exact commit-pinned install command in the [v0.12.0 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.0). An unpinned repository install follows the default branch and may install a different version.
+Use the exact commit-pinned install command in the [v0.12.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.1). An unpinned repository install follows the default branch and may install a different version.
 
 This is a direct repository install. The catalog may supply a different version; use the pinned command, not the bare catalog name.
 

@@ -49,7 +49,16 @@ def child_env(source=None):
 
 
 class BrokerError(RuntimeError):
-    pass
+    """A failure with stable `code` for clients; the message is the user-facing text."""
+    def __init__(self, message, code='codex_error'):
+        super().__init__(message)
+        self.code = code
+
+
+# Codes /codex/session can return (see CODEX-CALL-CONTRACT.md).
+ERROR_CODES = frozenset({'call_unavailable', 'call_limit', 'call_cancelled', 'cli_missing', 'sign_in_required',
+                         'provider_refused', 'provider_timeout', 'provider_disconnected', 'realtime_refused',
+                         'realtime_timeout', 'session_create_failed'})
 
 
 class AppServer:
@@ -65,10 +74,10 @@ class AppServer:
     def start(self):
         executable = binary()
         if not executable:
-            raise BrokerError('백엔드에 Codex CLI를 설치하고 codex login으로 로그인하세요.')
+            raise BrokerError('백엔드에 Codex CLI를 설치하고 codex login으로 로그인하세요.', 'cli_missing')
         with self.condition:
             if self.closed:
-                raise BrokerError('취소된 통화입니다.')
+                raise BrokerError('취소된 통화입니다.', 'call_cancelled')
             self.workdir = tempfile.TemporaryDirectory(prefix='hermes-live-')
             self.proc = subprocess.Popen(
                 [executable, 'app-server', '--listen', 'stdio://', '--enable', 'realtime_conversation',
@@ -86,12 +95,12 @@ class AppServer:
     def send(self, value):
         with self.condition:
             if self.closed or not self.proc or self.proc.poll() is not None:
-                raise BrokerError('Codex 음성 연결이 종료되었습니다.')
+                raise BrokerError('Codex 음성 연결이 종료되었습니다.', 'provider_disconnected')
             try:
                 self.proc.stdin.write(json.dumps(value)+'\n')
                 self.proc.stdin.flush()
             except (OSError, ValueError):
-                raise BrokerError('Codex 프로세스와 통신하지 못했습니다.') from None
+                raise BrokerError('Codex 프로세스와 통신하지 못했습니다.', 'provider_disconnected') from None
 
     def _read(self, proc):
         try:
@@ -129,14 +138,14 @@ class AppServer:
                 while self.pending[rid] is None and not self.closed:
                     remaining = until-time.monotonic()
                     if remaining <= 0:
-                        raise BrokerError('Codex 응답 대기 시간이 초과됐습니다.')
+                        raise BrokerError('Codex 응답 대기 시간이 초과됐습니다.', 'provider_timeout')
                     self.condition.wait(remaining)
                 message = self.pending[rid]
                 if message is None:
-                    raise BrokerError('Codex 연결이 종료되었습니다.')
+                    raise BrokerError('Codex 연결이 종료되었습니다.', 'provider_disconnected')
                 if 'error' in message:
                     # Provider errors may contain credentials/context. Never expose raw text.
-                    raise BrokerError('Codex가 요청을 거절했습니다. CLI 버전·로그인·구독 사용 한도를 확인하세요.')
+                    raise BrokerError('Codex가 요청을 거절했습니다. CLI 버전·로그인·구독 사용 한도를 확인하세요.', 'provider_refused')
                 return message.get('result') or {}
             finally:
                 self.pending.pop(rid, None)
@@ -150,14 +159,14 @@ class AppServer:
                     if params.get('threadId') != thread:
                         continue
                     if message['method'] == 'thread/realtime/error':
-                        raise BrokerError('Codex Live 연결이 거절되었습니다. 구독 사용 한도와 계정 상태를 확인하세요.')
+                        raise BrokerError('Codex Live 연결이 거절되었습니다. 구독 사용 한도와 계정 상태를 확인하세요.', 'realtime_refused')
                     if message['method'] == 'thread/realtime/sdp' and params.get('sdp'):
                         return params['sdp']
                 remaining = until-time.monotonic()
                 if remaining <= 0:
                     break
                 self.condition.wait(remaining)
-        raise BrokerError('Codex Live 음성 연결을 완료하지 못했습니다.')
+        raise BrokerError('Codex Live 음성 연결을 완료하지 못했습니다.', 'provider_disconnected' if self.closed else 'realtime_timeout')
 
     def close(self):
         with self.condition:
@@ -183,7 +192,7 @@ class AppServer:
 def account_status(server):
     account = server.request('account/read', {'refreshToken':False}, 10).get('account') or {}
     if account.get('type') != 'chatgpt':
-        raise BrokerError('codex login으로 ChatGPT 구독 계정에 로그인하세요. API 키 로그인은 사용할 수 없습니다.')
+        raise BrokerError('codex login으로 ChatGPT 구독 계정에 로그인하세요. API 키 로그인은 사용할 수 없습니다.', 'sign_in_required')
     return {'available':True,'reason':None,'plan':str(account.get('planType') or '')}
 
 
@@ -229,7 +238,7 @@ class Sessions:
                   'features':{'shell_tool':False,'multi_agent':False,'plugins':False,'apps':False,'hooks':False}}})
         thread_id = (thread.get('thread') or {}).get('id')
         if not thread_id:
-            raise BrokerError('Codex 음성 세션을 만들지 못했습니다.')
+            raise BrokerError('Codex 음성 세션을 만들지 못했습니다.', 'session_create_failed')
         return thread_id
 
     def prewarm(self):
@@ -276,9 +285,9 @@ class Sessions:
         self.reap()
         with self.lock:
             if self.closed or call_id in self.cancelled or call_id in self.calls:
-                raise BrokerError('종료되었거나 중복된 통화입니다.')
+                raise BrokerError('종료되었거나 중복된 통화입니다.', 'call_unavailable')
             if len(self.calls) >= 2:
-                raise BrokerError('진행 중인 Codex 통화를 먼저 종료하세요.')
+                raise BrokerError('진행 중인 Codex 통화를 먼저 종료하세요.', 'call_limit')
             prepared = self.warm if self.warm and self.warm['ready'] else None
             if prepared:self.warm = None  # An unused thread is transferred to exactly one call.
             server = prepared['server'] if prepared else self.factory()
@@ -300,10 +309,15 @@ class Sessions:
             answer = server.answer(thread_id)
             with self.lock:
                 if self.calls.get(call_id) is not call:
-                    raise BrokerError('취소된 통화입니다.')
+                    raise BrokerError('취소된 통화입니다.', 'call_cancelled')
                 call['expires'] = self.clock()+45;call['ready']=True
             return {'answer':answer,'callId':call_id,'engine':'codex','handoff':'client'}
-        except Exception:
+        except Exception as exc:
+            with self.lock:
+                stopped = self.calls.get(call_id) is not call
+            # A stop, expiry or shutdown during setup closes the server; report that, not the side effect.
+            if stopped and isinstance(exc, BrokerError):
+                exc.code = 'call_cancelled'
             self.stop(call_id)
             raise
 

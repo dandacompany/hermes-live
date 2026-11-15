@@ -3,7 +3,8 @@ import translations from './locales/translations.json' with {type:'json'};
 import legacyErrors from './locales/legacy-errors.json' with {type:'json'};
 
 export type Translate=(key:MessageKey,...args:unknown[])=>string;
-export const catalogs:Record<string,Record<MessageKey,string>>={en,...translations};
+// A locale may omit keys it has not translated; both the host and translate() fall back to English.
+export const catalogs:Record<string,Partial<Record<MessageKey,string>>>={en,...translations};
 export const supportedLocales=Object.keys(catalogs);
 export function formatMessage(template:string,args:unknown[]){return template.replace(/\{(\d+)\}/g,(_,index)=>String(args[Number(index)]??''))}
 // The SDK's plugin catalog accepts strings or functions, not string templates.

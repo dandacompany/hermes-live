@@ -12,6 +12,7 @@ import re
 import httpx
 import time
 from fastapi import APIRouter, Body, HTTPException, Response, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 
@@ -273,6 +274,16 @@ def codex_prewarm(response: Response):
     return codex.sessions.prewarm()
 
 
+# Version of the HTTP call contract in CODEX-CALL-CONTRACT.md; bump it with incompatible changes.
+CODEX_CALL_CONTRACT_VERSION = 1
+CODEX_SESSION_ERROR_CODES = codex.ERROR_CODES | {'invalid_request', 'session_failed'}
+
+
+def codex_session_error(status, detail, code):
+    # `detail` keeps the exact text Desktop already matches; `code` is the stable value for other clients.
+    return JSONResponse({'detail':detail,'code':code}, status_code=status, headers={'Cache-Control':'no-store'})
+
+
 @router.post('/codex/session')
 def codex_session(body: CodexSessionRequest, response: Response):
     response.headers['Cache-Control'] = 'no-store'
@@ -281,10 +292,12 @@ def codex_session(body: CodexSessionRequest, response: Response):
         if not body.offer.startswith('v=0'):
             raise ValueError('WebRTC 연결 정보가 올바르지 않습니다.')
         return codex.sessions.start(str(body.callId), body.voice, body.offer, body.model)
-    except (ValueError, codex.BrokerError) as exc:
-        raise HTTPException(400, str(exc)) from None
+    except codex.BrokerError as exc:
+        return codex_session_error(400, str(exc), exc.code)
+    except ValueError as exc:
+        return codex_session_error(400, str(exc), 'invalid_request')
     except Exception:
-        raise HTTPException(502, 'Codex 음성 연결에 실패했습니다. CLI와 구독 상태를 확인하세요.') from None
+        return codex_session_error(502, 'Codex 음성 연결에 실패했습니다. CLI와 구독 상태를 확인하세요.', 'session_failed')
 
 
 @router.post('/codex/heartbeat')
@@ -644,33 +657,40 @@ class DiagnosticControl(BaseModel):
     model_config=ConfigDict(extra='forbid',strict=True)
     recording: bool
 
+def _journal():
+    # Routes are mounted at import; the marker may disappear later without a restart.
+    journal=diag.journal()
+    if isinstance(journal,diag.DisabledJournal):raise HTTPException(404,detail='diagnostics_disabled',headers={'Cache-Control':'no-store'})
+    return journal
+
 def diagnostic_status(response:Response):
     response.headers['Cache-Control']='no-store'
-    return diag.journal().status()
+    return _journal().status()
 
 def diagnostic_control(body:DiagnosticControl,response:Response):
     response.headers['Cache-Control']='no-store'
-    return diag.journal().control(body.recording)
+    return _journal().control(body.recording)
 
 def diagnostic_tail(response:Response,after:str=Query(default='',max_length=80),limit:int=Query(default=200,ge=1,le=500),include_text:bool=False):
     response.headers['Cache-Control']='no-store'
-    return diag.journal().snapshot(limit=limit,after=after,include_text=include_text)
+    return _journal().snapshot(limit=limit,after=after,include_text=include_text)
 
 def diagnostic_report(response:Response,include_text:bool=False):
     response.headers['Cache-Control']='no-store'
-    return diag.journal().snapshot(include_text=include_text)
+    return _journal().snapshot(include_text=include_text)
 
 def diagnostic_events(body:DiagnosticBatch,response:Response):
     response.headers['Cache-Control']='no-store'
-    journal=diag.journal()
+    journal=_journal()
     accepted=sum(bool(journal.emit(e.event,e.fields,text=e.text,at=e.at,detail_id=e.detailId)) for e in body.events)
     return {'accepted':accepted,'ignored':len(body.events)-accepted,'recording':journal.recording_state()['enabled'],'writeError':journal.write_error}
 
 def diagnostic_detail(body:DiagnosticConsent,response:Response):
     response.headers['Cache-Control']='no-store'
-    try:diag.journal().detail(body.seconds)
+    journal=_journal()
+    try:journal.detail(body.seconds)
     except ValueError:raise HTTPException(409,detail='recording_disabled')
-    return diag.journal().snapshot(include_text=False)
+    return journal.snapshot(include_text=False)
 
 # Never mount diagnostic APIs in ordinary distribution installs.
 if diag.enabled():
