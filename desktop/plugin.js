@@ -4865,7 +4865,7 @@ function apiScopeMatches(scope) {
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.12.0",
+  version: "0.12.1",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: !1,
   register(ctx) {

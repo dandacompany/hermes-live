@@ -1,4 +1,4 @@
-> **Hermes Live 0.12.0** — name calling requires Apple Silicon macOS. Hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
+> **Hermes Live 0.12.1** — name calling requires Apple Silicon macOS. Hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
 
 # hermes-live
 
@@ -9,6 +9,17 @@ Korean documentation: [README.ko.md](./README.ko.md)
 A plugin that adds a Live call button next to the Hermes Desktop composer without modifying or rebuilding the official app. Its dedicated call panel supports Gemini Live, Grok Voice, Qwen Realtime, and GPT Live through a Codex subscription, with model and voice selection, transcripts, microphone muting, and call controls.
 
 Hover or focus the ear icon to reveal call and settings controls. Calling a selected name opens that bot in the Bots tab before starting the call. Enable Bots in Desktop; existing Sessions tabs are preserved.
+
+## What's new in 0.12.1
+
+- **Codex call contract for other clients.** [`CODEX-CALL-CONTRACT.md`](CODEX-CALL-CONTRACT.md) (contract version 1) documents the readiness, session, heartbeat, stop and usage routes, their timing, and the data-channel messages Desktop handles. `/codex/session` failures now carry a stable `code` beside the unchanged `detail` text (#21, #22).
+- **Wake detection keeps listening after one failed transcription.** Only three failures in a row restart the local engine (#15).
+- **Pausing Live voice always releases the wake microphone**, even when ending the call or saving the pause fails first (#16).
+- **External voice control:** a command handled by a window that does not own the live call still publishes its `last` result in `voice-state.json`, and `last` keeps the newest result (#20).
+- **Unloading the plugin always closes Codex sessions**, even when another cleanup step fails (#19).
+- The wake settings description no longer shows a literal `{name}`. Wake strings that were English copies in 15 languages were removed, so the same English text now comes from the fallback (#13, #14).
+- Developer diagnostics answer 404 instead of 500 when the marker is removed while the backend runs (#12).
+- Documentation: whisper.cpp copyright holder and engine signing identity, Korean README version dates, and code comments (#23–#26).
 
 ## What's new in 0.12.0
 
@@ -102,7 +113,7 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 ### Option A — clone and symlink
 
 ```sh
-git clone --branch v0.12.0 https://github.com/dandacompany/hermes-live.git ~/hermes-live
+git clone --branch v0.12.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
 mkdir -p ~/.hermes/plugins
 ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
 ```
@@ -111,7 +122,7 @@ Use the symlink command only if that plugin path does not already exist. The rep
 
 ### Option B — install from GitHub
 
-Use the exact commit-pinned install command in the [v0.12.0 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.0). An unpinned repository install follows the default branch and may install a different version.
+Use the exact commit-pinned install command in the [v0.12.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.1). An unpinned repository install follows the default branch and may install a different version.
 
 This is a direct repository install. The catalog may supply a different version; use the pinned command, not the bare catalog name.
 
