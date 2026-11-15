@@ -274,6 +274,8 @@ def codex_prewarm(response: Response):
     return codex.sessions.prewarm()
 
 
+# Version of the HTTP call contract in CODEX-CALL-CONTRACT.md; bump it with incompatible changes.
+CODEX_CALL_CONTRACT_VERSION = 1
 CODEX_SESSION_ERROR_CODES = codex.ERROR_CODES | {'invalid_request', 'session_failed'}
 
 
