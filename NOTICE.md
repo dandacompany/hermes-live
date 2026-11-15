@@ -26,4 +26,4 @@ SOFTWARE.
 
 ## Local wake recognition
 
-The packaged whisper.cpp v1.9.5 engine is MIT licensed (Copyright Georgi Gerganov and contributors). Its license is included in `dashboard/resources/whisper/darwin-arm64/LICENSE`. Source: https://github.com/ggml-org/whisper.cpp/tree/v1.9.5 . The authenticated loopback patch and build recipe are included in `scripts/build-whisper.mjs`. Whisper model weights are downloaded separately, verified, and shared across local bots.
+The packaged whisper.cpp v1.9.5 engine is MIT licensed (Copyright (c) 2023-2026 The ggml authors). Its license is included in `dashboard/resources/whisper/darwin-arm64/LICENSE`. Source: https://github.com/ggml-org/whisper.cpp/tree/v1.9.5 . The authenticated loopback patch and build recipe are included in `scripts/build-whisper.mjs`. Whisper model weights are downloaded separately, verified, and shared across local bots.
