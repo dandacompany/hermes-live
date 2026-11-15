@@ -111,17 +111,27 @@ def _previous(path:Path):
         return data if isinstance(data,dict) and data.get('v')==1 else None
     except (OSError,ValueError):return None
 
+def _newest_last(previous,candidate):
+    # Every window re-sends its own last result; an older one must not replace a newer one.
+    if candidate is None:return previous
+    if isinstance(previous,dict) and _int(previous.get('at')) and previous['at']>candidate['at']:return previous
+    return candidate
+
 def write_report(path:Path,payload,now_ms:int):
     report=validate_report(payload)
     path.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
     with _locked(path):
         previous=_previous(path)
+        last=_newest_last((previous or {}).get('last'),report['last'])
         if previous:
             fresh=isinstance(previous.get('updatedAt'),int) and now_ms-previous['updatedAt']<=STALE_AFTER_MS
             # Secondary windows also report "off"; they must not hide the window that owns a live call.
             if fresh and previous.get('instance')!=report['instance'] and previous.get('status') in ('connecting','in_call') and report['status'] in ('off','unknown'):
+                # The owner's status and updatedAt stay, but the command result is still published.
+                if last!=previous.get('last'):
+                    previous={**previous,'last':last}
+                    _atomic_write(path,json.dumps(previous,ensure_ascii=False),'.voice-state-')
                 return {'written':False,'state':previous}
-        last=report['last'] if report['last'] is not None else (previous or {}).get('last')
         state={'v':1,'status':report['status'],'profile':report['profile'],'updatedAt':now_ms,'intervalMs':INTERVAL_MS,'staleAfterMs':STALE_AFTER_MS,'instance':report['instance'],'last':last}
         _atomic_write(path,json.dumps(state,ensure_ascii=False),'.voice-state-')
         return {'written':True,'state':state}
