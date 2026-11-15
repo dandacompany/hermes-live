@@ -118,6 +118,8 @@ def _newest_last(previous,candidate,now_ms):
     if candidate is None:return previous
     if not isinstance(previous,dict) or not _int(previous.get('at')) or previous['at']>now_ms+FUTURE_TOLERANCE_MS:return candidate
     if previous['at']>candidate['at']:return previous
+    # A start records `accepted`, then `failed` with the same `at`; reports can arrive out of order.
+    if previous['at']==candidate['at'] and previous.get('nonce')==candidate['nonce'] and previous.get('outcome')=='failed' and candidate['outcome']=='accepted':return previous
     return candidate
 
 def write_report(path:Path,payload,now_ms:int):
