@@ -23,6 +23,8 @@ TOKEN_RELATIVE='state/hermes-live/voice-token'
 _TOKEN=re.compile(r'[A-Za-z0-9_-]{43}')
 INTERVAL_MS=2000
 STALE_AFTER_MS=6000
+# Reports come from Desktop on the same machine; a result stamped further ahead than this is not trusted as newest.
+FUTURE_TOLERANCE_MS=5000
 STATUSES={'off','connecting','in_call','unknown'}
 ACTIONS={'start','stop','toggle'}
 OUTCOMES={'accepted','rejected','failed'}
@@ -111,10 +113,11 @@ def _previous(path:Path):
         return data if isinstance(data,dict) and data.get('v')==1 else None
     except (OSError,ValueError):return None
 
-def _newest_last(previous,candidate):
+def _newest_last(previous,candidate,now_ms):
     # Every window re-sends its own last result; an older one must not replace a newer one.
     if candidate is None:return previous
-    if isinstance(previous,dict) and _int(previous.get('at')) and previous['at']>candidate['at']:return previous
+    if not isinstance(previous,dict) or not _int(previous.get('at')) or previous['at']>now_ms+FUTURE_TOLERANCE_MS:return candidate
+    if previous['at']>candidate['at']:return previous
     return candidate
 
 def write_report(path:Path,payload,now_ms:int):
@@ -122,7 +125,7 @@ def write_report(path:Path,payload,now_ms:int):
     path.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
     with _locked(path):
         previous=_previous(path)
-        last=_newest_last((previous or {}).get('last'),report['last'])
+        last=_newest_last((previous or {}).get('last'),report['last'],now_ms)
         if previous:
             fresh=isinstance(previous.get('updatedAt'),int) and now_ms-previous['updatedAt']<=STALE_AFTER_MS
             # Secondary windows also report "off"; they must not hide the window that owns a live call.
