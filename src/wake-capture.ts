@@ -6,7 +6,9 @@ export const wakeCaptureProcessor=`class WakeCapture extends AudioWorkletProcess
  if(this.samples.length===1280){const pcm=new Int16Array(this.samples);this.samples=[];this.port.postMessage({pcm,seq:++this.seq,at:currentTime},[pcm.buffer])}}}}return true}
 }registerProcessor('hermes-live-wake-capture',WakeCapture);`;
 export interface WakeUtterance {id:number;pcm:Int16Array;startedAt:number;endedAt:number}
-/** Same bounded energy gate as local standby: never split long speech into a command tail. */
+/** Bounded energy gate modelled on local standby (UtteranceGate in dashboard/wake_whisper.py): never split long speech
+ * into a command tail. The in-call limits differ: 9 quiet frames end an utterance (standby: 7), and 62 frames cap it
+ * (standby: 63) so the longest utterance, 4.96 s, stays within the 5 s of PCM that /wake/confirm accepts. */
 export class WakeUtteranceGate {
  private pre:Int16Array[]=[];private frames:Int16Array[]=[];private voiced=0;private quiet=0;private noise=45;private discarding=false;private serial=0;private startedAt=0;
  private start:(id:number)=>void;private end:(u:WakeUtterance)=>void;private drop:(reason:string)=>void;
