@@ -64,6 +64,9 @@ class UtteranceGate:
 
 class WhisperEngine:
     frame_length = 1280
+    # The workers answer a failed request and keep serving; only a streak means a broken worker.
+    max_failures = 3
+    failures = 0
 
     def __init__(self, cfg):
         self.lock = threading.RLock()
@@ -116,7 +119,8 @@ class WhisperEngine:
                         if not str(result['id']).startswith(f'{self.generation}:'):
                             continue
                         self.last_ms = result.get('elapsedMs',0)
-                        if result.get('error'):
+                        self.failures = self.failures + 1 if result.get('error') else 0
+                        if self.failures >= self.max_failures:
                             self.error = 'transcription_failed'
                         elif result.get('target') in {t['target'] for t in self.targets}:
                             self.last_target = result['target']
