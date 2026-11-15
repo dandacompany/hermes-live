@@ -6,7 +6,8 @@ export class VoicePause {
  async pause(){
   if(this.busy)return;
   this.intent='pause';this.paused=true;this.busy=true;this.failed=false;this.deps.changed();
-  try{this.deps.stop();this.deps.persist(true);await this.deps.release()}
+  // Release even when stopping or saving throws, so a failed pause never leaves the wake mic armed.
+  try{try{this.deps.stop();this.deps.persist(true)}finally{await this.deps.release()}}
   catch(e){this.failed=true;throw e}
   finally{this.busy=false;this.deps.changed()}
  }

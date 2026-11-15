@@ -3193,7 +3193,11 @@ var VoicePause = class {
     if (!this.busy) {
       this.intent = "pause", this.paused = !0, this.busy = !0, this.failed = !1, this.deps.changed();
       try {
-        this.deps.stop(), this.deps.persist(!0), await this.deps.release();
+        try {
+          this.deps.stop(), this.deps.persist(!0);
+        } finally {
+          await this.deps.release();
+        }
       } catch (e) {
         throw this.failed = !0, e;
       } finally {
