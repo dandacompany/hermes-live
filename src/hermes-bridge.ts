@@ -1,6 +1,6 @@
 export interface Scope {connection:string;profile:string;session:string|null}
 export interface Message {role:string;row_id?:number;text?:string;hidden?:boolean;display_kind?:string}
-interface Dependencies {current:()=>Scope;busy:(id:string|null)=>boolean;history:(scope:Scope)=>Promise<Message[]>;submit:(session:string|null,text:string,context:string)=>boolean|string|Promise<boolean|string>;adopt?:(scope:Scope)=>void}
+interface Dependencies {current:()=>Scope;busy:(id:string|null)=>boolean;history:(scope:Scope)=>Promise<Message[]>;submit:(session:string|null,text:string,context:string,signal:AbortSignal)=>boolean|string|Promise<boolean|string>;adopt?:(scope:Scope)=>void}
 export function ownedScope(owner:{connectionId:string;profile:string}|null,session:string|null):Scope {
  return {connection:owner?.connectionId??'',profile:owner?.profile??'',session};
 }
@@ -20,7 +20,7 @@ export class HermesBridge {
   try{
    const before=owner.session?await this.deps.history(owner):[];const ids=new Set(before.map(x=>x.row_id));
    if(signal.aborted||!sameScope(owner,this.deps.current()))throw new Error("HL_ERROR:errScope");
-   const submitted=await this.deps.submit(owner.session,text,context);
+   const submitted=await this.deps.submit(owner.session,text,context,signal);
    if(!submitted)throw new Error("HL_ERROR:errBackend");
    if(typeof submitted==='string')text=submitted;
    const deadline=Date.now()+180000;let userRow:number|undefined;

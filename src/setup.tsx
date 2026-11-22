@@ -3,7 +3,7 @@ import {Button,host,type PluginContext} from '@hermes/plugin-sdk';
 import {useLiveI18n} from './i18n-react.ts';
 import {localizeError} from './i18n.ts';
 import {setupCopy,setupError,type SetupKey} from './setup-copy.ts';
-import {basicReady,preparingModel,setupSteps,type SetupState} from './setup-state.ts';
+import {basicReady,preparingModel,setupForPlatform,setupSteps,type SetupState} from './setup-state.ts';
 import {WakeSettings} from './wake-settings.tsx';
 import {DeviceSettings} from './device-settings.tsx';
 import {settingsHref} from './auth.ts';
@@ -36,7 +36,12 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   if(!local)return;setLoading(true);setError('');
   try{const [value,bots]=await Promise.all([ctx.rest<SetupState>('/setup',{timeoutMs:30000}),ctx.rest<{targets:WakeTarget[]}>('/wake/bots')]);
    safe(()=>{setData(value);setTargets(bots.targets);setDevice(d=>d||value.device||value.audio.devices[0]||'');setTarget(id=>bots.targets.some(b=>b.target===id)?id:bots.targets[0]?.target??'');
-    if(initial.current){initial.current=false;if(basicReady(value)&&ctx.storage.get('hands-free-enabled',false))setStep(6)}
+    if(initial.current){
+     initial.current=false;
+     const position=setupForPlatform({mode,step},value.assets.supported);
+     setMode(position.mode);
+     setStep(basicReady(value)&&ctx.storage.get('hands-free-enabled',false)?6:position.step);
+    }
    });
   }catch(e){fail(e)}finally{safe(()=>setLoading(false))}
  };
@@ -105,7 +110,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   <nav aria-label={c('title')} style={{display:'flex',gap:6,flexWrap:'wrap',borderBottom:divider,paddingBottom:12}}>{steps.map(n=><Button key={n} size="sm" variant={step===n?'secondary':'ghost'} aria-current={step===n?'step':undefined} disabled={testing} onClick={()=>setStep(n)}>{c(labels[n]!)}</Button>)}</nav>
   {!local&&<p role="status">{c('localOnly')} <Button onClick={callSettings}>{c('callSettings')}</Button></p>}
   {step===0&&<div style={panel}>
-   <label><input type="radio" name="live-setup-mode" checked={mode==='wake'} onChange={()=>setMode('wake')}/> {c('wakeMode')}<p style={hint}>{c('wakeHint')}</p></label>
+   <label><input type="radio" name="live-setup-mode" checked={mode==='wake'} disabled={data?.assets.supported===false} onChange={()=>setMode('wake')}/> {c('wakeMode')}<p style={hint}>{c('wakeHint')}</p></label>
    <label><input type="radio" name="live-setup-mode" checked={mode==='call'} onChange={()=>setMode('call')}/> {c('manualMode')}<p style={hint}>{c('manualHint')}</p></label>
    {mode==='wake'&&data&&!data.assets.supported&&<p role="alert">{c('localOnly')}</p>}
   </div>}

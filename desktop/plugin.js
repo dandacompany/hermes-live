@@ -2582,6 +2582,9 @@ function basicReady(value) {
 function setupSteps(mode) {
   return mode === "wake" ? [0, 1, 2, 3, 4, 5, 6] : [0, 2, 4, 6];
 }
+function setupForPlatform(position, supportsWake) {
+  return !supportsWake && position.mode === "wake" ? { mode: "call", step: 0 } : position;
+}
 
 // src/wake-settings.tsx
 import { useEffect as useEffect2, useRef, useState as useState2 } from "react";
@@ -2887,7 +2890,11 @@ function Setup({ suspended = !1, registerStopTest, ctx, local, scopeKey, active,
       try {
         let [value, bots] = await Promise.all([ctx.rest("/setup", { timeoutMs: 3e4 }), ctx.rest("/wake/bots")]);
         safe(() => {
-          setData(value), setTargets(bots.targets), setDevice((d) => d || value.device || value.audio.devices[0] || ""), setTarget((id) => bots.targets.some((b) => b.target === id) ? id : bots.targets[0]?.target ?? ""), initial.current && (initial.current = !1, basicReady(value) && ctx.storage.get("hands-free-enabled", !1) && setStep(6));
+          if (setData(value), setTargets(bots.targets), setDevice((d) => d || value.device || value.audio.devices[0] || ""), setTarget((id) => bots.targets.some((b) => b.target === id) ? id : bots.targets[0]?.target ?? ""), initial.current) {
+            initial.current = !1;
+            let position = setupForPlatform({ mode, step }, value.assets.supported);
+            setMode(position.mode), setStep(basicReady(value) && ctx.storage.get("hands-free-enabled", !1) ? 6 : position.step);
+          }
         });
       } catch (e) {
         fail(e);
@@ -3030,7 +3037,7 @@ function Setup({ suspended = !1, registerStopTest, ctx, local, scopeKey, active,
     ] }),
     step === 0 && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
       /* @__PURE__ */ jsxs5("label", { children: [
-        /* @__PURE__ */ jsx5("input", { type: "radio", name: "live-setup-mode", checked: mode === "wake", onChange: () => setMode("wake") }),
+        /* @__PURE__ */ jsx5("input", { type: "radio", name: "live-setup-mode", checked: mode === "wake", disabled: data?.assets.supported === !1, onChange: () => setMode("wake") }),
         " ",
         c("wakeMode"),
         /* @__PURE__ */ jsx5("p", { style: hint, children: c("wakeHint") })
@@ -3230,6 +3237,7 @@ var WakeCoordinator = class {
   held = !1;
   handling = !1;
   ticking = !1;
+  leavingLocal = !1;
   generation = 0;
   queue = Promise.resolve();
   seen = /* @__PURE__ */ new Set();
@@ -3263,7 +3271,7 @@ var WakeCoordinator = class {
     await this.tick();
   }
   async tick() {
-    if (!this.enabled || this.handling || this.ticking || Date.now() < this.due) return;
+    if (this.leavingLocal || !this.enabled || this.handling || this.ticking || Date.now() < this.due) return;
     if (!this.deps.local()) {
       this.held = !1, this.set("suspended");
       return;
@@ -3304,7 +3312,7 @@ var WakeCoordinator = class {
     }
   }
   async detected(event) {
-    if (!this.enabled || this.handling || this.calling || !this.deps.local() || event.owner !== this.owner || !event.eventId || !(this.config?.targets?.some((t) => t.target === event.target) ?? event.target === this.config?.target) || this.seen.has(event.eventId)) return;
+    if (this.leavingLocal || !this.enabled || this.handling || this.calling || !this.deps.local() || event.owner !== this.owner || !event.eventId || !(this.config?.targets?.some((t) => t.target === event.target) ?? event.target === this.config?.target) || this.seen.has(event.eventId)) return;
     this.handling = !0;
     let generation = this.generation;
     this.seen.add(event.eventId), this.seen.size > 128 && this.seen.delete(this.seen.values().next().value);
@@ -3384,8 +3392,20 @@ var WakeCoordinator = class {
       throw this.error = String(error), this.set("suspended"), error;
     }
   }
+  /** Keep an in-flight local arm/heartbeat on its original backend until the
+   * lease is released. Preserve the user's listening preference across the swap. */
+  async withLocalWakeReleased(activate) {
+    if (this.handling || this.leavingLocal) throw new Error("HL_ERROR:errBusy");
+    this.leavingLocal = !0;
+    try {
+      for (; this.ticking; ) await new Promise((resolve) => setTimeout(resolve, 25));
+      this.deps.local() && await this.releaseForNavigation(), await activate();
+    } finally {
+      this.leavingLocal = !1;
+    }
+  }
   async suspend() {
-    this.enabled && (this.held && await this.command("pause"), this.calling = !0, this.set("calling"));
+    !this.enabled || !this.deps.local() || (this.held && await this.command("pause"), this.calling = !0, this.set("calling"));
   }
   ended() {
     this.calling = !1, this.due = Date.now() + 2e3, this.set(this.enabled ? "rearming" : "off");
@@ -3464,25 +3484,48 @@ async function openWakeBot(deps, target, connection, name, current) {
   check();
   let route = routes.find((r) => r.profile === target && r.connectionId === connection && r.mode !== "remote");
   if (!route) throw new Error("HL_ERROR:errScope");
-  if (!deps.revealPane || !deps.paneVisible || !deps.openSession) throw new Error("HL_ERROR:errBotsView");
+  return openCanonicalBot(deps, route, name, current);
+}
+async function openCanonicalBot(deps, route, name, current) {
+  let target = route.profile, check = () => {
+    if (!current()) throw new Error("HL_ERROR:errScope");
+  };
+  if (check(), !deps.revealPane || !deps.paneVisible || !deps.openSession) throw new Error("HL_ERROR:errBotsView");
   if (deps.revealPane("hermes-bots:pane"), check(), !deps.paneVisible("hermes-bots:pane")) throw new Error("HL_ERROR:errBotsView");
-  let result = await deps.request(route, "session.list", { profile: route.targetProfile || target, title: "Bot Chat", include_hidden: !0, limit: 200 });
-  if (check(), !Array.isArray(result?.sessions) || result.sessions.length > 1) throw new Error("HL_ERROR:errScope");
-  let row = result.sessions[0];
-  if (row && (!row.id || (row.root_title || row.title) !== "Bot Chat")) throw new Error("HL_ERROR:errScope");
-  let stored = row?.resolved_id || row?.id;
+  let profile = route.targetProfile || target, lookup = async () => {
+    let result = await deps.request(route, "session.list", { profile, title: "Bot Chat", include_hidden: !0, limit: 200 });
+    if (check(), !Array.isArray(result?.sessions) || result.sessions.length > 1) throw new Error("HL_ERROR:errScope");
+    let row2 = result.sessions[0];
+    if (result.sessions.length && (!row2 || typeof row2.id != "string" || !row2.id || (row2.root_title || row2.title) !== "Bot Chat")) throw new Error("HL_ERROR:errScope");
+    return row2;
+  }, row = await lookup(), stored = row?.resolved_id || row?.id;
   if (!stored) {
-    let created = await deps.request(route, "session.create", { profile: route.targetProfile || target, title: "Bot Chat", hidden: !0, follow_profile_config: !0 });
-    check(), stored = created.stored_session_id;
+    let release = await deps.retain?.(route);
+    try {
+      check();
+      let created = await deps.request(route, "session.create", { profile, title: "Bot Chat", hidden: !0, follow_profile_config: !0 });
+      if (check(), stored = created.stored_session_id, created.info?.desktop_contract != null) {
+        if (!stored || !created.session_id) throw new Error("HL_ERROR:errScope");
+        try {
+          await deps.request(route, "session.title", { session_id: created.session_id, title: "Bot Chat" });
+        } catch (error) {
+          if (!/already in use/i.test(String(error?.message ?? ""))) throw error;
+        }
+        check(), row = await lookup(), stored = row?.resolved_id || row?.id;
+      }
+    } finally {
+      release?.();
+    }
   }
   if (typeof stored != "string" || !stored) throw new Error("HL_ERROR:errScope");
-  await deps.activate(route), check();
+  deps.activate && (await deps.activate(route), check());
   let owner = `bot:${route.connectionId}::${route.profile}`;
   deps.label?.(owner, name || target);
   let open = (refresh = !1) => deps.openSession(stored, {
     ...refresh ? { refreshInPlace: !0 } : {},
+    ...route.mode === "remote" ? { route } : {},
     profile: target,
-    intent: "in-place",
+    intent: route.mode === "remote" ? "main" : "in-place",
     workspaceMode: "bots",
     workspaceOwnerKey: owner,
     tabTitle: "Bot Chat",
@@ -3519,51 +3562,8 @@ var ProfileTransition = class {
   }
 };
 
-// src/hover-controls.tsx
-import { useEffect as useEffect6, useRef as useRef4, useState as useState6 } from "react";
-import { Popover, PopoverContent, PopoverTrigger, Tip } from "@hermes/plugin-sdk";
-import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
-function HoverControls({ primary, children, label, tip, holdOpen }) {
-  let [open, setOpen] = useState6(!1), timer = useRef4(null), panel = useRef4(null), anchor = useRef4(null), skipFocus = useRef4(!1), cancel = () => {
-    timer.current !== null && clearTimeout(timer.current), timer.current = null;
-  }, show = () => {
-    cancel(), setOpen(!0);
-  }, hideSoon = () => {
-    cancel(), timer.current = setTimeout(() => {
-      timer.current = null, setOpen(!1);
-    }, 150);
-  };
-  useEffect6(() => cancel, []), useEffect6(() => {
-    if (!open || holdOpen) return;
-    let move = (event) => {
-      let node = event.target instanceof Node ? event.target : null;
-      node && (anchor.current?.contains(node) || panel.current?.contains(node)) ? cancel() : timer.current === null && hideSoon();
-    };
-    return document.addEventListener("pointermove", move, !0), () => document.removeEventListener("pointermove", move, !0);
-  }, [open, holdOpen]);
-  let escape = () => {
-    cancel(), setOpen(!1), skipFocus.current = !0, anchor.current?.querySelector("button")?.focus(), skipFocus.current = !1;
-  };
-  return /* @__PURE__ */ jsxs7(Popover, { open: open || holdOpen, onOpenChange: (value) => {
-    value ? show() : setOpen(!1);
-  }, children: [
-    /* @__PURE__ */ jsx7("span", { ref: anchor, style: { display: "inline-flex", position: "relative" }, onPointerEnter: show, onPointerLeave: hideSoon, onFocus: () => {
-      skipFocus.current || show();
-    }, onBlur: (e) => {
-      e.currentTarget.contains(e.relatedTarget) || hideSoon();
-    }, onKeyDown: (e) => {
-      e.key === "Escape" && !holdOpen ? (e.stopPropagation(), escape()) : !holdOpen && (e.key === "Tab" && !e.shiftKey || e.key === "ArrowUp" || e.key === "ArrowDown") && (e.preventDefault(), show(), requestAnimationFrame(() => panel.current?.querySelector("button")?.focus()));
-    }, children: /* @__PURE__ */ jsx7(Tip, { label: tip, placement: "control", children: /* @__PURE__ */ jsx7(PopoverTrigger, { asChild: !0, children: primary }) }) }),
-    /* @__PURE__ */ jsx7(PopoverContent, { ref: panel, role: "group", "aria-label": label, side: "top", align: "center", sideOffset: 4, variant: "menu", onPointerEnter: show, onPointerLeave: hideSoon, onFocus: show, onBlur: (e) => {
-      e.currentTarget.contains(e.relatedTarget) || hideSoon();
-    }, onOpenAutoFocus: (e) => e.preventDefault(), onCloseAutoFocus: (e) => e.preventDefault(), onEscapeKeyDown: () => {
-      holdOpen || escape();
-    }, style: { width: "auto", minWidth: 0, padding: 0, border: 0, background: "transparent", boxShadow: "none", backdropFilter: "none", display: "flex", flexDirection: "column-reverse", alignItems: "center", gap: 4 }, children })
-  ] });
-}
-
 // src/usage-settings.tsx
-import { useEffect as useEffect7, useState as useState7 } from "react";
+import { useEffect as useEffect6, useState as useState6 } from "react";
 import { Button as Button6, SegmentedControl } from "@hermes/plugin-sdk";
 
 // src/usage.ts
@@ -3651,11 +3651,11 @@ var UsageLedger = class {
 };
 
 // src/usage-settings.tsx
-import { Fragment as Fragment2, jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
 var names = { qwen: "Qwen Realtime", gemini: "Gemini Live", grok: "Grok Voice", codex: "Codex \xB7 GPT Live" };
 function UsageSettings({ data, selection, readQuota }) {
-  let { t, locale } = useLiveI18n(), duration = (ms) => formatDuration(locale, ms), number = (n) => formatNumber(locale, n), dollars = (n) => formatMoney(locale, n), [provider, setProvider] = useState7(selection.provider), [quota, setQuota] = useState7(null), [error, setError] = useState7(""), [loading, setLoading] = useState7(!1), [refresh, setRefresh] = useState7(0);
-  useEffect7(() => {
+  let { t, locale } = useLiveI18n(), duration = (ms) => formatDuration(locale, ms), number = (n) => formatNumber(locale, n), dollars = (n) => formatMoney(locale, n), [provider, setProvider] = useState6(selection.provider), [quota, setQuota] = useState6(null), [error, setError] = useState6(""), [loading, setLoading] = useState6(!1), [refresh, setRefresh] = useState6(0);
+  useEffect6(() => {
     let cancelled = !1;
     if (provider === "codex")
       return setLoading(!0), setError(""), setQuota(null), readQuota().then((value) => {
@@ -3668,101 +3668,101 @@ function UsageSettings({ data, selection, readQuota }) {
         cancelled = !0;
       };
   }, [provider, refresh]);
-  let total = summarize(data, provider), day = summarize(data, provider, Date.now() - 864e5), five = summarize(data, provider, Date.now() - 5 * 36e5), tokenTotals = /* @__PURE__ */ jsxs8(Fragment2, { children: [
-    /* @__PURE__ */ jsx8("div", { children: t("tokens", number(total.input), number(total.output)) }),
-    /* @__PURE__ */ jsxs8("div", { children: [
+  let total = summarize(data, provider), day = summarize(data, provider, Date.now() - 864e5), five = summarize(data, provider, Date.now() - 5 * 36e5), tokenTotals = /* @__PURE__ */ jsxs7(Fragment2, { children: [
+    /* @__PURE__ */ jsx7("div", { children: t("tokens", number(total.input), number(total.output)) }),
+    /* @__PURE__ */ jsxs7("div", { children: [
       t("estimated", dollars(total.usd)),
       total.unpriced > 0 ? t("unpriced") : ""
     ] })
-  ] }), rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs8(Fragment2, { children: [
+  ] }), rates = (audioIn, audioOut, textIn, textOut) => /* @__PURE__ */ jsxs7(Fragment2, { children: [
     t("audioRates", dollars(audioIn), dollars(audioOut)),
-    /* @__PURE__ */ jsx8("br", {}),
+    /* @__PURE__ */ jsx7("br", {}),
     t("textRates", dollars(textIn), dollars(textOut))
   ] });
-  return /* @__PURE__ */ jsxs8("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
-    /* @__PURE__ */ jsx8("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx8(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
-    /* @__PURE__ */ jsx8("strong", { children: names[provider] }),
-    /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx8("span", { children: t("last24") }),
-      /* @__PURE__ */ jsxs8("span", { children: [
+  return /* @__PURE__ */ jsxs7("section", { "aria-label": t("usage"), style: { display: "grid", gap: 12, fontSize: ".8125rem", overflowWrap: "anywhere" }, children: [
+    /* @__PURE__ */ jsx7("div", { role: "group", "aria-label": t("provider"), children: /* @__PURE__ */ jsx7(SegmentedControl, { className: "w-full", value: provider, onChange: (value) => setProvider(value), options: ["gemini", "grok", "codex", "qwen"].map((id) => ({ id, label: id === "codex" ? "GPT" : id === "gemini" ? "Gemini" : id === "qwen" ? "Qwen" : "Grok" })) }) }),
+    /* @__PURE__ */ jsx7("strong", { children: names[provider] }),
+    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx7("span", { children: t("last24") }),
+      /* @__PURE__ */ jsxs7("span", { children: [
         duration(day.durationMs),
         " \xB7 ",
         t("calls", number(day.calls))
       ] })
     ] }),
-    /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
-      /* @__PURE__ */ jsx8("span", { children: t("totalCalls") }),
-      /* @__PURE__ */ jsxs8("span", { children: [
+    /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 }, children: [
+      /* @__PURE__ */ jsx7("span", { children: t("totalCalls") }),
+      /* @__PURE__ */ jsxs7("span", { children: [
         duration(total.durationMs),
         " \xB7 ",
         t("calls", number(total.calls))
       ] })
     ] }),
-    provider === "gemini" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
+    provider === "gemini" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsx8("div", { style: hint, children: t("geminiHint") }),
-      /* @__PURE__ */ jsxs8("div", { style: hint, children: [
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("geminiHint") }),
+      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         t("perMillion"),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Gemini 3.8 / 3.1: ",
         rates(3, 12, 0.75, 4.5),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Gemini 2.5: ",
         rates(3, 12, 0.5, 2)
       ] })
     ] }),
-    provider === "qwen" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
+    provider === "qwen" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
       tokenTotals,
-      /* @__PURE__ */ jsxs8("div", { style: hint, children: [
+      /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         t("qwenHint"),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         t("perMillion"),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Singapore: ",
         rates(0.93, 1.87, 0.23, 0.7),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         "Beijing: ",
         rates(0.848, 1.696, 0.212, 0.636)
       ] })
     ] }),
-    provider === "grok" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
-      /* @__PURE__ */ jsx8("div", { children: t("estimated", dollars(total.usd)) }),
-      /* @__PURE__ */ jsx8("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
+    provider === "grok" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+      /* @__PURE__ */ jsx7("div", { children: t("estimated", dollars(total.usd)) }),
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("grokHint", dollars(0.08), dollars(4e-3)) })
     ] }),
-    provider === "codex" && /* @__PURE__ */ jsxs8(Fragment2, { children: [
-      /* @__PURE__ */ jsxs8("div", { children: [
+    provider === "codex" && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+      /* @__PURE__ */ jsxs7("div", { children: [
         t("last5"),
         " ",
         duration(five.durationMs)
       ] }),
-      /* @__PURE__ */ jsx8("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
-      /* @__PURE__ */ jsxs8("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
-        /* @__PURE__ */ jsx8("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
-        /* @__PURE__ */ jsx8(Button6, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: t(loading ? "refreshing" : "refresh") })
+      /* @__PURE__ */ jsx7("div", { style: hint, children: t("reportedAudio", duration(total.audioMs)) }),
+      /* @__PURE__ */ jsxs7("div", { style: { borderTop: divider, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }, children: [
+        /* @__PURE__ */ jsx7("strong", { children: t("subscription", quota?.plan.toUpperCase() ?? "") }),
+        /* @__PURE__ */ jsx7(Button6, { variant: "ghost", size: "sm", disabled: loading, onClick: () => setRefresh((n) => n + 1), children: t(loading ? "refreshing" : "refresh") })
       ] }),
-      error && /* @__PURE__ */ jsx8("div", { role: "alert", style: hint, children: localizeError(t, error) }),
-      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs8("div", { children: [
-        /* @__PURE__ */ jsxs8("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
-          /* @__PURE__ */ jsx8("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
-          /* @__PURE__ */ jsx8("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
+      error && /* @__PURE__ */ jsx7("div", { role: "alert", style: hint, children: localizeError(t, error) }),
+      quota?.windows.map((w, i) => /* @__PURE__ */ jsxs7("div", { children: [
+        /* @__PURE__ */ jsxs7("div", { style: { display: "flex", justifyContent: "space-between", gap: 10 }, children: [
+          /* @__PURE__ */ jsx7("span", { children: w.windowMinutes === 10080 ? t("weekly") : w.windowMinutes === 300 ? t("fiveHours") : w.windowMinutes ? t("minutes", number(w.windowMinutes)) : t("limit") }),
+          /* @__PURE__ */ jsx7("span", { children: t("remaining", number(w.usedPercent), number(100 - w.usedPercent)) })
         ] }),
-        /* @__PURE__ */ jsx8("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
-        w.resetsAt && /* @__PURE__ */ jsx8("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
+        /* @__PURE__ */ jsx7("progress", { "aria-label": t("limit"), max: 100, value: w.usedPercent, style: { width: "100%", height: 6, accentColor: "var(--dt-primary)" } }),
+        w.resetsAt && /* @__PURE__ */ jsx7("div", { style: hint, children: t("resets", formatDate(locale, w.resetsAt * 1e3)) })
       ] }, i)),
-      quota && /* @__PURE__ */ jsxs8("div", { style: hint, children: [
+      quota && /* @__PURE__ */ jsxs7("div", { style: hint, children: [
         quota.windows.length ? t("officialQuota") : t("noQuota"),
         " ",
         t("checked", formatDate(locale, quota.checkedAt * 1e3, !0)),
-        /* @__PURE__ */ jsx8("br", {}),
+        /* @__PURE__ */ jsx7("br", {}),
         t("quotaHint")
       ] })
     ] }),
-    /* @__PURE__ */ jsx8("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
-    /* @__PURE__ */ jsxs8("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
+    /* @__PURE__ */ jsx7("div", { style: { ...hint, borderTop: divider, paddingTop: 10 }, children: t("localUsage", formatDate(locale, data.since)) }),
+    /* @__PURE__ */ jsxs7("a", { href: pricingLinks[provider], target: "_blank", rel: "noreferrer", style: hint, children: [
       t(provider === "codex" ? "quotaPage" : "pricingPage"),
       " \u2197"
     ] }),
-    provider !== "codex" && /* @__PURE__ */ jsx8("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
+    provider !== "codex" && /* @__PURE__ */ jsx7("div", { style: hint, children: t("pricingDate", formatCalendarDate(locale, PRICING_DATE)) })
   ] });
 }
 
@@ -3807,10 +3807,162 @@ ${context}
 function voiceSubmission(session, text2, context, submissionId) {
   return { session_id: session, submission_id: submissionId, text: text2, surface: "voice-live", voice_context: context.slice(-6e3), queued: !0 };
 }
+async function submitVoiceTurn(request, params) {
+  try {
+    await request(params);
+  } catch (error) {
+    let rejection = error;
+    if (rejection?.code !== void 0 && rejection.code !== 4e3 || !/^invalid params for prompt\.submit: submission_id: Extra inputs are not permitted(?: —|$)/.test(rejection?.message ?? "")) throw error;
+    let { submission_id, ...legacy } = params;
+    await request(legacy);
+  }
+}
 
 // src/plugin.tsx
-import { useEffect as useEffect8, useRef as useRef5, useState as useState8, useSyncExternalStore as useSyncExternalStore2 } from "react";
-import { Button as Button7, Popover as Popover2, PopoverContent as PopoverContent2, PopoverTrigger as PopoverTrigger2, Tip as Tip2, COMPOSER_AREAS, ROUTES_AREA, host as host3, icons, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+import { useEffect as useEffect7, useRef as useRef4, useState as useState8, useSyncExternalStore as useSyncExternalStore2 } from "react";
+import { Button as Button8, Popover, PopoverContent, PopoverTrigger, Tip, COMPOSER_AREAS, ROUTES_AREA, host as host3, SegmentedControl as SegmentedControl2 } from "@hermes/plugin-sdk";
+
+// src/compat-mailbox.ts
+var MAILBOX_PATH = "/api/plugins/hermes-live/control-mailbox", PAIRING_FILE = "hermes-live-switchboard.key";
+function localMailboxUrl(address) {
+  let url = new URL(address);
+  if (!["ws:", "wss:"].includes(url.protocol) || !["127.0.0.1", "[::1]", "localhost"].includes(url.hostname) || url.username || url.password || url.pathname !== MAILBOX_PATH || url.hash) throw Error("Local Desktop unavailable");
+  return url.search = "", url.toString();
+}
+function controlFiles(native, legacy) {
+  if (typeof native?.readText != "function" || typeof native.writeText != "function") return legacy();
+  let fallback;
+  async function run(op) {
+    if (fallback) return op(fallback);
+    let result = await op(native);
+    return result.ok || result.error !== "unavailable" ? result : (fallback ??= legacy(), op(fallback));
+  }
+  return {
+    readText: (...args) => run((files) => files.readText(...args)),
+    writeText: (...args) => run((files) => files.writeText(...args))
+  };
+}
+function joined(...parts) {
+  let result = new Uint8Array(parts.reduce((n, part) => n + part.length, 0)), offset = 0;
+  for (let part of parts)
+    result.set(part, offset), offset += part.length;
+  return result;
+}
+var utf8 = new TextEncoder();
+async function exchange(url, key, packet) {
+  let socket = new WebSocket(localMailboxUrl(url));
+  return socket.binaryType = "arraybuffer", new Promise((resolve, reject) => {
+    let timeout = setTimeout(() => done(), 5e3), challenge, iv = crypto.getRandomValues(new Uint8Array(12));
+    function done(result) {
+      clearTimeout(timeout), socket.onclose = socket.onmessage = socket.onerror = null, socket.close(), result ? resolve(result) : reject(Error("Local Desktop unavailable"));
+    }
+    socket.onerror = socket.onclose = () => done(), socket.onmessage = async (event) => {
+      try {
+        if (!(event.data instanceof ArrayBuffer)) throw Error();
+        let bytes = new Uint8Array(event.data);
+        if (challenge) {
+          if (bytes.length < 28 || bytes.length > 8192) throw Error();
+          let decoded = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes.slice(0, 12), additionalData: joined(utf8.encode("hermes-live/result"), challenge, iv) }, key, bytes.slice(12)), value = JSON.parse(new TextDecoder().decode(decoded));
+          if (typeof value?.ok != "boolean") throw Error();
+          done(value);
+        } else {
+          if (bytes.length !== 16) throw Error();
+          challenge = bytes;
+          let encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: joined(utf8.encode("hermes-live/request"), challenge) }, key, utf8.encode(JSON.stringify(packet)));
+          socket.send(joined(iv, new Uint8Array(encrypted)));
+        }
+      } catch {
+        done();
+      }
+    };
+  });
+}
+async function parseGrant(file) {
+  if (file.size > 256) throw Error("Invalid pairing file");
+  let raw = await file.text(), url;
+  if (file.name === "hermes-live-connector.key") {
+    let grant = JSON.parse(raw);
+    if (!grant || grant.v !== 1 || Object.keys(grant).sort().join() !== "key,port,v" || !Number.isInteger(grant.port) || grant.port < 1024 || grant.port > 65535) throw Error("Invalid connector file");
+    url = "ws://127.0.0.1:" + grant.port + MAILBOX_PATH, raw = grant.key;
+  } else if (file.name !== PAIRING_FILE) throw Error("Invalid pairing file");
+  if (typeof raw != "string" || !/^[0-9a-f]{64}$/.test(raw)) throw Error("Invalid pairing file");
+  return { key: await crypto.subtle.importKey("raw", Uint8Array.from(raw.match(/../g), (c) => parseInt(c, 16)), "AES-GCM", !1, ["encrypt", "decrypt"]), url };
+}
+async function savedKey(write) {
+  return new Promise((resolve, reject) => {
+    let open = indexedDB.open("hermes-live-switchboard", 1);
+    open.onupgradeneeded = () => open.result.createObjectStore("pairing"), open.onerror = () => reject(open.error), open.onsuccess = () => {
+      let db = open.result, tx = db.transaction("pairing", write ? "readwrite" : "readonly"), store = tx.objectStore("pairing"), request = write ? store.put(write, "key") : store.get("key");
+      tx.oncomplete = () => {
+        db.close(), resolve(write ?? request.result);
+      }, tx.onabort = () => {
+        db.close(), reject(tx.error);
+      };
+    };
+  });
+}
+function legacyMailbox(resolveLocal) {
+  let grant, url, checkedAt = -1 / 0, send = async (packet) => {
+    try {
+      if (!grant && performance.now() - checkedAt > 5e3 && (checkedAt = performance.now(), grant = await savedKey()), !grant) throw Error();
+      return url ??= grant.url ?? localMailboxUrl(await resolveLocal()), await exchange(url, grant.key, packet);
+    } catch {
+      return url = void 0, grant = void 0, { ok: !1, error: "unavailable" };
+    }
+  };
+  return {
+    files: {
+      async readText(_folder, path) {
+        let result = await send({ op: "read", path });
+        return result.ok && typeof result.text == "string" ? { ok: !0, text: result.text } : { ok: !1, error: "unavailable" };
+      },
+      writeText: (_folder, path, text2, options) => send({ op: "write", path, text: text2, exclusive: !!options?.exclusive })
+    },
+    async pair(file) {
+      let imported = await parseGrant(file), local = imported.url ?? localMailboxUrl(await resolveLocal());
+      if (!(await exchange(local, imported.key, { op: "verify" })).ok) throw Error("Pairing failed");
+      await savedKey(imported), grant = imported, url = local;
+    }
+  };
+}
+
+// src/switchboard-pairing.tsx
+import { useState as useState7 } from "react";
+import { Button as Button7 } from "@hermes/plugin-sdk";
+import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
+function SwitchboardPairing({ korean, local, prepare, pair }) {
+  let [filePath, setPath] = useState7(""), [note, setNote] = useState7(""), failed = () => setNote(korean ? "\uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC774 \uAE30\uAE30\uC758 \uAE30\uBCF8 \uD504\uB85C\uD544\uC5D0\uC11C \uD398\uC5B4\uB9C1 \uD30C\uC77C\uC744 \uB2E4\uC2DC \uC900\uBE44\uD558\uC138\uC694." : "Could not pair. Prepare the file from this device\u2019s default profile and try again.");
+  return /* @__PURE__ */ jsxs8("section", { children: [
+    /* @__PURE__ */ jsx8("h3", { children: "Switchboard" }),
+    /* @__PURE__ */ jsx8("p", { children: korean ? "\uC774 Desktop\uC5D0\uC11C \uC678\uBD80 \uD0A4\uB85C \uC6D0\uACA9 \uB300\uD654\uC640 \uD1B5\uD654\uB97C \uC81C\uC5B4\uD558\uB824\uBA74 \uB85C\uCEEC \uD30C\uC77C\uC744 \uD55C \uBC88 \uC5F0\uACB0\uD558\uC138\uC694." : "To control remote chats and calls from external keys on this Desktop, pair the local file once." }),
+    /* @__PURE__ */ jsx8(Button7, { disabled: !local, onClick: async () => {
+      try {
+        setPath((await prepare()).file), setNote("");
+      } catch {
+        failed();
+      }
+    }, children: korean ? "\uD398\uC5B4\uB9C1 \uD30C\uC77C \uC900\uBE44" : "Prepare pairing file" }),
+    !local && /* @__PURE__ */ jsx8("p", { children: korean ? "\uD30C\uC77C\uC740 \uC774 \uAE30\uAE30\uC758 \uAE30\uBCF8 \uD504\uB85C\uD544\uC5D0\uC11C \uC900\uBE44\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uB3C5\uB9BD \uCEE4\uB125\uD130\uB97C \uC2E4\uD589\uD588\uB2E4\uBA74 \uD130\uBBF8\uB110\uC5D0 \uD45C\uC2DC\uB41C \uD398\uC5B4\uB9C1 \uD30C\uC77C\uC744 \uC120\uD0DD\uD558\uC138\uC694." : "Prepare a file from this device\u2019s default profile, or select the file printed by your local foreground connector." }),
+    filePath && /* @__PURE__ */ jsx8("p", { children: /* @__PURE__ */ jsx8("code", { children: filePath }) }),
+    /* @__PURE__ */ jsxs8("label", { children: [
+      korean ? "\uB85C\uCEEC \uD398\uC5B4\uB9C1 \uD30C\uC77C \uC120\uD0DD" : "Select local pairing file",
+      " ",
+      /* @__PURE__ */ jsx8("input", { type: "file", accept: ".key", onChange: async (event) => {
+        let file = event.currentTarget.files?.[0];
+        if (event.currentTarget.value = "", !!file)
+          try {
+            await pair(file), setNote(korean ? "\uC774 Desktop\uC744 \uC5F0\uACB0\uD588\uC2B5\uB2C8\uB2E4." : "This Desktop is paired.");
+          } catch {
+            failed();
+          }
+      } })
+    ] }),
+    note && /* @__PURE__ */ jsx8("p", { role: "status", children: note })
+  ] });
+}
+
+// src/plugin.tsx
+import { resolveSiblingWsUrl } from "@hermes/plugin-sdk";
 
 // src/voice-command.ts
 var ACTIONS = /* @__PURE__ */ new Set(["start", "stop", "toggle"]), PROFILE = /^[a-z0-9][a-z0-9_-]{0,63}$/, NONCE = /^[A-Za-z0-9_-]{8,64}$/, TOKEN = /^[A-Za-z0-9_-]{43}$/, START_RETURN_TIMEOUT_MS = 4e3;
@@ -3836,6 +3988,8 @@ function voiceCommandKey(location) {
   return param(location, "nonce") ?? "";
 }
 function parseVoiceCommand(location) {
+  let params = new URLSearchParams(location.slice(location.indexOf("?") + 1));
+  if (params.has("connectionId") || params.has("v")) return null;
   let one = (key) => param(location, key), action = one("action"), profile = one("profile"), nonce = one("nonce");
   return !action || !ACTIONS.has(action) || !profile || !PROFILE.test(profile) || !nonce || !NONCE.test(nonce) ? null : { action, profile, nonce };
 }
@@ -3935,6 +4089,161 @@ async function runVoiceCommand(deps, location) {
 function voiceReport(status, callProfile, last, instance) {
   let phase = callPhase(status);
   return { v: 1, instance, status: phase, profile: phase === "connecting" || phase === "in_call" ? callProfile : null, last };
+}
+
+// src/remote-control.ts
+var CONTROL_PATH = "/hermes-live/control", ControlError = class extends Error {
+  code;
+  constructor(code) {
+    super(code), this.code = code;
+  }
+};
+function refuse(code) {
+  throw new ControlError(code);
+}
+var actions = /* @__PURE__ */ new Set(["open", "start", "stop", "toggle"]);
+function parse(location) {
+  let prefix = "#" + CONTROL_PATH + "?";
+  location.startsWith(prefix) || refuse("bad_request");
+  let p = new URLSearchParams(location.slice(prefix.length));
+  (p.size !== 6 || !["v", "action", "connectionId", "profile", "nonce", "token"].every((k) => p.has(k)) || p.get("v") !== "2") && refuse("bad_request");
+  let action = p.get("action"), connectionId = p.get("connectionId"), profile = p.get("profile"), nonce = p.get("nonce");
+  return (!actions.has(action) || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(connectionId) || !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(profile) || !/^[0-9a-f]{32}$/.test(nonce)) && refuse("bad_request"), { action, connectionId, profile, nonce };
+}
+async function runRemoteControl(location, instance, files, now, execute) {
+  try {
+    let command = parse(location), token = parseVoiceToken(location);
+    token || refuse("bad_token"), (!files?.readText || !files.writeText) && refuse("auth_unavailable");
+    let request = await files.readText("data", `request-${command.nonce}.json`);
+    request.ok || refuse("auth_unavailable");
+    let ticket = JSON.parse(request.text), hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)), digest = Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join(""), time = now();
+    (ticket?.v !== 2 || ticket.instance !== instance || ticket.connectionId !== command.connectionId || ticket.profile !== command.profile || ticket.action !== command.action || !Number.isSafeInteger(ticket.expiresAt) || ticket.expiresAt <= time || ticket.expiresAt > time + 3e4 || ticket.sha256 !== digest) && refuse("bad_token");
+    let result = (outcome, reason2) => JSON.stringify({ v: 2, instance, ...command, at: now(), outcome, reason: reason2 }), path = `result-${command.nonce}.json`, claim = await files.writeText("data", path, result("pending", null), { exclusive: !0 });
+    claim.ok || refuse(claim.error === "exists" ? "duplicate" : "auth_unavailable");
+    let reason = null;
+    try {
+      now() >= ticket.expiresAt && refuse("bad_token"), await execute(command);
+    } catch (error) {
+      reason = error instanceof ControlError ? error.code : "open_failed";
+    }
+    let failed = reason && ["route_unavailable", "open_failed", "switch_failed", "start_failed", "stop_failed"].includes(reason);
+    return (await files.writeText(
+      "data",
+      path,
+      result(reason ? failed ? "failed" : "rejected" : "accepted", reason)
+    )).ok ? reason : "auth_unavailable";
+  } catch (error) {
+    return error instanceof ControlError ? error.code : "auth_unavailable";
+  }
+}
+async function resolveRemoteRoute(registry, target) {
+  try {
+    let source = (await registry.connections()).find((s) => s.id === target.connectionId);
+    (!source || !["ssh", "remote", "cloud"].includes(source.kind)) && refuse("unknown_connection");
+    let matchingSource = (r) => r.connectionId === source.id && r.mode === "remote", routes = (await registry.routes()).filter(matchingSource);
+    source.kind === "ssh" && routes.length === 1 && routes[0].profile === "default" && target.profile !== "default" && (await registry.probe(routes[0]), routes = (await registry.routes()).filter(matchingSource));
+    let exact = routes.filter((r) => r.profile === target.profile && r.targetProfile);
+    return exact.length !== 1 && refuse("unknown_profile"), exact[0];
+  } catch (error) {
+    if (error instanceof ControlError) throw error;
+    refuse("route_unavailable");
+  }
+}
+function remoteOperation(action, target, state) {
+  let { status, owner } = state;
+  (status === "unknown" || status === "connecting" || state.transitioning) && refuse("transitioning");
+  let op = action === "toggle" ? status === "in_call" ? "stop" : "start" : action;
+  return op === "stop" ? (status === "off" && refuse("already_off"), (owner?.connectionId !== target.connectionId || owner.profile !== target.profile) && refuse("wrong_bot")) : (status === "in_call" && refuse("already_on"), state.busy && refuse("busy"), op === "start" && state.paused && refuse("paused")), op;
+}
+
+// src/remote-desktop.ts
+function remoteDesktop(host4, live, hash) {
+  let working = !1, disposed = !1, supported = () => !!(typeof host4.activeConnectionId == "function" && typeof host4.connections == "function" && typeof host4.profileRoutes == "function" && typeof host4.requestProfile == "function" && typeof host4.openSession == "function" && typeof host4.ensureAgent == "function" && typeof host4.revealPane == "function" && typeof host4.paneVisibility == "function" && host4.state.focusedStoredSessionId);
+  function capture() {
+    let arrival = hash(), state = live.status(), identity = live.callIdentity();
+    return async (command) => {
+      working && refuse("busy"), working = !0;
+      try {
+        let stillIdleOrSameCall = () => !disposed && live.status().status === state.status && live.callIdentity() === identity, atCommand = () => hash() === arrival && stillIdleOrSameCall();
+        atCommand() || refuse("scope_changed");
+        let op = remoteOperation(command.action, command, state);
+        supported() || refuse("unsupported_sdk");
+        let route = await resolveRemoteRoute(
+          {
+            connections: () => host4.connections(),
+            routes: () => host4.profileRoutes(),
+            probe: (seed) => host4.requestProfile(seed, "profiles.list", { include_sessions: !1 }, void 0, {
+              spawnPriority: "foreground"
+            })
+          },
+          command
+        );
+        if (atCommand() || refuse("scope_changed"), remoteOperation(op, command, live.status()), op === "stop") {
+          try {
+            live.stop();
+          } catch {
+            refuse("stop_failed");
+          }
+          return;
+        }
+        let landing = null, selected = (stored2) => wakeBotReady(
+          live.scope(),
+          route.profile,
+          route.connectionId,
+          stored2,
+          host4.state.focusedStoredSessionId.get()
+        ), onChat = () => landing !== null && hash() === `#/${encodeURIComponent(landing)}` && selected(landing), current = () => stillIdleOrSameCall() && (hash() === arrival || onChat()), stored;
+        try {
+          stored = await openCanonicalBot(
+            {
+              retain: host4.retainProfile && ((r) => host4.retainProfile(r, { spawnPriority: "foreground" })),
+              request: (r, m, p) => host4.requestProfile(r, m, p, void 0, { spawnPriority: "foreground" }),
+              isSelected: selected,
+              revealPane: host4.revealPane,
+              paneVisible: (id) => host4.paneVisibility(id).get(),
+              label: host4.setWorkspaceOwnerLabel,
+              openSession: (id, options) => (landing = id, host4.openSession(id, options))
+            },
+            route,
+            route.profile,
+            current
+          );
+        } catch (error) {
+          current() || refuse("scope_changed"), error instanceof Error && error.message === "HL_ERROR:errBotsView" && refuse("unsupported_sdk"), refuse("open_failed");
+        }
+        if ((!onChat() || !selected(stored)) && refuse("scope_changed"), op === "open") return;
+        remoteOperation(op, command, live.status());
+        let backendMatches = () => host4.activeConnectionId() === route.connectionId && host4.state.connectionId.get() === route.connectionId && host4.state.profile.get() === route.profile;
+        if (!backendMatches())
+          try {
+            await live.withLocalWakeReleased(async () => {
+              (!current() || !onChat()) && refuse("scope_changed"), remoteOperation(op, command, live.status()), await host4.ensureAgent(route.connectionId, route.profile);
+            });
+          } catch (error) {
+            if (error instanceof ControlError) throw error;
+            refuse("switch_failed");
+          }
+        (!current() || !onChat() || !backendMatches()) && refuse("scope_changed"), remoteOperation(op, command, live.status());
+        try {
+          await live.start(live.scope());
+        } catch (error) {
+          if (error instanceof ControlError) throw error;
+          refuse("start_failed");
+        }
+        let active = live.status();
+        (!onChat() || active.status !== "in_call" || active.owner?.connectionId !== route.connectionId || active.owner.profile !== route.profile) && refuse("start_failed");
+      } finally {
+        working = !1;
+      }
+    };
+  }
+  return {
+    capture,
+    supported,
+    dispose: () => {
+      disposed = !0;
+    }
+  };
 }
 
 // src/wake-capture.ts
@@ -4812,7 +5121,7 @@ var HermesBridge = class {
     try {
       let before = owner.session ? await this.deps.history(owner) : [], ids = new Set(before.map((x) => x.row_id));
       if (signal.aborted || !sameScope(owner, this.deps.current())) throw new Error("HL_ERROR:errScope");
-      let submitted = await this.deps.submit(owner.session, text2, context);
+      let submitted = await this.deps.submit(owner.session, text2, context, signal);
       if (!submitted) throw new Error("HL_ERROR:errBackend");
       typeof submitted == "string" && (text2 = submitted);
       let deadline = Date.now() + 18e4, userRow;
@@ -4848,7 +5157,20 @@ function Icon({ name, size = 16 }) {
     /* @__PURE__ */ jsx9("path", { d: "M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" })
   ] }), muted: /* @__PURE__ */ jsx9(Fragment3, { children: /* @__PURE__ */ jsx9("path", { d: "m3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 0v4M5 10v2a7 7 0 0 0 12 5M12 19v3m-4 0h8" }) }), end: /* @__PURE__ */ jsx9("path", { d: "M4 15c-1 0-2-1-2-2v-2c5-6 15-6 20 0v2c0 1-1 2-2 2l-4-2v-3a14 14 0 0 0-8 0v3z" }), close: /* @__PURE__ */ jsx9("path", { d: "m6 6 12 12M6 18 18 6" }) }[name] });
 }
-var mutedStyle = hint, controlSize = "var(--composer-control-size, 24px)", primarySize = "var(--composer-control-primary-size, var(--composer-control-size, 24px))", defaults = { provider: "gemini", model: "gemini-3.8-live", voice: "Kore" }, providerNames = { qwen: "Alibaba Qwen Realtime", gemini: "Google Gemini Live", grok: "xAI Grok Voice", codex: "Codex subscription \xB7 GPT Live" };
+var mutedStyle = hint, primarySize = "max(28px, var(--composer-control-primary-size, 28px))", defaults = { provider: "gemini", model: "gemini-3.8-live", voice: "Kore" };
+function preferredSelection(saved, providers) {
+  if (saved) {
+    let provider = providers.find((p) => p.id === saved.provider);
+    return !provider?.models[0] || !provider.voices[0] ? saved : {
+      ...saved,
+      model: provider.models.some((m) => m.id === saved.model) ? saved.model : provider.models[0].id,
+      voice: provider.voices.includes(saved.voice) ? saved.voice : provider.voices[0]
+    };
+  }
+  let codex = providers.find((p) => p.id === "codex" && p.available);
+  return codex?.models[0] && codex.voices[0] ? { provider: "codex", model: codex.models[0].id, voice: codex.voices[0] } : defaults;
+}
+var providerNames = { qwen: "Alibaba Qwen Realtime", gemini: "Google Gemini Live", grok: "xAI Grok Voice", codex: "Codex subscription \xB7 GPT Live" };
 function CallWave({ state }) {
   let speaking = state.status === "speaking", level = state.muted ? 0 : Math.max(0, Math.min(1, state.level));
   return /* @__PURE__ */ jsxs9("span", { "aria-hidden": "true", style: { display: "flex", height: 12, alignItems: "center", gap: 2 }, children: [
@@ -4860,33 +5182,37 @@ function currentScope() {
   return ownedScope(host3.state.focusedSessionOwner.get(), host3.state.focusedSessionId.get());
 }
 function apiScopeMatches(scope) {
-  return scope.connection === (host3.state.connectionId.get() || "local") && scope.profile === (host3.state.profile.get() || "default");
+  return (!host3.activeConnectionId || (host3.activeConnectionId() ?? "local") === scope.connection) && scope.connection === (host3.state.connectionId.get() || "local") && scope.profile === (host3.state.profile.get() || "default");
 }
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.12.1",
+  version: "0.12.5",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
-  defaultEnabled: !1,
+  defaultEnabled: !0,
   register(ctx) {
     ctx.i18n.register(bundles);
     let t = ctx.i18n.t, diagnostics = null, lastInputAt = 0, lastTick = Date.now(), trialProfile = null, trialConnected = !1, wake, wakeCall = !1, wakeNames = [], wakeGreeting, activity = new VoiceActivity((active) => {
       active && !["idle", "error"].includes(controller.snapshot.status) && stop(), wake?.tick();
-    }), listeners = /* @__PURE__ */ new Set(), callOwner = null, allowSessionAdopt = !1, route = null, ledger = null, ledgerKey = "", storageErrorShown = !1, usageKey = (scope) => `usage:v1:${scope.connection}:${scope.profile}`, devices = () => ctx.storage.get("audio-devices", defaultDevices), bridge = new HermesBridge({
+    }), listeners = /* @__PURE__ */ new Set(), callOwner = null, allowSessionAdopt = !1, route = null, ledger = null, ledgerKey = "", storageErrorShown = !1, usageKey = (scope) => `usage:v1:${scope.connection}:${scope.profile}`, savedProvider = (scope) => ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, null), readCatalog = () => ctx.rest("/catalog", { timeoutMs: 3e4 }), devices = () => ctx.storage.get("audio-devices", defaultDevices), bridge = new HermesBridge({
       current: currentScope,
       busy: (id) => id ? !!host3.state.busyBySession.get()[id] : host3.state.busy.get(),
       history: async (scope) => {
         if (!route || route.connectionId !== scope.connection || route.profile !== scope.profile) throw new Error("HL_ERROR:errScope");
         return (await host3.requestProfile(route, "session.history", historyParams(scope.session))).messages;
       },
-      submit: async (session, text2, voiceContext) => {
+      submit: async (session, text2, voiceContext, signal) => {
         let owner = currentScope();
         if (!route || route.connectionId !== owner.connection || route.profile !== owner.profile || session !== owner.session) throw new Error("HL_ERROR:errScope");
         if (!session) {
           let prompt = draftVoicePrompt(text2, voiceContext);
           return host3.composer.submit(null, prompt) ? prompt : !1;
         }
-        return await host3.requestProfile(route, "prompt.submit", voiceSubmission(session, text2, voiceContext, crypto.randomUUID())), !0;
+        let destination = route;
+        return await submitVoiceTurn((fields) => {
+          if (signal.aborted || route !== destination || !sameScope(owner, currentScope()) || !apiScopeMatches(owner)) throw new Error("HL_ERROR:errScope");
+          return host3.requestProfile(destination, "prompt.submit", fields);
+        }, voiceSubmission(session, text2, voiceContext, crypto.randomUUID())), !0;
       },
       adopt: (scope) => {
         allowSessionAdopt && (callOwner = scope);
@@ -4897,7 +5223,7 @@ var plugin_default = {
       goodbyeNames: () => wakeNames,
       voiceControl: (text2, context = {}) => {
         let record = (reason, target2 = "") => diagnostics?.event("command.wake", { ...context, reason, target: target2, enabled: wake.enabled });
-        if (!wake.enabled)
+        if (!wake.enabled || callOwner?.connection !== "local")
           return record("disabled"), !1;
         let target = matchWakeTarget(text2, wake.config?.targets ?? []);
         if (!target)
@@ -4918,14 +5244,14 @@ var plugin_default = {
         let target = wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? []);
         return target && callOwner && callOwner.connection === "local" && target !== callOwner.profile && apiScopeMatches(callOwner) && sameScope(callOwner, currentScope()) ? target : null;
       },
-      isVoiceControl: (text2) => !!(wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? [])),
+      isVoiceControl: (text2) => !!(callOwner?.connection === "local" && wake.enabled && matchWakeTarget(text2, wake.config?.targets ?? [])),
       prepare: async (signal, selection) => {
         if (await wake?.suspend(), signal.aborted) return;
         let owner = callOwner && { ...callOwner };
         if (!owner || !apiScopeMatches(owner) || !sameScope(owner, currentScope())) throw new Error("HL_ERROR:errScope");
         let routes = await host3.profileRoutes();
         if (signal.aborted) return;
-        if (!callOwner || !sameScope(owner, callOwner) || !sameScope(owner, currentScope())) throw new Error("HL_ERROR:errScope");
+        if (!callOwner || !apiScopeMatches(owner) || !sameScope(owner, callOwner) || !sameScope(owner, currentScope())) throw new Error("HL_ERROR:errScope");
         if (route = routes.find((r) => r.connectionId === owner.connection && r.profile === owner.profile) ?? null, !route) throw new Error("HL_ERROR:errScope");
         let result = await ctx.rest("/readiness", { method: "POST", body: { provider: selection.provider }, timeoutMs: 3e4 });
         if (!signal.aborted) {
@@ -4940,7 +5266,7 @@ var plugin_default = {
         if (!route) throw new Error("HL_ERROR:errScope");
         if (selection.provider === "codex") return { ...selection, token: "", sampleRate: 48e3, ...wakeGreeting ? { wakeGreeting } : {} };
         let rows = owner.session ? await host3.requestProfile(route, "session.history", historyParams(owner.session)) : { messages: [] };
-        if (!sameScope(owner, currentScope()) || !callOwner || !sameScope(owner, callOwner)) throw new Error("HL_ERROR:errScope");
+        if (!apiScopeMatches(owner) || !sameScope(owner, currentScope()) || !callOwner || !sameScope(owner, callOwner)) throw new Error("HL_ERROR:errScope");
         let history = seedHistory(rows.messages);
         if (["codex", "qwen"].includes(selection.provider)) return { ...selection, token: "", sampleRate: 48e3, history, ...wakeGreeting ? { wakeGreeting } : {} };
         let result = await ctx.rest("/connect", { method: "POST", body: selection, timeoutMs: 4e4 });
@@ -4985,8 +5311,8 @@ var plugin_default = {
       changed: (state) => {
         state.level > 0.02 && !state.muted && (lastInputAt = Date.now()), listeners.forEach((fn) => fn());
       }
-    }), stop = () => {
-      controller.stop(), callOwner = null, allowSessionAdopt = !1, route = null;
+    }), stopGeneration = 0, stop = () => {
+      ++stopGeneration, controller.stop(), callOwner = null, allowSessionAdopt = !1, route = null;
     };
     function chime(hz) {
       let ac = new AudioContext(), tone = ac.createOscillator(), gain = ac.createGain();
@@ -5002,7 +5328,7 @@ var plugin_default = {
         if (!valid() || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
         playWakeCue(devices().output, ctx.storage.get("wake-cue-volume", 1)), ctx.storage.set("audio-devices", { ...devices(), input: selected.deviceId });
         let selectionKey = `selection:${host3.state.connectionId.get() || "local"}:${config.target}`, saved = ctx.storage.get(selectionKey, null), selection = { provider: "codex", model: "gpt-live-1-codex", voice: saved?.provider === "codex" && saved.voice ? saved.voice : "cove" };
-        if (ctx.storage.set(selectionKey, selection), activity.active) throw new Error("HL_ERROR:errBusy");
+        if (activity.active) throw new Error("HL_ERROR:errBusy");
         (host3.state.profile.get() || "default") !== config.target && await wake.releaseForNavigation(), host3.navigate("/"), await new Promise((r) => setTimeout(r, 0));
         let targetConnection = host3.state.connectionId.get() || "local";
         if (!host3.state.focusedStoredSessionId) throw new Error("HL_ERROR:errBotsView");
@@ -5010,6 +5336,7 @@ var plugin_default = {
         let stored = await openWakeBot(
           {
             routes: () => host3.profileRoutes(),
+            retain: host3.retainProfile,
             activate: (route2) => host3.ensureAgent(null, route2.profile),
             isSelected: (stored2, route2) => {
               let scope2 = currentScope();
@@ -5056,10 +5383,17 @@ var plugin_default = {
       activity.set("recorder", !!value?.enabled || !!value?.state && !["idle", "off", "stopped"].includes(value.state));
     }), ctx.setInterval(() => void wake.tick(), 1e3);
     let warming = !1, prewarm = async () => {
-      if (!(warming || !wake.enabled || host3.state.connectionId.get() && host3.state.connectionId.get() !== "local")) {
+      if (!(warming || !wake.enabled || !isLocal())) {
         warming = !0;
         try {
-          await ctx.rest("/wake/prewarm", { method: "POST", timeoutMs: 5e3 });
+          let { desktop } = await ctx.rest("/wake/prewarm", { method: "POST", timeoutMs: 5e3 });
+          if (desktop)
+            for (let i = 0; i < desktop.profiles.length && !(!wake.enabled || !isLocal()); i += 4)
+              await Promise.allSettled(desktop.profiles.slice(i, i + 4).map((profile) => ctx.rest("/wake/prewarm-target?profile=" + encodeURIComponent(profile), {
+                method: "POST",
+                body: { installId: desktop.installId, profile },
+                timeoutMs: 5e3
+              })));
         } catch {
         } finally {
           warming = !1;
@@ -5079,8 +5413,10 @@ var plugin_default = {
       },
       resume: async () => {
         let scope = currentScope();
+        if (scope.connection && scope.connection !== "local") return !0;
         apiScopeMatches(scope) || await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
         let ready = await ctx.rest("/setup", { timeoutMs: 3e4 });
+        if (!ready.assets.supported) return !0;
         if (!basicReady(ready))
           return openSetup(), !0;
         if (await wake.enable(!0), wake.state === "suspended") throw new Error(wake.error || "HL_SETUP:failed");
@@ -5093,17 +5429,31 @@ var plugin_default = {
       } catch {
         listeners.forEach((fn) => fn());
       }
-    }, VOICE_ROUTE = "/hermes-live/voice", voiceGate = new VoiceCommandGate(), voiceInstance = crypto.randomUUID(), lastVoiceCommand = null, isLocal = () => !host3.state.connectionId.get() || host3.state.connectionId.get() === "local", focusedChat = () => {
+    }, VOICE_ROUTE = "/hermes-live/voice", voiceGate = new VoiceCommandGate(), voiceInstance = crypto.randomUUID(), lastVoiceCommand = null, isLocal = () => {
+      let socket = host3.activeConnectionId?.();
+      return host3.state.connectionId.get() === "local" && (!socket || socket === "local");
+    }, focusedChat = () => {
       let owner = host3.state.focusedSessionOwner.get();
       return owner ? { connection: owner.connectionId, profile: owner.profile, storedId: host3.state.focusedStoredSessionId?.get() ?? null } : null;
     }, reportVoiceState = () => {
-      isLocal() && ctx.rest("/voice/state", { method: "POST", body: voiceReport(controller.snapshot.status, callOwner?.profile ?? null, lastVoiceCommand, voiceInstance), timeoutMs: 5e3 }).catch(() => {
+      isLocal() && (!callOwner || callOwner.connection === "local") && ctx.rest("/voice/state", { method: "POST", body: voiceReport(controller.snapshot.status, callOwner?.profile ?? null, lastVoiceCommand, voiceInstance), timeoutMs: 5e3 }).catch(() => {
       });
     }, reportedVoice = "";
     listeners.add(() => {
       let key = `${callPhase(controller.snapshot.status)}:${callOwner?.profile ?? ""}`;
       key !== reportedVoice && (reportedVoice = key, reportVoiceState());
     }), ctx.setInterval(reportVoiceState, 2e3);
+    async function startOwnedCall(scope) {
+      let selection = savedProvider(scope);
+      if (!selection) {
+        if (!apiScopeMatches(scope) || !sameScope(scope, currentScope())) throw new Error("HL_ERROR:errScope");
+        let generation = stopGeneration, catalog = await readCatalog();
+        if (generation !== stopGeneration || !apiScopeMatches(scope) || !sameScope(scope, currentScope())) throw new Error("HL_ERROR:errScope");
+        if (voiceMode.paused || voiceMode.busy || activity.active || !["idle", "error"].includes(controller.snapshot.status)) throw new Error("HL_ERROR:errBusy");
+        selection = preferredSelection(savedProvider(scope), catalog.providers);
+      }
+      if (callOwner = scope, await controller.start(selection), controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
+    }
     let voiceDeps = {
       gate: voiceGate,
       now: () => Date.now(),
@@ -5112,7 +5462,7 @@ var plugin_default = {
       context: () => ({
         local: isLocal(),
         status: controller.snapshot.status,
-        callProfile: callOwner?.profile ?? null,
+        callProfile: callOwner?.connection === "local" ? callOwner.profile : null,
         focused: focusedChat(),
         paused: voiceMode.paused,
         transitioning: voiceMode.busy || wake.state === "calling" && callPhase(controller.snapshot.status) === "off",
@@ -5141,40 +5491,84 @@ var plugin_default = {
           let scope = currentScope(), now = focusedChat();
           if (!now || now.connection !== "local" || now.profile !== focused.profile || now.storedId !== focused.storedId || !scope.session || !apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
         },
-        begin: async () => {
-          let scope = currentScope();
-          if (callOwner = scope, await controller.start(ctx.storage.get(`selection:${scope.connection}:${scope.profile}`, defaults)), controller.snapshot.status === "error") throw new Error(controller.snapshot.error);
-        }
+        begin: () => startOwnedCall(currentScope())
       }),
       record: (last) => {
         lastVoiceCommand = last, reportVoiceState();
       }
+    }, controlState = () => ({
+      status: callPhase(controller.snapshot.status),
+      owner: callOwner ? { connectionId: callOwner.connection, profile: callOwner.profile } : null,
+      paused: voiceMode.paused,
+      busy: activity.active,
+      transitioning: voiceMode.busy || wake.state === "calling" && callPhase(controller.snapshot.status) === "off"
+    }), remote = remoteDesktop(host3, {
+      scope: currentScope,
+      status: controlState,
+      callIdentity: () => callOwner,
+      withLocalWakeReleased: (activate) => wake.withLocalWakeReleased(activate),
+      start: startOwnedCall,
+      stop
+    }, () => window.location.hash);
+    ctx.onDispose(remote.dispose);
+    let mailbox = legacyMailbox(() => resolveSiblingWsUrl({ connectionId: "local", profile: "default" }, MAILBOX_PATH, { stripGatewayCredential: !0 })), needsPairing = !1, files = controlFiles(ctx.files, () => (needsPairing = !0, listeners.forEach((fn) => fn()), mailbox.files)), writingState = !1, publishControlState = async () => {
+      if (!(writingState || !remote.supported())) {
+        writingState = !0;
+        try {
+          let { status, owner } = controlState(), active = status === "in_call" || status === "connecting";
+          await files.writeText("data", `state-${voiceInstance}.json`, JSON.stringify({
+            v: 2,
+            instance: voiceInstance,
+            updatedAt: Date.now(),
+            status,
+            connectionId: active ? owner?.connectionId ?? null : null,
+            profile: active ? owner?.profile ?? null : null
+          }));
+        } catch {
+        } finally {
+          writingState = !1;
+        }
+      }
     };
-    function VoiceCommandPage() {
-      let handled = useRef5(!1);
-      return useEffect8(() => {
+    publishControlState(), ctx.setInterval(() => void publishControlState(), 2e3);
+    let previousPage = "/", rememberPage = (event) => {
+      let before = new URL(event.oldURL).hash.slice(1);
+      new URL(event.newURL).hash.split("?")[0] === "#" + CONTROL_PATH && before.startsWith("/") && !before.startsWith(CONTROL_PATH) && !before.startsWith(VOICE_ROUTE) && (previousPage = before);
+    };
+    window.addEventListener("hashchange", rememberPage), ctx.onDispose(() => window.removeEventListener("hashchange", rememberPage));
+    function VoiceCommandPage({ v2 = !1 }) {
+      let handled = useRef4(!1);
+      return useEffect7(() => {
         if (handled.current) return;
         handled.current = !0;
         let location = window.location.hash;
         if (!location.includes("?")) {
-          voiceDeps.returnTo(focusedChat()?.storedId ?? null);
+          v2 ? host3.navigate(previousPage) : voiceDeps.returnTo(focusedChat()?.storedId ?? null);
           return;
         }
-        window.history.replaceState(window.history.state, "", withoutVoiceToken(location)), runVoiceCommand(voiceDeps, location);
+        if (window.history.replaceState(window.history.state, "", withoutVoiceToken(location)), v2) {
+          let clean = window.location.hash;
+          runRemoteControl(location, voiceInstance, files, Date.now, remote.capture()).then((reason) => {
+            reason && host3.notify({ kind: "error", message: `Hermes Live \xB7 ${reason}` }), window.location.hash === clean && host3.navigate(previousPage), publishControlState();
+          });
+        } else runVoiceCommand(voiceDeps, location);
       }, []), null;
     }
-    ctx.register({ id: "voice-command", area: ROUTES_AREA, data: { path: VOICE_ROUTE }, render: () => /* @__PURE__ */ jsx9(VoiceCommandPage, {}, voiceCommandKey(window.location.hash)) });
+    ctx.register({ id: "voice-command", area: ROUTES_AREA, data: { path: VOICE_ROUTE }, render: () => /* @__PURE__ */ jsx9(VoiceCommandPage, {}, voiceCommandKey(window.location.hash)) }), ctx.register({ id: "remote-control", area: ROUTES_AREA, data: { path: CONTROL_PATH }, render: () => /* @__PURE__ */ jsx9(VoiceCommandPage, { v2: !0 }, voiceCommandKey(window.location.hash)) });
     function VoiceModeControls() {
       let { locale } = useLiveI18n(), c = setupCopy(locale);
       return useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`), /* @__PURE__ */ jsxs9("div", { style: { display: "grid", gap: 8 }, children: [
-        /* @__PURE__ */ jsx9(Button7, { variant: "secondary", disabled: voiceMode.busy, onClick: () => void changeVoiceMode(), children: c(voiceMode.busy ? voiceMode.intent === "pause" ? "pausingVoice" : "resumingVoice" : voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice") }),
+        /* @__PURE__ */ jsx9(Button8, { variant: "secondary", disabled: voiceMode.busy, onClick: () => void changeVoiceMode(), children: c(voiceMode.busy ? voiceMode.intent === "pause" ? "pausingVoice" : "resumingVoice" : voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice") }),
         /* @__PURE__ */ jsx9("p", { role: "status", style: { ...hint, margin: 0 }, children: c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : voiceMode.paused && !voiceMode.busy ? "pausedHelp" : "pauseHelp") })
       ] });
     }
     function SetupPage() {
-      let { locale } = useLiveI18n(), profile = useSyncExternalStore2((fn) => host3.state.profile.subscribe(fn), () => host3.state.profile.get()), connection = useSyncExternalStore2((fn) => host3.state.connectionId.subscribe(fn), () => host3.state.connectionId.get());
+      let { locale } = useLiveI18n(), showPairing = useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => needsPairing), profile = useSyncExternalStore2((fn) => host3.state.profile.subscribe(fn), () => host3.state.profile.get()), connection = useSyncExternalStore2((fn) => host3.state.connectionId.subscribe(fn), () => host3.state.connectionId.get());
       return useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${voiceMode.paused}:${voiceMode.busy}`), /* @__PURE__ */ jsxs9(Fragment3, { children: [
-        /* @__PURE__ */ jsx9("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: /* @__PURE__ */ jsx9(VoiceModeControls, {}) }),
+        /* @__PURE__ */ jsxs9("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: [
+          /* @__PURE__ */ jsx9(VoiceModeControls, {}),
+          showPairing && /* @__PURE__ */ jsx9(SwitchboardPairing, { korean: locale.startsWith("ko"), local: connection === "local" && profile === "default", prepare: () => ctx.rest("/control-mailbox/prepare", { method: "POST" }), pair: (file) => mailbox.pair(file) })
+        ] }),
         !1,
         /* @__PURE__ */ jsx9(
           Setup,
@@ -5229,51 +5623,59 @@ var plugin_default = {
     ctx.registerSettingsPage?.({ id: "setup", title: "Hermes Live", icon: "unmute", render: () => /* @__PURE__ */ jsx9(SetupPage, {}) });
     function LiveButton() {
       let { t: t2, locale } = useLiveI18n(), c = setupCopy(locale);
-      useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`), useEffect8(() => {
+      useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`), useEffect7(() => {
         booted || (booted = !0, !voiceMode.paused && ctx.storage.get("hands-free-enabled", !1) && wake.enable(!0).then(prewarm));
       }, []);
-      let providerName = (id) => id === "codex" ? t2("codexProvider") : providerNames[id], wakeState = useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${wake.enabled}:${wake.state}`), state = useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => controller.snapshot), focusedOwner = useSyncExternalStore2((fn) => host3.state.focusedSessionOwner.subscribe(fn), () => host3.state.focusedSessionOwner.get()), scopeKey = `selection:${focusedOwner?.connectionId ?? ""}:${focusedOwner?.profile ?? ""}`, savedSelection = () => ctx.storage.get(scopeKey, defaults), [tab, setTab] = useState8("call"), [deviceChoice, setDevices] = useState8(devices), [backend, setBackend] = useState8(""), [open, setOpen] = useState8(!1), [catalog, setCatalog] = useState8([]), [loading, setLoading] = useState8(!1), [error, setError] = useState8(""), [draftSelection, setSelection] = useState8(savedSelection), selection = state.selection ?? draftSelection, [now, setNow] = useState8(Date.now()), scroll = useRef5(null), mounted = useRef5(!0), loadId = useRef5(0);
-      useEffect8(() => (mounted.current = !0, () => {
+      let providerName = (id) => id === "codex" ? t2("codexProvider") : providerNames[id], wakeState = useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${wake.enabled}:${wake.state}`), state = useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => controller.snapshot), focusedOwner = useSyncExternalStore2((fn) => host3.state.focusedSessionOwner.subscribe(fn), () => host3.state.focusedSessionOwner.get()), scopeKey = `selection:${focusedOwner?.connectionId ?? ""}:${focusedOwner?.profile ?? ""}`, savedSelection = () => ctx.storage.get(scopeKey, null), [tab, setTab] = useState8("call"), [deviceChoice, setDevices] = useState8(devices), [backend, setBackend] = useState8(""), [open, setOpen] = useState8(!1), [catalog, setCatalog] = useState8([]), [loadMode, setLoadMode] = useState8(null), [error, setError] = useState8(""), loading = loadMode !== null, checkingStart = loadMode === "start", [draftSelection, setSelection] = useState8(() => savedSelection() ?? defaults), selection = state.selection ?? draftSelection, [now, setNow] = useState8(Date.now()), scroll = useRef4(null), mounted = useRef4(!0), loadId = useRef4(0);
+      useEffect7(() => (mounted.current = !0, () => {
         mounted.current = !1;
       }), []);
       let active = !["idle", "error"].includes(state.status);
-      useEffect8(() => {
+      useEffect7(() => {
         let show = () => {
           setTab("call"), setOpen(!0), load();
         };
         return openCallSettings = show, () => {
           openCallSettings === show && (openCallSettings = null);
         };
-      }, [scopeKey]), useEffect8(() => {
-        ++loadId.current, setSelection(savedSelection()), setCatalog([]), setBackend(""), setError(""), setLoading(!1), setOpen(!1);
-      }, [scopeKey]), useEffect8(() => {
-        state.status === "error" && (setOpen(!0), load());
-      }, [state.status]), useEffect8(() => {
+      }, [scopeKey]), useEffect7(() => {
+        ++loadId.current, setSelection(savedSelection() ?? defaults), setCatalog([]), setBackend(""), setError(""), setLoadMode(null), setOpen(!1);
+      }, [scopeKey]), useEffect7(() => {
+        state.status === "error" && (setTab("call"), setOpen(!0), load());
+      }, [state.status]), useEffect7(() => {
         if (!active) return;
         let timer = setInterval(() => setNow(Date.now()), 1e3);
         return () => clearInterval(timer);
-      }, [active]), useEffect8(() => {
+      }, [active]), useEffect7(() => {
         scroll.current && (scroll.current.scrollTop = scroll.current.scrollHeight);
       }, [state.transcript]);
-      let load = async () => {
+      let load = async (forStart = !1) => {
         let id = ++loadId.current;
-        setLoading(!0), setError("");
+        setLoadMode(forStart ? "start" : "settings"), setError("");
         let scope = currentScope();
         try {
           if (!apiScopeMatches(scope)) {
+            if (forStart) throw new Error("HL_ERROR:errScope");
             if (!["idle", "error"].includes(controller.snapshot.status) || activity.active || host3.state.busy.get() || Object.values(host3.state.busyBySession.get()).some(Boolean)) throw new Error("HL_ERROR:errBusy");
             await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
           }
           if (!mounted.current || id !== loadId.current || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) return;
-          let value = await ctx.rest("/catalog", { timeoutMs: 3e4 });
+          let value = await readCatalog();
           if (!mounted.current || id !== loadId.current || !sameScope(scope, currentScope()) || !apiScopeMatches(scope)) return;
           setBackend(value.backend), setCatalog(value.providers);
-          let saved = controller.snapshot.selection ?? savedSelection(), p = value.providers.find((x) => x.id === saved.provider) ?? value.providers[0];
-          p && setSelection({ provider: p.id, model: p.models.some((m) => m.id === saved.model) ? saved.model : p.models[0].id, voice: p.voices.includes(saved.voice) ? saved.voice : p.voices[0] });
-        } catch {
-          mounted.current && id === loadId.current && setError("HL_ERROR:errBackend");
+          let selected = controller.snapshot.selection ?? preferredSelection(savedProvider(scope), value.providers);
+          if (setSelection(selected), forStart) {
+            let provider2 = value.providers.find((p) => p.id === selected.provider);
+            if (!provider2?.available) {
+              setTab("call"), setOpen(!0), setError(provider2?.reason || "HL_ERROR:errRequest");
+              return;
+            }
+            return selected;
+          }
+        } catch (cause) {
+          mounted.current && id === loadId.current && sameScope(scope, currentScope()) && (setError(cause instanceof Error && cause.message.startsWith("HL_ERROR:") ? cause.message : "HL_ERROR:errBackend"), forStart && (setTab("call"), setOpen(!0)));
         } finally {
-          mounted.current && id === loadId.current && setLoading(!1);
+          mounted.current && id === loadId.current && setLoadMode(null);
         }
       }, updateDevices = async (value) => {
         let before = devices();
@@ -5301,108 +5703,146 @@ var plugin_default = {
         }
         setOpen(!1), host3.navigate(settingsHref(scope.profile));
       }, start = async () => {
-        voiceMode.paused || voiceMode.busy || !["idle", "error"].includes(controller.snapshot.status) || (setError(""), setOpen(!1), callOwner = currentScope(), await controller.start(savedSelection()));
+        if (voiceMode.paused || voiceMode.busy || !["idle", "error"].includes(controller.snapshot.status)) return;
+        let scope = currentScope(), generation = stopGeneration, selected = await load(!0);
+        !selected || !mounted.current || generation !== stopGeneration || !sameScope(scope, currentScope()) || !apiScopeMatches(scope) || voiceMode.paused || voiceMode.busy || !["idle", "error"].includes(controller.snapshot.status) || (setOpen(!1), callOwner = scope, await controller.start(selected));
       }, provider = catalog.find((p) => p.id === selection.provider), seconds = state.startedAt ? Math.floor((now - state.startedAt) / 1e3) : 0, key = usageKey(currentScope()), usage = ledger && ledgerKey === key ? ledger.data : ctx.storage.get(key, emptyUsage()), readQuota = async () => {
         let scope = currentScope();
         if (!apiScopeMatches(scope)) throw new Error("HL_ERROR:errScope");
         let value = await ctx.rest("/codex/usage", { timeoutMs: 4e4 });
         if (!sameScope(scope, currentScope())) throw new Error("HL_ERROR:errScope");
         return value;
-      }, label = state.muted && state.status === "listening" ? t2("muted") : { idle: t2("idle"), connecting: t2("preparing"), listening: t2("listening"), speaking: t2("speaking"), thinking: t2("thinking"), error: t2("errorStatus") }[state.status], wakeLabel = voiceMode.paused ? c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : "pausedVoice") : wake.enabled ? wake.state === "armed" ? t2("wakeArmed", wake.config?.phrase ?? "\u2026") : t2(wake.state === "empty" ? "wakeEmpty" : wake.state === "warming" ? "wakeWarming" : wake.state === "calling" ? "wakeCalling" : wake.state === "rearming" ? "wakeRearming" : "wakeSuspended") : t2("wakeOff"), discStyle = { height: primarySize, width: primarySize, padding: 0, borderRadius: 999, boxShadow: "0 2px 8px #0003" };
-      return /* @__PURE__ */ jsxs9("span", { role: "group", "aria-label": t2("call"), style: { order: 1, display: "inline-flex", alignItems: "center", flexShrink: 0 }, children: [
-        /* @__PURE__ */ jsxs9(HoverControls, { label: t2("callSettings"), holdOpen: open, tip: active ? t2("actionTip", label, state.status === "connecting" ? t2("cancel") : t2("end")) : wakeLabel, primary: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: active ? "default" : "ghost", size: active ? "sm" : "icon", "aria-label": active ? state.status === "connecting" ? t2("cancelConnection") : t2("endCall") : t2("wakeToggle"), "aria-pressed": active || wake.enabled, "aria-busy": state.status === "connecting", disabled: voiceMode.busy, onClick: () => {
-          active ? stop() : voiceMode.paused ? changeVoiceMode() : wake.enabled ? (ctx.storage.set("hands-free-enabled", !1), wake.enable(!1)) : (async () => {
-            try {
-              let scope = currentScope();
-              apiScopeMatches(scope) || await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
-              let ready = await ctx.rest("/setup", { timeoutMs: 3e4 });
-              if (!basicReady(ready)) {
-                openSetup();
-                return;
-              }
-              ctx.storage.set("hands-free-enabled", !0), await wake.enable(!0), wake.state === "suspended" && openSetup();
-            } catch {
+      }, label = state.muted && state.status === "listening" ? t2("muted") : { idle: t2("idle"), connecting: t2("preparing"), listening: t2("listening"), speaking: t2("speaking"), thinking: t2("thinking"), error: t2("errorStatus") }[state.status], wakeLabel = voiceMode.paused ? c(voiceMode.failed ? voiceMode.intent === "pause" ? "pauseFailed" : "resumeFailed" : "pausedVoice") : wake.enabled ? wake.state === "armed" ? t2("wakeArmed", wake.config?.phrase ?? "\u2026") : t2(wake.state === "empty" ? "wakeEmpty" : wake.state === "warming" ? "wakeWarming" : wake.state === "calling" ? "wakeCalling" : wake.state === "rearming" ? "wakeRearming" : "wakeSuspended") : t2("wakeOff"), toggleWake = async () => {
+        if (!(voiceMode.busy || active)) {
+          if (voiceMode.paused) {
+            await changeVoiceMode();
+            return;
+          }
+          if (wake.enabled) {
+            ctx.storage.set("hands-free-enabled", !1), await wake.enable(!1);
+            return;
+          }
+          try {
+            let scope = currentScope();
+            apiScopeMatches(scope) || await host3.ensureAgent(scope.connection === "local" ? null : scope.connection, scope.profile);
+            let ready = await ctx.rest("/setup", { timeoutMs: 3e4 });
+            if (!basicReady(ready)) {
               openSetup();
+              return;
             }
-          })();
-        }, style: { height: active ? primarySize : controlSize, width: active ? void 0 : controlSize, padding: active ? "0 12px" : 0, gap: 6, borderRadius: 999, color: !active && wake.enabled ? "var(--dt-primary-solid)" : void 0 }, children: active ? /* @__PURE__ */ jsxs9(Fragment3, { children: [
-          /* @__PURE__ */ jsx9(CallWave, { state }),
-          /* @__PURE__ */ jsx9("span", { children: state.status === "connecting" ? t2("preparing") : t2("end") })
-        ] }) : /* @__PURE__ */ jsx9(Icon, { name: "wake" }) }), children: [
-          !active && /* @__PURE__ */ jsx9(Tip2, { label: t2("startTip", providerName(selection.provider), selection.voice), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "default", size: "icon", "aria-label": t2("start"), disabled: voiceMode.paused || voiceMode.busy, onClick: () => void start(), style: discStyle, children: /* @__PURE__ */ jsx9(icons.AudioLines, { className: icons.iconSize.sm }) }) }),
-          /* @__PURE__ */ jsx9(Tip2, { label: c(voiceMode.paused ? "resumeVoice" : "pauseVoice"), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "secondary", size: "icon", disabled: voiceMode.busy, "aria-label": c(voiceMode.failed ? "refresh" : voiceMode.paused ? "resumeVoice" : "pauseVoice"), onClick: () => void changeVoiceMode(), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: voiceMode.paused ? "wake" : "muted" }) }) }),
-          active && /* @__PURE__ */ jsx9(Tip2, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: state.muted ? "default" : "secondary", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
-          /* @__PURE__ */ jsxs9(Popover2, { open, onOpenChange: (v) => {
-            setOpen(v), v && load();
-          }, children: [
-            /* @__PURE__ */ jsx9(Tip2, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx9(PopoverTrigger2, { asChild: !0, children: /* @__PURE__ */ jsx9(Button7, { type: "button", variant: "secondary", size: "icon", "aria-label": t2("callSettings"), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: "settings" }) }) }) }),
-            /* @__PURE__ */ jsxs9(PopoverContent2, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
-              /* @__PURE__ */ jsxs9("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
-                /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
-                  /* @__PURE__ */ jsx9("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
-                  /* @__PURE__ */ jsx9(Button7, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(!1), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx9(Icon, { name: "close" }) })
-                ] }),
-                /* @__PURE__ */ jsx9(VoiceModeControls, {}),
-                /* @__PURE__ */ jsx9("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx9(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "wake", "usage"].map((id) => ({ id, label: t2(id) })) }) })
+            ctx.storage.set("hands-free-enabled", !0), await wake.enable(!0), wake.state === "suspended" && openSetup();
+          } catch {
+            openSetup();
+          }
+        }
+      }, discStyle = { height: primarySize, width: primarySize, padding: 0, borderRadius: 999 }, toggleCall = () => {
+        if (checkingStart) {
+          ++loadId.current, setLoadMode(null);
+          return;
+        }
+        active ? stop() : start();
+      }, connecting = state.status === "connecting", callLabel = t2(connecting || checkingStart ? "cancelConnection" : active ? "endCall" : "start");
+      return /* @__PURE__ */ jsxs9("span", { role: "group", "aria-label": t2("call"), style: { display: "inline-flex", alignItems: "center", flexWrap: "wrap", maxWidth: "100%", gap: 4 }, children: [
+        /* @__PURE__ */ jsx9(Tip, { label: checkingStart ? t2("cancelConnection") : active ? t2("actionTip", label, t2(connecting ? "cancel" : "end")) : savedSelection() || catalog.length ? t2("startTip", providerName(selection.provider), selection.voice) : t2("start"), placement: "control", children: /* @__PURE__ */ jsxs9(
+          Button8,
+          {
+            type: "button",
+            variant: "default",
+            size: "sm",
+            "aria-label": callLabel,
+            "aria-busy": connecting || loading,
+            disabled: voiceMode.busy || !active && (voiceMode.paused || loadMode === "settings"),
+            onClick: toggleCall,
+            style: {
+              minHeight: primarySize,
+              borderRadius: 999,
+              padding: "3px 10px",
+              maxWidth: "100%",
+              whiteSpace: "normal",
+              backgroundColor: "var(--dt-primary-solid, ButtonText)",
+              color: "var(--dt-primary-solid-foreground, ButtonFace)"
+            },
+            children: [
+              active ? /* @__PURE__ */ jsx9(CallWave, { state }) : /* @__PURE__ */ jsx9(Icon, { name: "live" }),
+              /* @__PURE__ */ jsx9("span", { children: t2(active ? connecting ? "cancel" : "end" : checkingStart ? "cancel" : "start") })
+            ]
+          }
+        ) }),
+        active && /* @__PURE__ */ jsx9(Tip, { label: state.muted ? t2("unmute") : t2("mute"), placement: "control", children: /* @__PURE__ */ jsx9(Button8, { type: "button", variant: state.muted ? "default" : "secondary", size: "icon", "aria-label": state.muted ? t2("unmute") : t2("mute"), "aria-pressed": state.muted, onClick: () => controller.mute(), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: state.muted ? "muted" : "mic" }) }) }),
+        /* @__PURE__ */ jsxs9(Popover, { open, onOpenChange: (v) => {
+          setOpen(v), v && load();
+        }, children: [
+          /* @__PURE__ */ jsx9(Tip, { label: t2("settingsHint"), placement: "control", children: /* @__PURE__ */ jsx9(PopoverTrigger, { asChild: !0, children: /* @__PURE__ */ jsx9(Button8, { type: "button", variant: "secondary", size: "icon", "aria-label": t2("callSettings"), style: discStyle, children: /* @__PURE__ */ jsx9(Icon, { name: "settings" }) }) }) }),
+          /* @__PURE__ */ jsxs9(PopoverContent, { lang: locale, align: "end", side: "top", sideOffset: 8, style: { width: "24rem", maxWidth: "calc(100vw - 24px)", padding: 0, maxHeight: "min(40rem, var(--radix-popover-content-available-height, calc(100vh - 32px)))", display: "flex", flexDirection: "column" }, children: [
+            /* @__PURE__ */ jsxs9("header", { style: { padding: 16, display: "grid", gap: 12, flexShrink: 0, borderBottom: divider }, children: [
+              /* @__PURE__ */ jsxs9("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }, children: [
+                /* @__PURE__ */ jsx9("strong", { style: { fontSize: ".875rem" }, children: t2("settings") }),
+                /* @__PURE__ */ jsx9(Button8, { size: "icon", variant: "ghost", "aria-label": t2("close"), onClick: () => setOpen(!1), style: { height: 28, width: 28 }, children: /* @__PURE__ */ jsx9(Icon, { name: "close" }) })
               ] }),
-              /* @__PURE__ */ jsxs9("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
-                tab === "audio" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
-                  error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, error) || localizeError(t2, error) }),
-                  /* @__PURE__ */ jsx9(DeviceSettings, { value: deviceChoice, active: active || voiceMode.paused || voiceMode.busy, onChange: (value) => void updateDevices(value) })
-                ] }),
-                tab === "wake" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
-                  /* @__PURE__ */ jsx9(Button7, { onClick: () => {
-                    setOpen(!1), openSetup();
-                  }, children: setupCopy(locale)("title") }),
-                  wake.error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, wake.error) || localizeError(t2, wake.error) }),
-                  /* @__PURE__ */ jsx9("p", { role: "status", style: { ...hint, margin: 0 }, children: wakeLabel }),
-                  /* @__PURE__ */ jsx9(WakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, scopeKey)
-                ] }),
-                tab === "usage" && /* @__PURE__ */ jsx9(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
-                tab === "call" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
-                  /* @__PURE__ */ jsx9(Button7, { variant: "ghost", onClick: () => {
-                    setOpen(!1), openSetup();
-                  }, children: setupCopy(locale)("title") }),
-                  /* @__PURE__ */ jsxs9("div", { style: { display: "grid", gap: 12 }, children: [
-                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: !0 }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
-                      let p = catalog.find((p2) => p2.id === value);
-                      p && change({ provider: p.id, model: p.models[0].id, voice: p.voices[0] });
-                    } }),
-                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
-                    /* @__PURE__ */ jsx9(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
-                  ] }),
-                  /* @__PURE__ */ jsxs9("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
-                    loading ? t2("checking") : provider && !provider.available && !active ? t2("setupNeeded") : label,
-                    state.startedAt > 0 && /* @__PURE__ */ jsx9("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs9("bdi", { children: [
-                      formatNumber(locale, Math.floor(seconds / 60)),
-                      ":",
-                      new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds % 60)
-                    ] }) })
-                  ] }),
-                  active && state.wakeCheck && /* @__PURE__ */ jsx9("div", { role: "status", style: mutedStyle, children: t2(state.wakeCheck === "checking" ? "wakeConfirming" : state.wakeCheck === "retry" ? "wakeConfirmRetry" : "wakeConfirmUnavailable") }),
-                  (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs9("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
-                    localizeError(t2, error || state.error || provider?.reason),
-                    error && /* @__PURE__ */ jsx9(Button7, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
-                  ] }),
-                  /* @__PURE__ */ jsx9(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
-                  state.transcript.length > 0 && /* @__PURE__ */ jsx9("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs9("p", { style: { margin: "0 0 8px" }, children: [
-                    /* @__PURE__ */ jsx9("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
-                    fragment.text
-                  ] }, i)) })
-                ] })
+              /* @__PURE__ */ jsx9(VoiceModeControls, {}),
+              /* @__PURE__ */ jsx9("div", { role: "group", "aria-label": t2("callSettings"), children: /* @__PURE__ */ jsx9(SegmentedControl2, { className: "w-full", value: tab, onChange: (value) => setTab(value), options: ["call", "audio", "wake", "usage"].map((id) => ({ id, label: t2(id) })) }) })
+            ] }),
+            /* @__PURE__ */ jsxs9("div", { style: { padding: 16, minHeight: 0, overflowY: "auto", display: "grid", gap: 16 }, children: [
+              tab === "audio" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, error) || localizeError(t2, error) }),
+                /* @__PURE__ */ jsx9(DeviceSettings, { value: deviceChoice, active: active || voiceMode.paused || voiceMode.busy, onChange: (value) => void updateDevices(value) })
               ] }),
-              tab === "call" && /* @__PURE__ */ jsxs9("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
-                selection.provider === "codex" ? t2("subscriptionNotice") : t2("apiNotice"),
-                /* @__PURE__ */ jsx9("br", {}),
-                t2("endExisting")
+              tab === "wake" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                /* @__PURE__ */ jsxs9(Button8, { type: "button", variant: "secondary", "aria-pressed": wake.enabled, disabled: active || voiceMode.busy, onClick: () => void toggleWake(), children: [
+                  /* @__PURE__ */ jsx9(Icon, { name: "wake" }),
+                  t2("wakeToggle")
+                ] }),
+                /* @__PURE__ */ jsx9(Button8, { onClick: () => {
+                  setOpen(!1), openSetup();
+                }, children: setupCopy(locale)("title") }),
+                wake.error && /* @__PURE__ */ jsx9("p", { role: "alert", children: setupError(locale, wake.error) || localizeError(t2, wake.error) }),
+                /* @__PURE__ */ jsx9("p", { role: "status", style: { ...hint, margin: 0 }, children: wakeLabel }),
+                /* @__PURE__ */ jsx9(WakeSettings, { rest: ctx.rest, changed: () => void wake.tick(), local: !host3.state.connectionId.get() || host3.state.connectionId.get() === "local" }, scopeKey)
+              ] }),
+              tab === "usage" && /* @__PURE__ */ jsx9(UsageSettings, { data: usage, selection, readQuota }, scopeKey),
+              tab === "call" && /* @__PURE__ */ jsxs9(Fragment3, { children: [
+                /* @__PURE__ */ jsx9(Button8, { variant: "ghost", onClick: () => {
+                  setOpen(!1), openSetup();
+                }, children: setupCopy(locale)("title") }),
+                /* @__PURE__ */ jsxs9("div", { style: { display: "grid", gap: 12 }, children: [
+                  /* @__PURE__ */ jsx9(FieldSelect, { label: t2("provider"), value: selection.provider, disabled: active || loading, options: (catalog.length ? catalog : [{ id: selection.provider, available: !0 }]).map((p) => ({ value: p.id, label: providerName(p.id) + (p.available ? "" : ` \xB7 ${t2("setupNeeded")}`) })), onChange: (value) => {
+                    let p = catalog.find((p2) => p2.id === value);
+                    p && change({ provider: p.id, model: p.models[0].id, voice: p.voices[0] });
+                  } }),
+                  /* @__PURE__ */ jsx9(FieldSelect, { label: t2("model"), value: selection.model, disabled: active || loading, options: provider ? provider.models.map((m) => ({ value: m.id, label: selection.provider === "codex" ? t2("codexModel") : m.name })) : [{ value: selection.model, label: selection.model }], onChange: (model) => change({ ...selection, model }) }),
+                  /* @__PURE__ */ jsx9(FieldSelect, { label: t2("voice"), value: selection.voice, disabled: active || loading, options: (provider?.voices ?? [selection.voice]).map((value) => ({ value, label: value })), onChange: (voice) => change({ ...selection, voice }) })
+                ] }),
+                /* @__PURE__ */ jsxs9("div", { role: "status", style: { ...mutedStyle, display: "flex", alignItems: "center", gap: 8 }, children: [
+                  loading ? t2("checking") : provider && !provider.available && !active ? t2("setupNeeded") : label,
+                  state.startedAt > 0 && /* @__PURE__ */ jsx9("span", { style: { marginInlineStart: 8, fontVariantNumeric: "tabular-nums" }, children: /* @__PURE__ */ jsxs9("bdi", { children: [
+                    formatNumber(locale, Math.floor(seconds / 60)),
+                    ":",
+                    new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds % 60)
+                  ] }) })
+                ] }),
+                active && state.wakeCheck && /* @__PURE__ */ jsx9("div", { role: "status", style: mutedStyle, children: t2(state.wakeCheck === "checking" ? "wakeConfirming" : state.wakeCheck === "retry" ? "wakeConfirmRetry" : "wakeConfirmUnavailable") }),
+                (error || state.error || provider?.reason) && /* @__PURE__ */ jsxs9("div", { role: "alert", style: { ...mutedStyle, padding: "8px 10px", borderRadius: "var(--radius-sm)", background: "var(--ui-bg-tertiary)", border: divider }, children: [
+                  localizeError(t2, error || state.error || provider?.reason),
+                  error && /* @__PURE__ */ jsx9(Button8, { variant: "ghost", size: "sm", onClick: () => void load(), children: t2("retry") })
+                ] }),
+                /* @__PURE__ */ jsx9(AuthSettings, { provider, selected: selection.provider, backend, connection: currentScope().connection, profile: currentScope().profile, active, loading, configure, recheck: () => void load() }),
+                state.transcript.length > 0 && /* @__PURE__ */ jsx9("div", { ref: scroll, style: { maxHeight: 150, overflowY: "auto", fontSize: 12, lineHeight: 1.65, borderTop: divider, paddingTop: 12 }, "aria-label": t2("transcripts"), children: state.transcript.map((fragment, i) => /* @__PURE__ */ jsxs9("p", { style: { margin: "0 0 8px" }, children: [
+                  /* @__PURE__ */ jsx9("span", { style: { ...mutedStyle, marginInlineEnd: 6 }, children: fragment.speaker === "user" ? t2("you") : "Live" }),
+                  fragment.text
+                ] }, i)) })
               ] })
+            ] }),
+            tab === "call" && /* @__PURE__ */ jsxs9("footer", { style: { ...mutedStyle, padding: "12px 16px", borderTop: divider, flexShrink: 0 }, children: [
+              selection.provider === "codex" ? t2("subscriptionNotice") : t2("apiNotice"),
+              /* @__PURE__ */ jsx9("br", {}),
+              t2("endExisting")
             ] })
           ] })
         ] }),
         /* @__PURE__ */ jsx9("span", { role: "status", className: "sr-only", children: active ? label : state.error ? localizeError(t2, state.error) : wakeLabel })
       ] });
     }
-    ctx.register({ id: "call", area: COMPOSER_AREAS.actions, order: 20, render: () => /* @__PURE__ */ jsx9(LiveButton, {}) });
+    ctx.register({ id: "call", area: COMPOSER_AREAS.underside, order: 20, render: () => /* @__PURE__ */ jsx9(LiveButton, {}) });
   }
 };
 export {

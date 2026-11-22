@@ -1,10 +1,10 @@
 """Shared local bot opt-ins; display names are resolved afresh, never used as routing IDs."""
 from contextlib import contextmanager
-import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
+from pm.filesystem import lock_fd
 import re
 import tempfile
 import unicodedata
@@ -27,14 +27,14 @@ class WakeRegistry:
     def locked(self):
         self.path.parent.mkdir(parents=True,exist_ok=True)
         with open(self.path.with_suffix('.lock'),'a') as lock:
-            fcntl.flock(lock,fcntl.LOCK_EX)
+            lock_fd(lock.fileno(), wait=True)
             yield
 
     def _load(self):
         if not self.path.exists():
             target=self.legacy.get('target','')
             return {'version':1,'serial':0,'entries':{target:{'enabled':True,'aliases':['Lumi'] if target=='lumi' else []}} if target else {}}
-        data=json.loads(self.path.read_text())
+        data=json.loads(self.path.read_text(encoding='utf-8'))
         if data.get('version')!=1 or not isinstance(data.get('entries'),dict):
             raise RegistryError('Invalid wake registry')
         return data
@@ -82,7 +82,7 @@ class WakeRegistry:
             if result['errors']:raise RegistryError('HL_ERROR:errWakeRegistry')
             fd,temp=tempfile.mkstemp(dir=self.path.parent,prefix='.wake-')
             try:
-                with os.fdopen(fd,'w') as out:
+                with os.fdopen(fd,'w',encoding='utf-8') as out:
                     json.dump(updated,out,ensure_ascii=False,indent=2);out.flush();os.fsync(out.fileno())
                 os.replace(temp,self.path)
             finally:

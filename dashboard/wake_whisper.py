@@ -3,7 +3,6 @@ import sys
 """Local Whisper adapter using Hermes capture and the same machine-wide mic lock."""
 import base64
 from collections import deque
-import fcntl
 import json
 import os
 from pathlib import Path
@@ -208,6 +207,7 @@ class WhisperDetector:
         self.paused = False
 
     def start_listening(self, callback, *, owner, config):
+        import fcntl  # Apple Silicon capture only
         from tools.wake_word import WakeWordDetector
         from hermes_constants import get_default_hermes_root
         if self.owner is not None:

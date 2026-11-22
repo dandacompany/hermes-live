@@ -1,9 +1,9 @@
 """Verified, machine-shared local wake assets. GET never downloads or records audio."""
-import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
+from pm.filesystem import lock_fd
 import platform
 import shutil
 import subprocess
@@ -60,6 +60,10 @@ def read_json(path):
         return value if isinstance(value,dict) else {}
     except (OSError, ValueError): return {}
 
+def wake_supported():
+    return platform.system() == 'Darwin' and platform.machine() == 'arm64'
+
+
 class Assets:
     def __init__(self, root, home=None, resources=None):
         self.root = Path(root)
@@ -68,7 +72,7 @@ class Assets:
         self.thread = None
 
     @property
-    def supported(self): return platform.system() == 'Darwin' and platform.machine() == 'arm64'
+    def supported(self): return wake_supported()
 
     def engine(self):
         path = self.resources/'whisper-server'
@@ -90,8 +94,8 @@ class Assets:
         if value.get('state') in ('downloading', 'verifying', 'preparing'):
             try:
                 with open(self.root/'install.lock', 'a') as lock:
-                    fcntl.flock(lock, fcntl.LOCK_EX|fcntl.LOCK_NB)
-                    value = {**value, 'state':'interrupted', 'error':'downloadInterrupted'}
+                    if lock_fd(lock.fileno(), wait=False):
+                        value = {**value, 'state':'interrupted', 'error':'downloadInterrupted'}
             except BlockingIOError: pass
         return value
 
@@ -128,10 +132,10 @@ class Assets:
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         model, path = self.discover(cfg)
         lock = open(self.root/'install.lock', 'a')
-        try: fcntl.flock(lock, fcntl.LOCK_EX|fcntl.LOCK_NB)
-        except BlockingIOError:
-            lock.close(); return self.progress()
         try:
+            if not lock_fd(lock.fileno(), wait=False):
+                lock.close()
+                return self.progress()
             (self.root/'cancel').unlink(missing_ok=True)
             model, path = self.discover(cfg)
             self._write('preparing' if path else 'downloading', model)

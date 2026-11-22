@@ -15,14 +15,18 @@ import {settingsHref} from './auth.ts';
 import {DeviceSettings} from './device-settings.tsx';
 import {matchWakeTarget} from '../dashboard/wake-phrase.mjs';
 import {openWakeBot,wakeBotReady,ProfileTransition} from './wake-navigation.ts';
-import {HoverControls} from './hover-controls.tsx';
 import {WakeSettings} from './wake-settings.tsx';
 import {UsageSettings,type Quota} from './usage-settings.tsx';
 import {defaultDevices,selectWakeMicrophone,canonicalMicrophoneLabel,type AudioDevices} from './devices.ts';
 import {UsageLedger,emptyUsage,type UsageData} from './usage.ts';
-import {seedHistory,draftVoicePrompt,voiceSubmission,historyParams} from './context.ts';
+import {seedHistory,draftVoicePrompt,voiceSubmission,submitVoiceTurn,historyParams} from './context.ts';
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
-import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,ROUTES_AREA,host,icons,SegmentedControl} from '@hermes/plugin-sdk';
+import {Button,Popover,PopoverContent,PopoverTrigger,Tip,COMPOSER_AREAS,ROUTES_AREA,host,SegmentedControl} from '@hermes/plugin-sdk';
+import {controlFiles,legacyMailbox,MAILBOX_PATH} from './compat-mailbox.ts';
+import {SwitchboardPairing} from './switchboard-pairing.tsx';
+import {resolveSiblingWsUrl} from '@hermes/plugin-sdk';
+import {CONTROL_PATH,runRemoteControl} from './remote-control.ts';
+import {remoteDesktop} from './remote-desktop.ts';
 import {VoiceCommandGate,startForChat,runVoiceCommand,voiceReport,callPhase,withoutVoiceToken,voiceCommandKey,type FocusedChat,type LastCommand,type RunnerDeps} from './voice-command.ts';
 import type {PluginContext,Route} from '@hermes/plugin-sdk';
 import {CallController} from './controller.ts';
@@ -40,9 +44,19 @@ function Icon({name,size=16}:{name:'live'|'mic'|'muted'|'end'|'close'|'wake'|'se
  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 const mutedStyle=hint;
-const controlSize='var(--composer-control-size, 24px)';
-const primarySize='var(--composer-control-primary-size, var(--composer-control-size, 24px))';
+const primarySize='max(28px, var(--composer-control-primary-size, 28px))';
 const defaults:Selection={provider:'gemini',model:'gemini-3.8-live',voice:'Kore'};
+function preferredSelection(saved:Selection|null, providers:CatalogItem[]):Selection {
+ if(saved){
+  const provider=providers.find(p=>p.id===saved.provider);
+  if(!provider?.models[0]||!provider.voices[0])return saved;
+  return {...saved, model:provider.models.some(m=>m.id===saved.model)?saved.model:provider.models[0].id,
+   voice:provider.voices.includes(saved.voice)?saved.voice:provider.voices[0]};
+ }
+ const codex=providers.find(p=>p.id==='codex'&&p.available);
+ if(codex?.models[0]&&codex.voices[0])return {provider:'codex',model:codex.models[0].id,voice:codex.voices[0]};
+ return defaults;
+}
 const providerNames={qwen:'Alibaba Qwen Realtime',gemini:'Google Gemini Live',grok:'xAI Grok Voice',codex:'Codex subscription · GPT Live'};
 function CallWave({state}:{state:CallState}){
  const speaking=state.status==='speaking';const level=state.muted?0:Math.max(0,Math.min(1,state.level));
@@ -54,10 +68,13 @@ function CallWave({state}:{state:CallState}){
 function currentScope():Scope{
  return ownedScope(host.state.focusedSessionOwner.get(),host.state.focusedSessionId.get());
 }
-function apiScopeMatches(scope:Scope){return scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default')}
+function apiScopeMatches(scope:Scope){
+ const socketMatches=!host.activeConnectionId||(host.activeConnectionId()??'local')===scope.connection;
+ return socketMatches&&scope.connection===(host.state.connectionId.get()||'local')&&scope.profile===(host.state.profile.get()||'default');
+}
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.12.1',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:false,
+ id:'hermes-live',name:'Hermes Live',version:'0.12.5',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:true,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
@@ -74,6 +91,8 @@ export default {
   const listeners=new Set<()=>void>();let callOwner:Scope|null=null;let allowSessionAdopt=false;let route:Route|null=null;
   let ledger:UsageLedger|null=null;let ledgerKey='';let storageErrorShown=false;
   const usageKey=(scope:Scope)=>`usage:v1:${scope.connection}:${scope.profile}`;
+  const savedProvider=(scope:Scope)=>ctx.storage.get<Selection|null>(`selection:${scope.connection}:${scope.profile}`,null);
+  const readCatalog=()=>ctx.rest<{providers:CatalogItem[];backend:string}>('/catalog',{timeoutMs:30000});
   const devices=()=>ctx.storage.get<AudioDevices>('audio-devices',defaultDevices);
   const bridge=new HermesBridge({
    current:currentScope,
@@ -82,11 +101,15 @@ export default {
     if(!route||route.connectionId!==scope.connection||route.profile!==scope.profile)throw new Error("HL_ERROR:errScope");
     const result=await host.requestProfile<{messages:Message[]}>(route,'session.history',historyParams(scope.session!));return result.messages;
    },
-   submit:async(session,text,voiceContext)=>{
+   submit:async(session,text,voiceContext,signal)=>{
     const owner=currentScope();
     if(!route||route.connectionId!==owner.connection||route.profile!==owner.profile||session!==owner.session)throw new Error("HL_ERROR:errScope");
     if(!session){const prompt=draftVoicePrompt(text,voiceContext);return host.composer.submit(null,prompt)?prompt:false}
-    await host.requestProfile(route,'prompt.submit',voiceSubmission(session,text,voiceContext,crypto.randomUUID()));
+    const destination=route;
+    await submitVoiceTurn(fields=>{
+     if(signal.aborted||route!==destination||!sameScope(owner,currentScope())||!apiScopeMatches(owner))throw new Error('HL_ERROR:errScope');
+     return host.requestProfile(destination,'prompt.submit',fields);
+    },voiceSubmission(session,text,voiceContext,crypto.randomUUID()));
     return true;
    },
    adopt:scope=>{if(allowSessionAdopt)callOwner=scope},
@@ -96,7 +119,7 @@ export default {
    goodbye:()=>wakeCall,goodbyeNames:()=>wakeNames,
    voiceControl:(text,context={})=>{
     const record=(reason:string,target='')=>diagnostics?.event('command.wake',{...context,reason,target,enabled:wake.enabled});
-    if(!wake.enabled){record('disabled');return false;}
+    if(!wake.enabled||callOwner?.connection!=='local'){record('disabled');return false;}
     const target=matchWakeTarget(text,wake.config?.targets??[]);
     if(!target){record(wake.config?.targets?.length?'no_match':'no_targets');return false}
     if(target===callOwner?.profile){record('same_bot',target);return true}
@@ -112,14 +135,14 @@ export default {
     },context);return true;
    },
    fallbackWakeTarget:text=>{const target=wake.enabled&&matchWakeTarget(text,wake.config?.targets??[]);return target&&callOwner&&callOwner.connection==='local'&&target!==callOwner.profile&&apiScopeMatches(callOwner)&&sameScope(callOwner,currentScope())?target:null;},
-   isVoiceControl:text=>Boolean(wake.enabled&&matchWakeTarget(text,wake.config?.targets??[])),
+   isVoiceControl:text=>Boolean(callOwner?.connection==='local'&&wake.enabled&&matchWakeTarget(text,wake.config?.targets??[])),
    prepare:async (signal,selection)=>{
     await wake?.suspend();if(signal.aborted)return;
     const owner=callOwner&&{...callOwner};
     if(!owner||!apiScopeMatches(owner)||!sameScope(owner,currentScope()))throw new Error("HL_ERROR:errScope");
     const routes=await host.profileRoutes();
     if(signal.aborted)return;
-    if(!callOwner||!sameScope(owner,callOwner)||!sameScope(owner,currentScope()))throw new Error("HL_ERROR:errScope");
+    if(!callOwner||!apiScopeMatches(owner)||!sameScope(owner,callOwner)||!sameScope(owner,currentScope()))throw new Error("HL_ERROR:errScope");
     route=routes.find(r=>r.connectionId===owner.connection&&r.profile===owner.profile)??null;
     if(!route)throw new Error("HL_ERROR:errScope");
     const result=await ctx.rest<{provider:CatalogItem}>('/readiness',{method:'POST',body:{provider:selection.provider},timeoutMs:30000});
@@ -136,7 +159,7 @@ export default {
     // Sending old turns through its active append channel can cause unsolicited playback.
     if(selection.provider==='codex')return {...selection,token:'',sampleRate:48000,...(wakeGreeting?{wakeGreeting}:{})};
     const rows=owner.session?await host.requestProfile<{messages:Message[]}>(route,'session.history',historyParams(owner.session)):{messages:[]};
-    if(!sameScope(owner,currentScope())||!callOwner||!sameScope(owner,callOwner))throw new Error("HL_ERROR:errScope");
+    if(!apiScopeMatches(owner)||!sameScope(owner,currentScope())||!callOwner||!sameScope(owner,callOwner))throw new Error("HL_ERROR:errScope");
     const history=seedHistory(rows.messages);
     if(['codex','qwen'].includes(selection.provider))return {...selection,token:'',sampleRate:48000,history,...(wakeGreeting?{wakeGreeting}:{})};
     const result=await ctx.rest<Connection>('/connect',{method:'POST',body:selection,timeoutMs:40000});
@@ -162,7 +185,8 @@ export default {
    ended:()=>{if(trialProfile&&trialConnected)ctx.storage.set(`setup-trial:${trialProfile}`,'ended');trialProfile=null;trialConnected=false;callOwner=null;route=null;allowSessionAdopt=false;ledger?.end();ledger=null;const wasWake=wakeCall;wakeCall=false;wakeNames=[];wakeGreeting=undefined;wake?.ended();if(wasWake)chime(440)},
    changed:state=>{if(state.level>.02&&!state.muted)lastInputAt=Date.now();listeners.forEach(fn=>fn())},
   });
-  const stop=()=>{controller.stop();callOwner=null;allowSessionAdopt=false;route=null};
+  let stopGeneration=0;
+  const stop=()=>{++stopGeneration;controller.stop();callOwner=null;allowSessionAdopt=false;route=null};
   function chime(hz:number){
    const ac=new AudioContext();const tone=ac.createOscillator();const gain=ac.createGain();tone.frequency.value=hz;gain.gain.value=.035;tone.connect(gain);gain.connect(ac.destination);tone.start();gain.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.16);tone.stop(ac.currentTime+.18);tone.onended=()=>void ac.close();void ac.resume().catch(()=>void ac.close());
   }
@@ -180,14 +204,14 @@ export default {
     const selectionKey=`selection:${host.state.connectionId.get()||'local'}:${config.target}`;
     const saved=ctx.storage.get<Selection|null>(selectionKey,null);
     const selection:Selection={provider:'codex',model:'gpt-live-1-codex',voice:saved?.provider==='codex'&&saved.voice?saved.voice:'cove'};
-    ctx.storage.set(selectionKey,selection);
+    // Name calls use Codex for this call only. The manual preference belongs to the user.
     if(activity.active)throw new Error('HL_ERROR:errBusy');
     if((host.state.profile.get()||'default')!==config.target)await wake.releaseForNavigation();
     // Settings hides the workspace; close it before the SDK takes a Bot Chat ownership token.
     host.navigate('/');await new Promise(r=>setTimeout(r,0));
     const targetConnection=host.state.connectionId.get()||'local';
     if(!host.state.focusedStoredSessionId)throw new Error('HL_ERROR:errBotsView');
-    void diagnostics?.flush();const stored=await openWakeBot({routes:()=>host.profileRoutes(),activate:route=>host.ensureAgent(null,route.profile),isSelected:(stored,route)=>{const scope=currentScope();return scope.profile===route.profile&&scope.connection===route.connectionId&&host.state.focusedStoredSessionId!.get()===stored},request:(route,method,params)=>host.requestProfile(route,method,params),revealPane:host.revealPane,
+    void diagnostics?.flush();const stored=await openWakeBot({routes:()=>host.profileRoutes(),retain:host.retainProfile,activate:route=>host.ensureAgent(null,route.profile),isSelected:(stored,route)=>{const scope=currentScope();return scope.profile===route.profile&&scope.connection===route.connectionId&&host.state.focusedStoredSessionId!.get()===stored},request:(route,method,params)=>host.requestProfile(route,method,params),revealPane:host.revealPane,
      paneVisible:host.paneVisibility?id=>host.paneVisibility!(id).get():undefined,
      label:host.setWorkspaceOwnerLabel,openSession:host.openSession},
      config.target,targetConnection,config.names?.[0]||config.target,valid);
@@ -220,9 +244,22 @@ export default {
   ctx.setInterval(()=>void wake.tick(),1000);
   let warming=false;
   const prewarm=async()=>{
-   if(warming||!wake.enabled||(host.state.connectionId.get()&&host.state.connectionId.get()!=='local'))return;
+   if(warming||!wake.enabled||!isLocal())return;
    warming=true;
-   try{await ctx.rest('/wake/prewarm',{method:'POST',timeoutMs:5000})}catch{/* Cold startup remains available. */}
+   try{
+    const {desktop}=await ctx.rest<{desktop?:{installId:string;profiles:string[]}}>('/wake/prewarm',{method:'POST',timeoutMs:5000});
+    if(desktop){
+     // Older local dashboards multiplex plugin REST by the explicit profile query.
+     // Reuse the active authenticated backend without dialing or activating a bot.
+     for(let i=0;i<desktop.profiles.length;i+=4){
+      if(!wake.enabled||!isLocal())break;
+      await Promise.allSettled(desktop.profiles.slice(i,i+4).map(profile=>
+       ctx.rest('/wake/prewarm-target?profile='+encodeURIComponent(profile),{
+        method:'POST',body:{installId:desktop.installId,profile},timeoutMs:5000
+       })));
+     }
+    }
+   }catch{/* Cold startup remains available. */}
    finally{warming=false}
   };
   ctx.setInterval(()=>void prewarm(),10000);
@@ -246,8 +283,10 @@ export default {
    release:async()=>{await stopSetupTest?.();await wake.park()},
    resume:async()=>{
     const scope=currentScope();
+    if(scope.connection && scope.connection!=='local')return true;
     if(!apiScopeMatches(scope))await host.ensureAgent(scope.connection==='local'?null:scope.connection,scope.profile);
     const ready=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});
+    if(!ready.assets.supported)return true;
     // Explicit resume also unlocks setup repairs; missing setup never arms the mic.
     if(!basicReady(ready)){openSetup();return true}
     await wake.enable(true);
@@ -261,18 +300,35 @@ export default {
   // Wake detection is untouched; this only reads its state to refuse mid-navigation commands.
   const VOICE_ROUTE='/hermes-live/voice';
   const voiceGate=new VoiceCommandGate();const voiceInstance=crypto.randomUUID();let lastVoiceCommand:LastCommand|null=null;
-  const isLocal=()=>!host.state.connectionId.get()||host.state.connectionId.get()==='local';
+  const isLocal=()=>{
+   const socket=host.activeConnectionId?.();
+   return host.state.connectionId.get()==='local'&&(!socket||socket==='local');
+  };
   const focusedChat=():FocusedChat|null=>{const owner=host.state.focusedSessionOwner.get();return owner?{connection:owner.connectionId,profile:owner.profile,storedId:host.state.focusedStoredSessionId?.get()??null}:null};
   // Remote backends would write the file on another machine; staying silent lets local readers see it as stale.
-  const reportVoiceState=()=>{if(isLocal())void ctx.rest('/voice/state',{method:'POST',body:voiceReport(controller.snapshot.status,callOwner?.profile??null,lastVoiceCommand,voiceInstance),timeoutMs:5000}).catch(()=>{})};
+  const reportVoiceState=()=>{if(isLocal()&&(!callOwner||callOwner.connection==='local'))void ctx.rest('/voice/state',{method:'POST',body:voiceReport(controller.snapshot.status,callOwner?.profile??null,lastVoiceCommand,voiceInstance),timeoutMs:5000}).catch(()=>{})};
   let reportedVoice='';
   listeners.add(()=>{const key=`${callPhase(controller.snapshot.status)}:${callOwner?.profile??''}`;if(key!==reportedVoice){reportedVoice=key;reportVoiceState()}});
   ctx.setInterval(reportVoiceState,2000);
+  async function startOwnedCall(scope:Scope){
+   let selection=savedProvider(scope);
+   if(!selection){
+    if(!apiScopeMatches(scope)||!sameScope(scope,currentScope()))throw new Error('HL_ERROR:errScope');
+    const generation=stopGeneration;
+    const catalog=await readCatalog();
+    if(generation!==stopGeneration||!apiScopeMatches(scope)||!sameScope(scope,currentScope()))throw new Error('HL_ERROR:errScope');
+    if(voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status))throw new Error('HL_ERROR:errBusy');
+    selection=preferredSelection(savedProvider(scope),catalog.providers);
+   }
+   callOwner=scope;
+   await controller.start(selection);
+   if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
+  }
   const voiceDeps:RunnerDeps={
    gate:voiceGate,now:()=>Date.now(),
    // Sent in the body (never the URL) to the local backend only; the runner refuses remote connections first.
    verify:async token=>(await ctx.rest<{ok?:boolean}>('/voice/verify',{method:'POST',body:{token},timeoutMs:5000})).ok===true,
-   context:()=>({local:isLocal(),status:controller.snapshot.status,callProfile:callOwner?.profile??null,focused:focusedChat(),paused:voiceMode.paused,
+   context:()=>({local:isLocal(),status:controller.snapshot.status,callProfile:callOwner?.connection==='local'?callOwner.profile:null,focused:focusedChat(),paused:voiceMode.paused,
     transitioning:voiceMode.busy||(wake.state==='calling'&&callPhase(controller.snapshot.status)==='off'),busy:activity.active}),
    stop,
    returnTo:storedId=>{if(storedId)host.navigate(`/${encodeURIComponent(storedId)}`);else if(window.history.length>1)window.history.back();else host.navigate('/')},
@@ -290,29 +346,72 @@ export default {
      const scope=currentScope();const now=focusedChat();
      if(!now||now.connection!=='local'||now.profile!==focused.profile||now.storedId!==focused.storedId||!scope.session||!apiScopeMatches(scope))throw new Error('HL_ERROR:errScope');
     },
-    begin:async()=>{
-     // Same path as the composer call button: the chat's saved provider and voice.
-     const scope=currentScope();
-     callOwner=scope;await controller.start(ctx.storage.get<Selection>(`selection:${scope.connection}:${scope.profile}`,defaults));
-     if(controller.snapshot.status==='error')throw new Error(controller.snapshot.error);
-    },
+    begin:()=>startOwnedCall(currentScope()),
    }),
    record:last=>{lastVoiceCommand=last;reportVoiceState()},
   };
-  function VoiceCommandPage(){
+  const controlState=()=>({
+   status:callPhase(controller.snapshot.status),
+   owner:callOwner?{connectionId:callOwner.connection,profile:callOwner.profile}:null,
+   paused:voiceMode.paused,busy:activity.active,
+   transitioning:voiceMode.busy||(wake.state==='calling'&&callPhase(controller.snapshot.status)==='off')
+  });
+  const remote=remoteDesktop(host,{scope:currentScope,status:controlState,callIdentity:()=>callOwner,
+   withLocalWakeReleased:activate=>wake.withLocalWakeReleased(activate),start:startOwnedCall,stop},()=>window.location.hash);
+  ctx.onDispose(remote.dispose);
+  const mailbox=legacyMailbox(()=>resolveSiblingWsUrl({connectionId:'local',profile:'default'},MAILBOX_PATH,{stripGatewayCredential:true}));
+  let needsPairing=false;
+  const files=controlFiles(ctx.files,()=>{
+   needsPairing=true;listeners.forEach(fn=>fn());return mailbox.files;
+  });
+  let writingState=false;
+  const publishControlState=async()=>{
+   if(writingState||!remote.supported())return;
+   writingState=true;
+   try{
+    const {status,owner}=controlState();
+    const active=status==='in_call'||status==='connecting';
+    await files.writeText('data',`state-${voiceInstance}.json`,JSON.stringify({
+     v:2,instance:voiceInstance,updatedAt:Date.now(),status,
+     connectionId:active?owner?.connectionId??null:null,profile:active?owner?.profile??null:null
+    }));
+   }catch{/* A missing heartbeat expires on the reader. */}
+   finally{writingState=false}
+  };
+  void publishControlState();
+  ctx.setInterval(()=>void publishControlState(),2000);
+  // A rejection/stop should restore the page the deck interrupted. A stored id
+  // alone cannot reconstruct a connection-qualified chat on another gateway.
+  let previousPage='/';
+  const rememberPage=(event:HashChangeEvent)=>{
+   const before=new URL(event.oldURL).hash.slice(1);
+   const after=new URL(event.newURL).hash.split('?')[0];
+   if(after==='#'+CONTROL_PATH&&before.startsWith('/')&&!before.startsWith(CONTROL_PATH)&&!before.startsWith(VOICE_ROUTE))previousPage=before;
+  };
+  window.addEventListener('hashchange',rememberPage);
+  ctx.onDispose(()=>window.removeEventListener('hashchange',rememberPage));
+  function VoiceCommandPage({v2=false}:{v2?:boolean}){
    const handled=useRef(false);
    useEffect(()=>{
     if(handled.current)return;handled.current=true;
     const location=window.location.hash;
     // A bare restored route (Desktop remembers only the pathname) is not a command: just leave.
-    if(!location.includes('?')){voiceDeps.returnTo(focusedChat()?.storedId??null);return}
+    if(!location.includes('?')){if(v2)host.navigate(previousPage);else voiceDeps.returnTo(focusedChat()?.storedId??null);return}
     // Keep the token out of the history entry; Back must not replay an authenticated link.
     window.history.replaceState(window.history.state,'',withoutVoiceToken(location));
-    void runVoiceCommand(voiceDeps,location);
+    if(v2){
+     const clean=window.location.hash;
+     void runRemoteControl(location,voiceInstance,files,Date.now,remote.capture()).then(reason=>{
+      if(reason)host.notify({kind:'error',message:`Hermes Live · ${reason}`});
+      if(window.location.hash===clean)host.navigate(previousPage);
+      void publishControlState();
+     });
+    }else void runVoiceCommand(voiceDeps,location);
    },[]);
    return null;
   }
   ctx.register({id:'voice-command',area:ROUTES_AREA,data:{path:VOICE_ROUTE},render:()=> <VoiceCommandPage key={voiceCommandKey(window.location.hash)}/>});
+  ctx.register({id:'remote-control',area:ROUTES_AREA,data:{path:CONTROL_PATH},render:()=> <VoiceCommandPage v2 key={voiceCommandKey(window.location.hash)}/>});
   function VoiceModeControls(){
    const {locale}=useLiveI18n();const c=setupCopy(locale);
    useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>`${voiceMode.paused}:${voiceMode.busy}:${voiceMode.failed}`);
@@ -324,10 +423,11 @@ export default {
 
   function SetupPage(){
    const {locale}=useLiveI18n();
+   const showPairing=useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>needsPairing);
    const profile=useSyncExternalStore(fn=>host.state.profile.subscribe(fn),()=>host.state.profile.get());
    const connection=useSyncExternalStore(fn=>host.state.connectionId.subscribe(fn),()=>host.state.connectionId.get());
    useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>`${voiceMode.paused}:${voiceMode.busy}`);
-   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/></div>{__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics&&<DiagnosticsPanel key={`diag:${connection}:${profile}`} ctx={ctx} diagnostics={diagnostics} korean={locale.startsWith('ko')}/>}<Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
+   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/>{showPairing&&<SwitchboardPairing korean={locale.startsWith('ko')} local={connection==='local'&&profile==='default'} prepare={()=>ctx.rest('/control-mailbox/prepare',{method:'POST'})} pair={file=>mailbox.pair(file)}/>}</div>{__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics&&<DiagnosticsPanel key={`diag:${connection}:${profile}`} ctx={ctx} diagnostics={diagnostics} korean={locale.startsWith('ko')}/>}<Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
     subscribe={fn=>{listeners.add(fn);return()=>{listeners.delete(fn)}}} callState={()=>controller.snapshot.status}
     active={()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status)||host.state.busy.get()}
     hold={async()=>{const enabled=wake.enabled;await wake.enable(false);return()=>{if(enabled&&!voiceMode.paused&&!voiceMode.busy&&['idle','error'].includes(controller.snapshot.status))void wake.enable(true)}}}
@@ -346,34 +446,47 @@ export default {
    const state=useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>controller.snapshot);
    const focusedOwner=useSyncExternalStore(fn=>host.state.focusedSessionOwner.subscribe(fn),()=>host.state.focusedSessionOwner.get());
    const scopeKey=`selection:${focusedOwner?.connectionId??''}:${focusedOwner?.profile??''}`;
-   const savedSelection=()=>ctx.storage.get<Selection>(scopeKey,defaults);
+   const savedSelection=()=>ctx.storage.get<Selection|null>(scopeKey,null);
    const [tab,setTab]=useState<'call'|'audio'|'wake'|'usage'>('call');const [deviceChoice,setDevices]=useState<AudioDevices>(devices);
    const [backend,setBackend]=useState('');
-   const [open,setOpen]=useState(false);const [catalog,setCatalog]=useState<CatalogItem[]>([]);const [loading,setLoading]=useState(false);const [error,setError]=useState('');
-   const [draftSelection,setSelection]=useState<Selection>(savedSelection);const selection=state.selection??draftSelection;const [now,setNow]=useState(Date.now());const scroll=useRef<HTMLDivElement>(null);const mounted=useRef(true);const loadId=useRef(0);
+   const [open,setOpen]=useState(false);const [catalog,setCatalog]=useState<CatalogItem[]>([]);const [loadMode,setLoadMode]=useState<'settings'|'start'|null>(null);const [error,setError]=useState('');
+   const loading=loadMode!==null, checkingStart=loadMode==='start';
+   const [draftSelection,setSelection]=useState<Selection>(()=>savedSelection()??defaults);const selection=state.selection??draftSelection;const [now,setNow]=useState(Date.now());const scroll=useRef<HTMLDivElement>(null);const mounted=useRef(true);const loadId=useRef(0);
    useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[]);
    const active=!['idle','error'].includes(state.status);
    useEffect(()=>{const show=()=>{setTab('call');setOpen(true);void load()};openCallSettings=show;return()=>{if(openCallSettings===show)openCallSettings=null}},[scopeKey]);
-   useEffect(()=>{++loadId.current;setSelection(savedSelection());setCatalog([]);setBackend('');setError('');setLoading(false);setOpen(false)},[scopeKey]);
-   useEffect(()=>{if(state.status==='error'){setOpen(true);void load()}},[state.status]);
+   useEffect(()=>{++loadId.current;setSelection(savedSelection()??defaults);setCatalog([]);setBackend('');setError('');setLoadMode(null);setOpen(false)},[scopeKey]);
+   useEffect(()=>{if(state.status==='error'){setTab('call');setOpen(true);void load()}},[state.status]);
    useEffect(()=>{if(!active)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer)},[active]);
    useEffect(()=>{if(scroll.current)scroll.current.scrollTop=scroll.current.scrollHeight},[state.transcript]);
-   const load=async()=>{
-    const id=++loadId.current;setLoading(true);setError('');const scope=currentScope();
+   const load=async(forStart=false)=>{
+    const id=++loadId.current;setLoadMode(forStart?'start':'settings');setError('');const scope=currentScope();
     try{
      if(!apiScopeMatches(scope)){
+      if(forStart)throw new Error('HL_ERROR:errScope');
       if(!['idle','error'].includes(controller.snapshot.status)||activity.active||host.state.busy.get()||Object.values(host.state.busyBySession.get()).some(Boolean))throw new Error("HL_ERROR:errBusy");
       await host.ensureAgent(scope.connection==='local'?null:scope.connection,scope.profile);
      }
      if(!mounted.current||id!==loadId.current||!sameScope(scope,currentScope())||!apiScopeMatches(scope))return;
-     const value=await ctx.rest<{providers:CatalogItem[];backend:string}>('/catalog',{timeoutMs:30000});
+     const value=await readCatalog();
      if(!mounted.current||id!==loadId.current||!sameScope(scope,currentScope())||!apiScopeMatches(scope))return;
      setBackend(value.backend);setCatalog(value.providers);
-     const saved=controller.snapshot.selection??savedSelection();
-     const p=value.providers.find(x=>x.id===saved.provider)??value.providers[0];
-     if(p)setSelection({provider:p.id,model:p.models.some(m=>m.id===saved.model)?saved.model:p.models[0]!.id,voice:p.voices.includes(saved.voice)?saved.voice:p.voices[0]!});
-    }catch{if(mounted.current&&id===loadId.current)setError("HL_ERROR:errBackend")}
-    finally{if(mounted.current&&id===loadId.current)setLoading(false)}
+     const selected=controller.snapshot.selection??preferredSelection(savedProvider(scope),value.providers);
+     setSelection(selected);
+     if(forStart){
+      const provider=value.providers.find(p=>p.id===selected.provider);
+      if(!provider?.available){
+       setTab('call');setOpen(true);setError(provider?.reason||'HL_ERROR:errRequest');return;
+      }
+      return selected;
+     }
+    }catch(cause){
+     if(mounted.current&&id===loadId.current&&sameScope(scope,currentScope())){
+      setError(cause instanceof Error&&cause.message.startsWith('HL_ERROR:')?cause.message:'HL_ERROR:errBackend');
+      if(forStart){setTab('call');setOpen(true)}
+     }
+    }
+    finally{if(mounted.current&&id===loadId.current)setLoadMode(null)}
    };
    const updateDevices=async(value:AudioDevices)=>{
     const before=devices();setError('');
@@ -400,19 +513,47 @@ export default {
    };
    const start=async()=>{
     if(voiceMode.paused||voiceMode.busy||!['idle','error'].includes(controller.snapshot.status))return;
-    setError('');setOpen(false);callOwner=currentScope();await controller.start(savedSelection());
+    const scope=currentScope(), generation=stopGeneration;
+    const selected=await load(true);
+    if(!selected||!mounted.current||generation!==stopGeneration||!sameScope(scope,currentScope())||!apiScopeMatches(scope))return;
+    if(voiceMode.paused||voiceMode.busy||!['idle','error'].includes(controller.snapshot.status))return;
+    setOpen(false);callOwner=scope;await controller.start(selected);
    };
    const provider=catalog.find(p=>p.id===selection.provider);const seconds=state.startedAt?Math.floor((now-state.startedAt)/1000):0;
    const key=usageKey(currentScope());const usage=ledger&&ledgerKey===key?ledger.data:ctx.storage.get<UsageData>(key,emptyUsage());
    const readQuota=async()=>{const scope=currentScope();if(!apiScopeMatches(scope))throw new Error("HL_ERROR:errScope");const value=await ctx.rest<Quota>('/codex/usage',{timeoutMs:40000});if(!sameScope(scope,currentScope()))throw new Error("HL_ERROR:errScope");return value};
    const label=state.muted&&state.status==='listening'?t('muted'):{idle:t('idle'),connecting:t('preparing'),listening:t('listening'),speaking:t('speaking'),thinking:t('thinking'),error:t('errorStatus')}[state.status];
    const wakeLabel=voiceMode.paused?c(voiceMode.failed?(voiceMode.intent==='pause'?'pauseFailed':'resumeFailed'):'pausedVoice'):!wake.enabled?t('wakeOff'):wake.state==='armed'?t('wakeArmed',wake.config?.phrase??'…'):t(wake.state==='empty'?'wakeEmpty':wake.state==='warming'?'wakeWarming':wake.state==='calling'?'wakeCalling':wake.state==='rearming'?'wakeRearming':'wakeSuspended');
-   const discStyle={height:primarySize,width:primarySize,padding:0,borderRadius:999,boxShadow:'0 2px 8px #0003'};
-   return <span role="group" aria-label={t('call')} style={{order:1,display:'inline-flex',alignItems:'center',flexShrink:0}}>
-    <HoverControls label={t('callSettings')} holdOpen={open} tip={active?t('actionTip',label,state.status==='connecting'?t('cancel'):t('end')):wakeLabel} primary={<Button type="button" variant={active?'default':'ghost'} size={active?'sm':'icon'} aria-label={active?(state.status==='connecting'?t('cancelConnection'):t('endCall')):t('wakeToggle')} aria-pressed={active||wake.enabled} aria-busy={state.status==='connecting'} disabled={voiceMode.busy} onClick={()=>{if(active)stop();else if(voiceMode.paused)void changeVoiceMode();else if(wake.enabled){ctx.storage.set('hands-free-enabled',false);void wake.enable(false)}else void (async()=>{try{const scope=currentScope();if(!apiScopeMatches(scope))await host.ensureAgent(scope.connection==='local'?null:scope.connection,scope.profile);const ready=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});if(!basicReady(ready)){openSetup();return}ctx.storage.set('hands-free-enabled',true);await wake.enable(true);if(wake.state==='suspended')openSetup()}catch{openSetup()}})()}} style={{height:active?primarySize:controlSize,width:active?undefined:controlSize,padding:active?'0 12px':0,gap:6,borderRadius:999,color:!active&&wake.enabled?'var(--dt-primary-solid)':undefined}}>{active?<><CallWave state={state}/><span>{state.status==='connecting'?t('preparing'):t('end')}</span></>:<Icon name="wake"/>}</Button>
-    }>
-    {!active&&<Tip label={t('startTip',providerName(selection.provider),selection.voice)} placement="control"><Button type="button" variant="default" size="icon" aria-label={t('start')} disabled={voiceMode.paused||voiceMode.busy} onClick={()=>void start()} style={discStyle}><icons.AudioLines className={icons.iconSize.sm}/></Button></Tip>}
-    <Tip label={c(voiceMode.paused?'resumeVoice':'pauseVoice')} placement="control"><Button type="button" variant="secondary" size="icon" disabled={voiceMode.busy} aria-label={c(voiceMode.failed?'refresh':voiceMode.paused?'resumeVoice':'pauseVoice')} onClick={()=>void changeVoiceMode()} style={discStyle}><Icon name={voiceMode.paused?'wake':'muted'}/></Button></Tip>
+   const toggleWake=async()=>{
+    if(voiceMode.busy||active)return;
+    if(voiceMode.paused){await changeVoiceMode();return}
+    if(wake.enabled){ctx.storage.set('hands-free-enabled',false);await wake.enable(false);return}
+    try{
+     const scope=currentScope();
+     if(!apiScopeMatches(scope))await host.ensureAgent(scope.connection==='local'?null:scope.connection,scope.profile);
+     const ready=await ctx.rest<SetupState>('/setup',{timeoutMs:30000});
+     if(!basicReady(ready)){openSetup();return}
+     ctx.storage.set('hands-free-enabled',true);await wake.enable(true);
+     if(wake.state==='suspended')openSetup();
+    }catch{openSetup()}
+   };
+   const discStyle={height:primarySize,width:primarySize,padding:0,borderRadius:999};
+   const toggleCall=()=>{
+    if(checkingStart){++loadId.current;setLoadMode(null);return}
+    if(active)stop();else void start();
+   };
+   const connecting=state.status==='connecting';
+   const callLabel=connecting||checkingStart?t('cancelConnection'):active?t('endCall'):t('start');
+   return <span role="group" aria-label={t('call')} style={{display:'inline-flex',alignItems:'center',flexWrap:'wrap',maxWidth:'100%',gap:4}}>
+    <Tip label={checkingStart?t('cancelConnection'):active?t('actionTip',label,connecting?t('cancel'):t('end')):(savedSelection()||catalog.length?t('startTip',providerName(selection.provider),selection.voice):t('start'))} placement="control">
+     <Button type="button" variant="default" size="sm" aria-label={callLabel} aria-busy={connecting||loading}
+      disabled={voiceMode.busy||(!active&&(voiceMode.paused||loadMode==='settings'))} onClick={toggleCall}
+      style={{minHeight:primarySize,borderRadius:999,padding:'3px 10px',maxWidth:'100%',whiteSpace:'normal',
+       backgroundColor:'var(--dt-primary-solid, ButtonText)',color:'var(--dt-primary-solid-foreground, ButtonFace)'}}>
+      {active?<CallWave state={state}/>:<Icon name="live"/>}
+      <span>{active?(connecting?t('cancel'):t('end')):checkingStart?t('cancel'):t('start')}</span>
+     </Button>
+    </Tip>
     {active&&<Tip label={state.muted?t('unmute'):t('mute')} placement="control"><Button type="button" variant={state.muted?'default':'secondary'} size="icon" aria-label={state.muted?t('unmute'):t('mute')} aria-pressed={state.muted} onClick={()=>controller.mute()} style={discStyle}><Icon name={state.muted?'muted':'mic'}/></Button></Tip>}
     <Popover open={open} onOpenChange={(v:boolean)=>{setOpen(v);if(v)void load()}}>
     <Tip label={t('settingsHint')} placement="control"><PopoverTrigger asChild><Button type="button" variant="secondary" size="icon" aria-label={t('callSettings')} style={discStyle}><Icon name="settings"/></Button></PopoverTrigger></Tip>
@@ -424,7 +565,7 @@ export default {
      </header>
      <div style={{padding:16,minHeight:0,overflowY:'auto',display:'grid',gap:16}}>
      {tab==='audio'&&<>{error&&<p role="alert">{setupError(locale,error)||localizeError(t,error)}</p>}<DeviceSettings value={deviceChoice} active={active||voiceMode.paused||voiceMode.busy} onChange={value=>void updateDevices(value)}/></>}
-     {tab==='wake'&&<><Button onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button>{wake.error&&<p role="alert">{setupError(locale,wake.error)||localizeError(t,wake.error)}</p>}<p role="status" style={{...hint,margin:0}}>{wakeLabel}</p><WakeSettings key={scopeKey} rest={ctx.rest} changed={()=>void wake.tick()} local={!host.state.connectionId.get()||host.state.connectionId.get()==='local'}/></>}
+     {tab==='wake'&&<><Button type="button" variant="secondary" aria-pressed={wake.enabled} disabled={active||voiceMode.busy} onClick={()=>void toggleWake()}><Icon name="wake"/>{t('wakeToggle')}</Button><Button onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button>{wake.error&&<p role="alert">{setupError(locale,wake.error)||localizeError(t,wake.error)}</p>}<p role="status" style={{...hint,margin:0}}>{wakeLabel}</p><WakeSettings key={scopeKey} rest={ctx.rest} changed={()=>void wake.tick()} local={!host.state.connectionId.get()||host.state.connectionId.get()==='local'}/></>}
      {tab==='usage'&&<UsageSettings key={scopeKey} data={usage} selection={selection} readQuota={readQuota}/>}
      {tab==='call'&&<><Button variant="ghost" onClick={()=>{setOpen(false);openSetup()}}>{setupCopy(locale)('title')}</Button><div style={{display:'grid',gap:12}}>
       <FieldSelect label={t('provider')} value={selection.provider} disabled={active||loading} options={(catalog.length?catalog:[{id:selection.provider,available:true}]).map(p=>({value:p.id,label:providerName(p.id)+(p.available?'':` · ${t('setupNeeded')}`)}))} onChange={value=>{const p=catalog.find(p=>p.id===value);if(p)change({provider:p.id,model:p.models[0]!.id,voice:p.voices[0]!})}}/>
@@ -440,8 +581,8 @@ export default {
      </div>
      {tab==='call'&&<footer style={{...mutedStyle,padding:'12px 16px',borderTop:divider,flexShrink:0}}>{selection.provider==='codex'?t('subscriptionNotice'):t('apiNotice')}<br/>{t('endExisting')}</footer>}
     </PopoverContent>
-   </Popover></HoverControls><span role="status" className="sr-only">{active?label:state.error?localizeError(t,state.error):wakeLabel}</span></span>;
+   </Popover><span role="status" className="sr-only">{active?label:state.error?localizeError(t,state.error):wakeLabel}</span></span>;
   }
-  ctx.register({id:'call',area:COMPOSER_AREAS.actions,order:20,render:()=> <LiveButton/>});
+  ctx.register({id:'call',area:COMPOSER_AREAS.underside,order:20,render:()=> <LiveButton/>});
  }
 };

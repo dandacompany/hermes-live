@@ -5,8 +5,8 @@ export function wakeBotReady(scope:Scope,target:string,connection:string,expecte
  return scope.profile===target&&scope.connection===connection&&Boolean(scope.session)&&focusedStored===expectedStored;
 }
 interface Navigation {
- routes():Promise<Route[]>;
- activate(route:Route):Promise<void>;
+ activate?(route:Route):Promise<void>;
+ retain?(route:Route):Promise<()=>void>;
  isSelected(stored:string,route:Route):boolean;
  request<T>(route:Route,method:string,params:Record<string,unknown>):Promise<T>;
  revealPane?(id:string):void;
@@ -16,30 +16,55 @@ interface Navigation {
 }
 interface BotChat {id:string;resolved_id?:string;title?:string;root_title?:string;message_count?:number;live_message_count?:number}
 /** Use the same exact-title registry as a Bots row click; never a remembered side thread. */
-export async function openWakeBot(deps:Navigation,target:string,connection:string,name:string,current:()=>boolean):Promise<string>{
+export async function openWakeBot(deps:Navigation & {routes():Promise<Route[]>;activate(route:Route):Promise<void>},target:string,connection:string,name:string,current:()=>boolean):Promise<string>{
  const check=()=>{if(!current())throw new Error('HL_ERROR:errScope')};
  const routes=await deps.routes();check();
  const route=routes.find(r=>r.profile===target&&r.connectionId===connection&&r.mode!=='remote');
  if(!route)throw new Error('HL_ERROR:errScope');
+ return openCanonicalBot(deps,route,name,current);
+}
+
+export async function openCanonicalBot(deps:Navigation,route:Route,name:string,current:()=>boolean):Promise<string>{
+ const target=route.profile;
+ const check=()=>{if(!current())throw new Error('HL_ERROR:errScope')};
+ check();
  if(!deps.revealPane||!deps.paneVisible||!deps.openSession)throw new Error('HL_ERROR:errBotsView');
  deps.revealPane('hermes-bots:pane');check();
  if(!deps.paneVisible('hermes-bots:pane'))throw new Error('HL_ERROR:errBotsView');
- const result=await deps.request<{sessions:BotChat[]}>(route,'session.list',{profile:route.targetProfile||target,title:'Bot Chat',include_hidden:true,limit:200});check();
- if(!Array.isArray(result?.sessions)||result.sessions.length>1)throw new Error('HL_ERROR:errScope');
- const row=result.sessions[0];
- if(row&&(!row.id||(row.root_title||row.title)!=='Bot Chat'))throw new Error('HL_ERROR:errScope');
+ const profile=route.targetProfile||target;
+ const lookup=async()=>{
+  const result=await deps.request<{sessions:BotChat[]}>(route,'session.list',{profile,title:'Bot Chat',include_hidden:true,limit:200});check();
+  if(!Array.isArray(result?.sessions)||result.sessions.length>1)throw new Error('HL_ERROR:errScope');
+  const row=result.sessions[0];
+  if(result.sessions.length&&(!row||typeof row.id!=='string'||!row.id||(row.root_title||row.title)!=='Bot Chat'))throw new Error('HL_ERROR:errScope');
+  return row;
+ };
+ let row=await lookup();
  let stored:string|undefined=row?.resolved_id||row?.id;
  if(!stored){
-  // Hermes >=0.23 atomically resolves or creates this exact title, including concurrent opens.
-  // A failed lookup never reaches this branch. No untitled/fresh-chat fallback is allowed.
-  const created=await deps.request<{stored_session_id?:string}>(route,'session.create',{profile:route.targetProfile||target,title:'Bot Chat',hidden:true,follow_profile_config:true});check();
-  stored=created.stored_session_id;
+  // A secondary gateway releases lazy runtime sessions when its last request lease closes.
+  const release=await deps.retain?.(route);
+  try{
+   check();
+   const created=await deps.request<{stored_session_id?:string;session_id?:string;info?:{desktop_contract?:unknown}}>(route,'session.create',{profile,title:'Bot Chat',hidden:true,follow_profile_config:true});check();
+   stored=created.stored_session_id;
+   // The TUI gateway returns a lazy draft. Its explicit title RPC persists the hidden row.
+   // A simultaneous creator may already own the title, in which case the registry wins.
+   if(created.info?.desktop_contract!=null){
+    if(!stored||!created.session_id)throw new Error('HL_ERROR:errScope');
+    try{await deps.request(route,'session.title',{session_id:created.session_id,title:'Bot Chat'})}
+    catch(error){if(!/already in use/i.test(String((error as {message?:string})?.message??'')))throw error}
+    check();
+    row=await lookup();
+    stored=row?.resolved_id||row?.id;
+   }
+  }finally{release?.()}
  }
  if(typeof stored!=='string'||!stored)throw new Error('HL_ERROR:errScope');
- await deps.activate(route);check();
+ if(deps.activate){await deps.activate(route);check()}
  const owner=`bot:${route.connectionId}::${route.profile}`;
  deps.label?.(owner,name||target);
- const open=(refresh=false)=>deps.openSession!(stored!,{...(refresh?{refreshInPlace:true}:{}),profile:target,intent:'in-place',workspaceMode:'bots',workspaceOwnerKey:owner,
+ const open=(refresh=false)=>deps.openSession!(stored!,{...(refresh?{refreshInPlace:true}:{}),...(route.mode==='remote'?{route}:{}),profile:target,intent:route.mode==='remote'?'main':'in-place',workspaceMode:'bots',workspaceOwnerKey:owner,
   tabTitle:'Bot Chat',keepAllProfilesScope:true,awaitHydration:true,forceResume:true,
   expectHistory:(row?.live_message_count??row?.message_count??0)>0,hydrationTimeoutMs:60000,retryHydrationTimeoutOnce:true});
  try{await open()}catch(error){

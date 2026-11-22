@@ -2,7 +2,7 @@
 from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
-import fcntl
+from pm.filesystem import lock_fd
 import json
 import math
 import os
@@ -36,9 +36,8 @@ class Journal:
     def disk(self):
         self.root.mkdir(parents=True,exist_ok=True,mode=0o700)
         with os.fdopen(os.open(self.root/'journal.lock',os.O_CREAT|os.O_RDWR,0o600),'a') as f:
-            fcntl.flock(f,fcntl.LOCK_EX)
-            try:yield
-            finally:fcntl.flock(f,fcntl.LOCK_UN)
+            lock_fd(f.fileno(), wait=True)
+            yield
     def recording_state(self):
         try:
             state=json.loads((self.root/'recording.json').read_text())

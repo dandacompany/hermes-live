@@ -1,15 +1,28 @@
 """Best-effort preparation of enabled LOCAL bots, without changing Desktop's active profile."""
 from concurrent.futures import ThreadPoolExecutor
+from importlib import import_module
 from pathlib import Path
 import threading
 import time
 from urllib.parse import urlparse
 
 
+def native_transport():
+    try:
+        runtime = import_module('hermes_cli.gateway_runtime')
+        client = import_module('hermes_cli.gateway_client')
+    except ModuleNotFoundError as exc:
+        if exc.name not in ('hermes_cli.gateway_runtime', 'hermes_cli.gateway_client'):
+            raise
+        return None
+    discover = getattr(runtime, 'discover_gateway_endpoint', None)
+    ticket = getattr(client, '_session_ticket', None)
+    return (discover, ticket) if callable(discover) and callable(ticket) else None
+
+
 def warm_profile(home):
     import httpx
-    from hermes_cli.gateway_runtime import discover_gateway_endpoint
-    from hermes_cli.gateway_client import _session_ticket
+    discover_gateway_endpoint, _session_ticket = native_transport()
     endpoint = discover_gateway_endpoint(Path(home)).endpoint
     # Preparation never launches gateways or reaches remote connections.
     if not endpoint or urlparse(endpoint.api_origin).hostname not in ('localhost','127.0.0.1','::1'):
