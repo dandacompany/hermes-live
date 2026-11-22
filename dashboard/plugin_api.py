@@ -35,6 +35,11 @@ sys.modules[_confirm_spec.name]=confirmation
 _confirm_spec.loader.exec_module(confirmation)
 
 router = APIRouter()
+_mailbox_spec = importlib.util.spec_from_file_location(__name__ + '_mailbox', Path(__file__).with_name('compat_mailbox.py'))
+_mailbox = importlib.util.module_from_spec(_mailbox_spec)
+_mailbox_spec.loader.exec_module(_mailbox)
+router.add_api_route('/control-mailbox/prepare', _mailbox.prepare, methods=['POST'])
+router.add_api_websocket_route('/control-mailbox', _mailbox.exchange)
 PROVIDERS = {
     'codex': {
         'name':'Codex 구독 · GPT Live',
@@ -433,6 +438,8 @@ class WakeRequest(BaseModel):
 
 
 def wake_config(*, preparing=False):
+    if not assets_module.wake_supported():
+        raise HTTPException(503, 'HL_SETUP:unsupportedPlatform')
     cfg = wake_settings()
     if not preparing and not cfg.get('wake_enabled', False):
         raise HTTPException(403, 'Hands-free calling is not configured for this profile')
@@ -548,13 +555,40 @@ def wake_prewarm(response: Response):
     response.headers['Cache-Control'] = 'no-store'
     from hermes_cli.profiles import list_profiles
     selected={target['target'] for target in wake_config()['targets']}
-    homes=[profile.path for profile in list_profiles(lazy_skill_count=True) if profile.name in selected]
+    profiles=[p for p in list_profiles(lazy_skill_count=True) if p.name in selected]
+    if prewarm.native_transport() is None:
+        from hermes_cli.install_identity import get_install_id
+        install_id = get_install_id()
+        if not install_id:
+            raise HTTPException(503, 'Local installation identity unavailable')
+        return {'scheduled':0, 'desktop':{'installId':install_id,'profiles':[p.name for p in profiles]}}
+    homes=[profile.path for profile in profiles]
     prewarm.targets.refresh(homes)
     return {'scheduled':len(homes)}
+
+class PrewarmTarget(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    installId: str = Field(pattern=r'^[a-f0-9]{32}$')
+    profile: str = Field(pattern=r'^[a-z0-9][a-z0-9_-]{0,63}$')
+
+
+@router.post('/wake/prewarm-target')
+def wake_prewarm_target(body: PrewarmTarget, response: Response):
+    from hermes_cli.install_identity import get_install_id
+    from hermes_cli.profiles import profile_matches_home
+    response.headers['Cache-Control'] = 'no-store'
+    if get_install_id() != body.installId or not profile_matches_home(body.profile):
+        raise HTTPException(409, 'Wake target changed')
+    if not any(t['target'] == body.profile for t in wake_config()['targets']):
+        raise HTTPException(409, 'Wake target disabled')
+    return codex.sessions.prewarm()
 
 # Setup remains readable before wake is enabled. The host scopes these routes to
 # the selected backend/profile; the Desktop only offers wake setup on local routes.
 def setup_devices():
+    if not assets_module.wake_supported():
+        # Manual calls enumerate devices in Desktop, on the user's computer.
+        return {'devices': [], 'duplicates': [], 'error': 'unsupportedPlatform'}
     try:
         import sounddevice as sd
         import numpy
@@ -573,7 +607,7 @@ def get_setup(response: Response):
                'engine':bool(assets_module.assets().engine()),'installed':False,'prepared':False,
                'model':str(cfg.get('wake_whisper_model') or 'small'),'bytes':0,'source':'managed','progress':{}}
     return {'assets':model,'audio':setup_devices(),'device':cfg.get('wake_input_device',''),
-            'enabled':bool(cfg.get('wake_enabled',False)), 'legacy':all(cfg.get('wake_whisper_'+k) for k in ('node','module','models','engine')) and not cfg.get('wake_managed'),
+            'enabled':assets_module.wake_supported() and bool(cfg.get('wake_enabled',False)), 'legacy':all(cfg.get('wake_whisper_'+k) for k in ('node','module','models','engine')) and not cfg.get('wake_managed'),
             'configured':assets_module.read_json(setup_path()).get('configured',False)}
 
 class SetupRequest(BaseModel):

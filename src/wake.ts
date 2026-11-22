@@ -15,6 +15,7 @@ interface Dependencies {
 export class WakeCoordinator {
  readonly owner=crypto.randomUUID();enabled=false;state='off';config:WakeConfig|null=null;error='';
  private deps:Dependencies;private held=false;private handling=false;private ticking=false;
+ private leavingLocal=false;
  private generation=0;private queue=Promise.resolve();private seen=new Set<string>();private due=0;private calling=false;
  constructor(deps:Dependencies){this.deps=deps}
  private trace(event:string,fields:DiagnosticFields){try{this.deps.diagnostic?.(event,{owner:this.owner,...fields})}catch{}}
@@ -29,7 +30,7 @@ export class WakeCoordinator {
   await this.tick();
  }
  async tick(){
-  if(!this.enabled||this.handling||this.ticking||Date.now()<this.due)return;
+  if(this.leavingLocal||!this.enabled||this.handling||this.ticking||Date.now()<this.due)return;
   if(!this.deps.local()){this.held=false;this.set('suspended');return}
   if(this.calling&&!this.held){this.set('calling');return}
   this.ticking=true;const generation=this.generation;
@@ -50,7 +51,7 @@ export class WakeCoordinator {
   finally{this.ticking=false}
  }
  async detected(event:WakeEvent){
-  if(!this.enabled||this.handling||this.calling||!this.deps.local()||event.owner!==this.owner||!event.eventId||!(this.config?.targets?.some(t=>t.target===event.target)??event.target===this.config?.target)||this.seen.has(event.eventId))return;
+  if(this.leavingLocal||!this.enabled||this.handling||this.calling||!this.deps.local()||event.owner!==this.owner||!event.eventId||!(this.config?.targets?.some(t=>t.target===event.target)??event.target===this.config?.target)||this.seen.has(event.eventId))return;
   this.handling=true;const generation=this.generation;
   this.seen.add(event.eventId);if(this.seen.size>128)this.seen.delete(this.seen.values().next().value!);
   const current=()=>this.enabled&&generation===this.generation&&this.deps.local();
@@ -113,8 +114,19 @@ export class WakeCoordinator {
   try{await this.command('release');this.held=false}
   catch(error){this.error=String(error);this.set('suspended');throw error}
  }
+ /** Keep an in-flight local arm/heartbeat on its original backend until the
+  * lease is released. Preserve the user's listening preference across the swap. */
+ async withLocalWakeReleased(activate:()=>Promise<void>){
+  if(this.handling||this.leavingLocal)throw new Error('HL_ERROR:errBusy');
+  this.leavingLocal=true;
+  try{
+   while(this.ticking)await new Promise(resolve=>setTimeout(resolve,25));
+   if(this.deps.local())await this.releaseForNavigation();
+   await activate();
+  }finally{this.leavingLocal=false}
+ }
  async suspend(){
-  if(!this.enabled)return;
+  if(!this.enabled||!this.deps.local())return;
   if(this.held)await this.command('pause');
   this.calling=true;this.set('calling');
  }

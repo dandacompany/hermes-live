@@ -1,9 +1,10 @@
 name: hermes-live
-version: 0.12.1
-requires_hermes: '>=0.23.0'
+version: 0.12.5
+requires_hermes: '>=0.22.0'
 python_dependencies:
-  - 'numpy>=2,<3; platform_system == "Darwin"'
-  - 'sounddevice>=0.5,<0.6; platform_system == "Darwin"'
+  - 'pywin32>=306,<312; sys_platform == "win32"'
+  - 'numpy>=2,<3; platform_system == "Darwin" and platform_machine == "arm64"'
+  - 'sounddevice>=0.5,<0.6; platform_system == "Darwin" and platform_machine == "arm64"'
 description: Gemini, Grok, Qwen, and Codex subscription live voice calls beside the Hermes Desktop composer.
 author: Dante Labs
 config_schema:

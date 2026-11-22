@@ -3,3 +3,9 @@ export interface SetupState {assets:SetupAssets;audio:{devices:string[];duplicat
 export const preparingModel=(value?:SetupAssets)=>['downloading','verifying','preparing'].includes(value?.progress?.state??'');
 export function basicReady(value:SetupState|null){return Boolean(value?.assets.supported&&value.assets.engine&&value.assets.installed&&value.device&&value.enabled&&!value.audio.error&&value.audio.devices.includes(value.device)&&!value.audio.duplicates.includes(value.device))}
 export function setupSteps(mode:'wake'|'call'){return mode==='wake'?[0,1,2,3,4,5,6]:[0,2,4,6]}
+
+type SetupPosition = {mode: 'wake' | 'call'; step: number};
+
+export function setupForPlatform(position: SetupPosition, supportsWake: boolean): SetupPosition {
+  return !supportsWake && position.mode === 'wake' ? {mode: 'call', step: 0} : position;
+}

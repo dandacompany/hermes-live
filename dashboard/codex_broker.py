@@ -86,7 +86,7 @@ class AppServer:
                  '-c', 'features.apps=false', '-c', 'features.hooks=false',
                  '-c', 'suppress_unstable_features_warning=true'],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                text=True, bufsize=1, env=child_env(), cwd=self.workdir.name)
+                text=True, encoding='utf-8', bufsize=1, env=child_env(), cwd=self.workdir.name)
         threading.Thread(target=self._read, args=(self.proc,), daemon=True).start()
         self.request('initialize', {'clientInfo': {'name':'hermes-live','version':'0.9.0'},
                                     'capabilities': {'experimentalApi':True}}, 15)
@@ -220,8 +220,13 @@ class Sessions:
         self.lock = threading.RLock()
         self.calls = {}
         self.cancelled = {}
-        self.warm = None
+        self._warm_by_home = {}
         self.closed = False
+
+    @property
+    def warm(self):
+        from hermes_constants import get_hermes_home
+        return self._warm_by_home.get(str(get_hermes_home()))
 
     def _prepare(self, server):
         server.start()
@@ -247,24 +252,27 @@ class Sessions:
         with self.lock:
             if self.closed:
                 return {'state':'off'}
-            if self.warm is not None:
-                self.warm['expires'] = self.clock()+45
-                return {'state':'ready' if self.warm['ready'] else 'warming'}
+            from hermes_constants import get_hermes_home
+            home = str(get_hermes_home())
+            existing = self._warm_by_home.get(home)
+            if existing is not None:
+                existing['expires'] = self.clock()+45
+                return {'state':'ready' if existing['ready'] else 'warming'}
             server = self.factory()
             item = {'server':server, 'thread':None, 'ready':False,
                     'created':self.clock(), 'expires':self.clock()+45}
-            self.warm = item
+            self._warm_by_home[home] = item
             def prepare():
                 try:
                     thread_id = self._prepare(server)
                     with self.lock:
-                        if self.warm is item and not self.closed and item['expires']>self.clock():
+                        if self._warm_by_home.get(home) is item and not self.closed and item['expires']>self.clock():
                             item.update(thread=thread_id, ready=True)
                             return
                 except Exception:
                     pass  # Warmup is optional; never expose upstream auth/context.
                 with self.lock:
-                    if self.warm is item:self.warm = None
+                    if self._warm_by_home.get(home) is item:self._warm_by_home.pop(home)
                 server.close()
             worker = threading.Thread(target=prepare, name='hermes-live-prewarm', daemon=True)
             item['worker'] = worker
@@ -275,9 +283,9 @@ class Sessions:
         with self.lock:
             expired = [key for key, call in self.calls.items() if call['expires'] < self.clock()]
             self.cancelled = {key:expiry for key,expiry in self.cancelled.items() if expiry > self.clock()}
-            old = self.warm if self.warm and (self.warm['expires']<=self.clock() or self.clock()-self.warm['created']>=300 or self.warm['server'].closed) else None
-            if old:self.warm = None
-        if old:old['server'].close()
+            old = [self._warm_by_home.pop(home) for home, item in list(self._warm_by_home.items())
+                   if item['expires'] <= self.clock() or self.clock()-item['created'] >= 300 or item['server'].closed]
+        for item in old:item['server'].close()
         for key in expired:
             self.stop(key)
 
@@ -288,11 +296,12 @@ class Sessions:
                 raise BrokerError('종료되었거나 중복된 통화입니다.', 'call_unavailable')
             if len(self.calls) >= 2:
                 raise BrokerError('진행 중인 Codex 통화를 먼저 종료하세요.', 'call_limit')
-            prepared = self.warm if self.warm and self.warm['ready'] else None
-            if prepared:self.warm = None  # An unused thread is transferred to exactly one call.
-            server = prepared['server'] if prepared else self.factory()
             from hermes_constants import get_hermes_home
-            call = {'server':server, 'home':str(get_hermes_home()), 'ready':False, 'expires':self.clock()+100, 'thread':prepared['thread'] if prepared else None}
+            home = str(get_hermes_home())
+            standby = self._warm_by_home.get(home)
+            prepared = self._warm_by_home.pop(home) if standby and standby['ready'] else None
+            server = prepared['server'] if prepared else self.factory()
+            call = {'server':server, 'home':home, 'ready':False, 'expires':self.clock()+100, 'thread':prepared['thread'] if prepared else None}
             self.calls[call_id] = call
         try:
             if call['thread'] is None:
@@ -349,8 +358,8 @@ class Sessions:
         with self.lock:
             self.closed = True
             ids = list(self.calls)
-            prepared, self.warm = self.warm, None
-        if prepared:prepared['server'].close()
+            prepared, self._warm_by_home = self._warm_by_home, {}
+        for item in prepared.values():item['server'].close()
         for key in ids:
             self.stop(key)
 

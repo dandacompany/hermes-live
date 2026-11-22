@@ -1,6 +1,6 @@
-> **Hermes Live 0.12.1** — 이름 호출에는 Apple Silicon Mac이 필요합니다. 귀 아이콘에 마우스를 올리거나 포커스한 뒤 **음성 기능 잠시 쉬기**를 누르면 Live 통화와 호출 대기가 종료됩니다. Hermes 기본 음성·받아쓰기를 마친 후 **호출 대기 재개**를 누르세요. 일시정지는 새로고침 후에도 유지되며 봇·목소리·마이크·자동 시작 선호는 보존합니다. 기본 음성 사용을 자동 감지하지 않습니다.
+> **Hermes Live 0.12.5** — 이름 호출에는 Apple Silicon Mac이 필요합니다. Live 통화 버튼 옆 설정에서 **음성 기능 잠시 쉬기**를 누르면 Live 통화와 호출 대기가 종료됩니다. Hermes 기본 음성·받아쓰기를 마친 후 **호출 대기 재개**를 누르세요. 일시정지는 새로고침 후에도 유지되며 봇·목소리·마이크·자동 시작 선호는 보존합니다. 기본 음성 사용을 자동 감지하지 않습니다.
 
-> 첫 설정: **설정 → 플러그인 → Hermes Live**에서 봇 선택 → 계정 → 호출 모델 → 마이크 → 직접 해보기 순서로 준비합니다. 버튼 통화만 사용하면 호출 모델을 받지 않습니다. 이름 호출은 Apple Silicon Mac / Hermes 0.23.0 이상을 지원합니다.
+> 첫 설정: **설정 → 플러그인 → Hermes Live**에서 봇 선택 → 계정 → 호출 모델 → 마이크 → 직접 해보기 순서로 준비합니다. 버튼 통화만 사용하면 호출 모델을 받지 않습니다. 이름 호출은 Apple Silicon Mac / Hermes 0.22.0 이상을 지원합니다.
 > 모델이 있으면 검증해 재사용하고, 없으면 약 488 MB Whisper Small을 내려받습니다. 실행 엔진은 포함되어 BotIn·Node.js·개발 도구 설치가 필요 없습니다. 다운로드 취소·재시도, 로그인·권한 안내를 제공합니다.
 > 호출은 **헤이 {이름}**, 종료는 **바이 {이름} / Bye {이름}**입니다. 로컬 호출 테스트와 실제 구독 통화 테스트를 구분하며, 대기는 마지막에 직접 시작합니다. 기존 봇·목소리·모델 설정은 유지합니다. 자세한 설치 조건과 저장 위치는 [README](README.md#first-use-setup)를 참고하세요.
 
@@ -12,9 +12,18 @@ English: [README.md](./README.md)
 
 공식 앱을 수정하거나 다시 빌드하지 않고 입력란에 통화 버튼을 추가합니다. 최근 채팅 맥락을 음성 모델에 전달하며, 파일 확인이나 작업 요청은 현재 Hermes 채팅에 위임합니다. 마이크·스피커 선택, 음소거, 실시간 자막, 제공자별 사용량과 예상 요금을 지원합니다.
 
-귀 아이콘에 마우스를 올리거나 키보드로 포커스하면 Live 통화·설정 버튼이 펼쳐집니다. 대기 상태는 툴팁과 이름 호출 설정에서 확인하며, 통화 중 종료 버튼은 계속 표시합니다.
+입력란 아래에 Live 통화 시작 버튼과 설정 버튼이 항상 표시됩니다. 이름 호출 대기는 설정의 호출 탭에서 켜고 끌 수 있습니다. 통화 중에는 같은 자리에서 음소거하거나 통화를 종료할 수 있습니다.
 
 이름을 부르면 Sessions 화면에서도 Bots 탭으로 전환하고, 해당 봇의 고정 Bot Chat을 연 뒤 통화를 시작합니다. 기존 세션 탭은 유지하며 Desktop에서 Bots가 켜져 있어야 합니다.
+
+## 0.12.1 이후 변경 사항
+
+- **0.12.2 · 원격 봇.** Switchboard에서 등록된 원격 연결과 프로필의 Bot Chat을 열고, 음성 키로 해당 봇의 통화를 시작하거나 종료할 수 있습니다. 구형 Desktop에서는 앱을 실행하는 컴퓨터에서 덱을 한 번 페어링하세요.
+- **0.12.3 · Hermes 0.22.0 이상 지원.** 입력란 아래에 Live 통화 버튼이 항상 표시됩니다. 바로 옆 설정에서 공급자·모델·목소리를 고를 수 있습니다.
+- **0.12.4 · 첫 사용.** ZIP은 Desktop 플러그인을 장비당 한 번, 백엔드를 선택한 프로필마다 설치합니다. Desktop 스위치는 처음에 켜지고, 직접 끈 선택을 기억합니다. 저장한 공급자가 없으면 현재 프로필에서 사용 가능한 Codex 구독을 선택하고, 사용할 수 없으면 Gemini Live를 사용합니다. API 키가 없는 상태에서 시작을 누르면 통화 설정에 키 설정 버튼이 나타납니다.
+- **0.12.5 · Windows 설치.** 설치 파일이 대상 폴더의 권한을 상속해 관리자 셸로 설치한 뒤에도 일반 사용자 세션의 Desktop과 게이트웨이가 읽을 수 있습니다. Windows와 macOS·Linux 설치 예시는 `hermes -p`로 선택한 프로필과 `HERMES_HOME`을 직접 지정하는 방법을 모두 안내합니다.
+
+Hermes 0.22.0·0.23.3 macOS VM에서 0.12.4 ZIP의 Desktop 활성화, 컴포저 버튼, 키 미설정 안내를 확인했습니다. Hermes 0.22.5 Windows Server에서는 0.12.5 ZIP을 관리자 셸로 설치한 뒤 일반 사용자 세션에서 파일을 읽고 Live 버튼과 Codex 구독이 선택된 설정 패널을 확인했습니다. 실제 음성 통화와 네이티브 앱의 한국어 라벨은 이번 실기 검증 범위 밖입니다.
 
 ## 0.12.1 변경 사항
 
@@ -94,42 +103,75 @@ Hermes Desktop의 기본 선택 상자와 탭을 사용하는 v0.9.0 설정 화�
 
 ## 요구 사항
 
-- Hermes Desktop 및 백엔드 v0.23.0 이상
+- Hermes Desktop 및 백엔드 v0.22.0 이상
 - 제공자 API 키 또는 백엔드 컴퓨터에 로그인한 Codex CLI의 ChatGPT 구독 계정
 - 마이크 권한
-- macOS에서 검증했습니다. Windows·Linux와 원격 백엔드의 전체 실통화는 아직 검증하지 않았습니다.
+- Hermes v0.22.0과 v0.23.3의 호스트 계약, Hermes v0.22.5 Windows Server의 설치 및 수동 통화 설정을 확인했습니다.
+
+### 구형 Desktop에서 Switchboard 연결
+
+Desktop에 플러그인 파일 API가 있으면 Switchboard v2 덱이 로컬 플러그인 폴더를 자동으로 사용합니다. v0.22.0에서는 **이 기기 → default** 프로필에 Hermes Live를 켜고 **설정 → 플러그인 → Hermes Live → Switchboard → 페어링 파일 준비**를 누른 뒤 표시된 로컬 파일을 한 번 선택하세요. Desktop이 내보낼 수 없는 키를 저장합니다. 이후 등록된 원격 봇으로 전환해도 덱 명령을 받을 수 있습니다. 자신의 Desktop에서 만든 페어링 파일을 선택하세요. 덱은 계속 같은 Desktop 사용자 데이터 폴더 아래의 `plugin-files/data/hermes-live`를 사용합니다.
+
+원격 전용 Desktop 또는 `plugins.isolation: host` 환경에서는 **Desktop을 실행하는 컴퓨터**에서 ZIP을 풀고 `plugins/hermes-live` 폴더에서 다음 명령을 실행하세요. 로컬 Python 환경에 FastAPI, Uvicorn, websockets, cryptography가 필요하며 Windows에서는 pywin32 및 비공개 파일 쓰기 기능을 제공하는 Hermes Python 패키지도 사용합니다.
+
+```text
+python dashboard/compat_mailbox.py
+```
+
+별도 사용자 데이터 폴더를 사용하는 경우 명령 끝에 `--user-data "/절대/경로/Desktop-userData"`를 추가하세요. Windows에서는 Windows 절대 경로를 사용합니다. 이 경로는 기존 Desktop 설정이 있는 **Electron 사용자 데이터 폴더**입니다. **Switchboard → 로컬 페어링 파일 선택**에서 터미널에 표시된 `hermes-live-connector.key`를 선택하세요. 덱을 사용하는 동안 커넥터를 열어 두고 Ctrl+C로 종료합니다. 다음 실행 때도 같은 계정과 경로를 쓰면 페어링을 재사용합니다. 해당 폴더는 이 계정이 소유하고 다른 일반 사용자가 쓸 수 없어야 합니다. Live 버튼 통화와 로컬 v1 링크는 기존 방식으로 동작합니다.
 
 ## 설치
 
-### 방법 A — 복제 후 심볼릭 링크
+### 0.12.5 ZIP 설치
+
+예시의 `mybot`을 설치할 기존 프로필 이름으로 바꾸세요. 기본 프로필은 `default`입니다. ZIP이 있는 폴더에서 실행하면 `hermes -p … config path`로 확인한 프로필에 백엔드를 설치하고 같은 프로필에서 검증·활성화합니다. Desktop 번들은 이 장비의 Hermes 루트 아래 `desktop-plugins/hermes-live`에 한 번 설치하며, 다른 프로필도 같은 버전을 재사용합니다.
+
+**macOS · Linux**
 
 ```sh
-git clone --branch v0.12.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
-mkdir -p ~/.hermes/plugins
-ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
+(
+  set -eu
+  profile=mybot
+  config=$(hermes -p "$profile" config path)
+  profile_home=$(dirname "$config")
+  stage=$(mktemp -d)
+  unzip -q hermes-live-0.12.5.zip -d "$stage"
+  python3 "$stage/install.py" --profile-home "$profile_home"
+  hermes -p "$profile" plugins validate "$profile_home/plugins/hermes-live" --install-deps
+  hermes -p "$profile" plugins enable hermes-live
+  hermes -p "$profile" plugins list
+)
 ```
 
-같은 이름의 설치 경로가 이미 있으면 링크 명령을 실행하지 마세요. 저장소에 빌드된 Desktop 파일이 포함되어 있습니다.
+**Windows PowerShell** (Python 3 필요. `py -3` 대신 설치된 Python 3 실행 파일도 사용 가능)
 
-### 방법 B — GitHub에서 설치
-
-[v0.12.1 릴리스 안내](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.1)의 커밋을 고정한 설치 명령을 사용하세요. 커밋을 지정하지 않으면 저장소 기본 브랜치의 다른 버전이 설치될 수 있습니다.
-
-저장소 직접 설치입니다. 카탈로그는 다른 버전을 제공할 수 있으므로 릴리스의 고정 설치 명령을 사용하세요.
-
-### 검증 및 활성화
-
-```sh
-hermes plugins validate ~/.hermes/plugins/hermes-live
-hermes plugins enable hermes-live
-hermes plugins list
+```powershell
+$profileName = 'mybot'
+$config = hermes -p $profileName config path
+if ($LASTEXITCODE -ne 0 -or !$config) { throw 'Could not resolve Hermes profile' }
+$profileHome = Split-Path -Parent $config
+$stage = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
+Expand-Archive -LiteralPath '.\hermes-live-0.12.5.zip' -DestinationPath $stage -ErrorAction Stop
+py -3 (Join-Path $stage 'install.py') --profile-home $profileHome
+if ($LASTEXITCODE -ne 0) { throw 'Installation stopped' }
+hermes -p $profileName plugins validate (Join-Path $profileHome 'plugins/hermes-live') --install-deps
+if ($LASTEXITCODE -ne 0) { throw 'Validation failed' }
+hermes -p $profileName plugins enable hermes-live
+if ($LASTEXITCODE -ne 0) { throw 'Activation failed' }
+hermes -p $profileName plugins list
 ```
 
-Desktop의 Capabilities → Plugins에서 Rescan을 누르고 **Hermes Live**(공백 포함)를 검색한 뒤 스위치를 켜세요. 상세 화면에서 Desktop 활성화 상태도 확인하세요. 백엔드와 Desktop 활성화는 별개입니다. 백엔드 경로가 변경된 업데이트는 진행 중 작업이 끝난 뒤 백엔드를 재시작해야 합니다.
+Windows에서는 Desktop이나 게이트웨이를 실행하는 사용자 계정에서 설치하세요. 같은 계정의 관리자 셸도 사용할 수 있습니다. 대상 `plugins`와 `desktop-plugins`의 하위 폴더 및 파일에 해당 사용자의 읽기·실행 권한이 상속되어야 합니다. 0.12.5는 두 플러그인을 복사할 때부터 이 권한을 물려받습니다. 관리자 셸에서 설치한 0.12.4에 `Skipping unreadable plugin directory`가 표시되면 아래 업데이트 절차에 따라 Hermes Live 폴더 두 개를 백업하고 재설치하세요.
+
+`HERMES_HOME`을 직접 지정하는 환경에서는 해당 변수를 **대상 프로필의 절대 경로**로 설정한 셸에서 압축을 풀고 `python install.py`를 실행하세요. 이어서 같은 셸에서 `hermes plugins validate <해당 프로필의 plugins/hermes-live 절대 경로> --install-deps`, `hermes plugins enable hermes-live`를 실행합니다. 원격 백엔드는 해당 서버 프로필에 `plugins/hermes-live`를, Desktop은 앱을 실행하는 장비의 Hermes 루트에 `desktop-plugins/hermes-live`를 설치하세요.
+
+**업데이트**할 때는 Desktop을 종료하고 기존 대상 프로필의 `plugins/hermes-live`와 이전 버전의 공용 `desktop-plugins/hermes-live` 폴더 전체를 검색 경로 밖에 백업한 뒤 설치하세요. 0.12.3의 통합 패키지가 있는 다른 프로필도 같은 방식으로 업데이트하세요. 새 설치는 독립 Desktop 플러그인으로 표시되며, **Capabilities → Plugins → Rescan** 후 처음에는 켜져 있습니다. 이전에 직접 껐다면 꺼짐을 유지합니다.
+
+공급자를 고른 적이 없으면 현재 프로필의 `/catalog`에서 사용 가능한 Codex 구독을 기본으로 표시합니다. Codex를 사용할 수 없으면 Gemini Live를 사용합니다. 키가 없는 상태에서 **Live 통화 시작**을 누르면 **통화** 설정에 필요한 키와 설정 버튼이 표시됩니다.
 
 ## 인증과 첫 통화
 
-1. 입력란의 귀 아이콘에 마우스를 올리거나 포커스한 뒤 통화 설정을 엽니다.
+1. 입력란 아래 Live 통화 버튼 옆에서 설정을 엽니다.
 2. Call에서 제공자를 선택하고 Configure API key를 누릅니다.
 3. Hermes의 비밀정보 설정에 해당 키를 입력하고 저장합니다. Qwen은 Workspace ID와 키에 맞는 지역도 설정합니다.
 4. 통화 설정으로 돌아와 Refresh를 누른 다음 통화 버튼을 누릅니다.
@@ -167,6 +209,7 @@ Node.js 24에서 실행합니다.
 npm ci
 npm run typecheck
 npm run build
+python3 scripts/package.py
 hermes plugins validate . --install-deps
 ```
 
@@ -181,7 +224,7 @@ hermes plugins validate . --install-deps
 
 ## 배포 범위와 제한
 
-Apple Silicon Mac과 Hermes 0.23.0 이상을 대상으로 한 직접 설치 배포판입니다. 이번 버전은 카탈로그에 제출하지 않았습니다. 포함된 Whisper 실행 파일은 소스 빌드 방법·라이선스·체크섬을 제공하지만 공개 GitHub Actions 빌드 증명은 아직 없습니다. 프로필·호출 처리에 Hermes 내부 API를 사용하므로 Hermes 업데이트 시 호환성 수정이 필요할 수 있습니다. Codex 구독 경로의 카탈로그 정책 검토도 남아 있습니다.
+Hermes 0.22.0 이상용 직접 설치 배포판입니다. 이름 호출에는 Apple Silicon Mac이 필요합니다. 이번 버전은 카탈로그에 제출하지 않았습니다. 포함된 Whisper 실행 파일은 소스 빌드 방법·라이선스·체크섬을 제공하지만 공개 GitHub Actions 빌드 증명은 아직 없습니다. 프로필·호출 처리에 Hermes 내부 API를 사용하므로 Hermes 업데이트 시 호환성 수정이 필요할 수 있습니다. Codex 구독 경로의 카탈로그 정책 검토도 남아 있습니다.
 
 ---
 [Dante Labs](https://dante-labs.com) · [YouTube @dante-labs](https://youtube.com/@dante-labs) · [Email](mailto:dante@dante-labs.com) · [Discord](https://discord.com/invite/rXyy5e9ujs) · [Support](https://buymeacoffee.com/dante.labs)

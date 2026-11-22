@@ -49,3 +49,19 @@ export function draftVoicePrompt(text:string,context:string):string{
 export function voiceSubmission(session:string,text:string,context:string,submissionId:string){
  return {session_id:session,submission_id:submissionId,text,surface:'voice-live',voice_context:context.slice(-6000),queued:true};
 }
+
+// Validation code 4000 is returned before the legacy gateway enters prompt.submit.
+// A timeout or an admission error can follow a successful submit and must not replay it.
+export async function submitVoiceTurn(
+ request:(fields:Record<string,unknown>)=>Promise<unknown>,
+ params:ReturnType<typeof voiceSubmission>
+){
+ try{await request(params)}
+ catch(error){
+  const rejection=error as {code?:number;message?:string}|null;
+  if((rejection?.code!==undefined&&rejection.code!==4000)||
+     !/^invalid params for prompt\.submit: submission_id: Extra inputs are not permitted(?: —|$)/.test(rejection?.message??''))throw error;
+  const {submission_id,...legacy}=params;
+  await request(legacy);
+ }
+}

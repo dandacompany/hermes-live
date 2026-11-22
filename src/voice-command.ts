@@ -35,6 +35,8 @@ export function withoutVoiceToken(location:string):string{
 export function voiceCommandKey(location:string):string{return param(location,'nonce')??''}
 
 export function parseVoiceCommand(location:string):VoiceCommand|null{
+ const params=new URLSearchParams(location.slice(location.indexOf('?')+1));
+ if(params.has('connectionId')||params.has('v'))return null;
  const one=(key:string)=>param(location,key);
  const action=one('action'),profile=one('profile'),nonce=one('nonce');
  if(!action||!ACTIONS.has(action)||!profile||!PROFILE.test(profile)||!nonce||!NONCE.test(nonce))return null;

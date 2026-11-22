@@ -7,15 +7,16 @@ No transcript, session id or credential is accepted or written.
 from __future__ import annotations
 
 import contextlib
-import fcntl
 import hmac
 import json
 import os
 import re
 import secrets
 import stat
+import sys
 import tempfile
 from pathlib import Path
+from pm.filesystem import lock_fd
 
 STATE_RELATIVE='state/hermes-live/voice-state.json'
 # Shared secret for hermes://hermes-live/voice links: one line, 43 base64url characters, mode 600.
@@ -64,20 +65,40 @@ def validate_report(payload):
 @contextlib.contextmanager
 def _locked(path:Path):
     with open(path.with_name('.voice-state.lock'),'a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX)
-        try:yield
-        finally:fcntl.flock(lock,fcntl.LOCK_UN)
+        lock_fd(lock.fileno(), wait=True)
+        yield
 
 def _atomic_write(path:Path,text:str,prefix:str):
     fd,temp=tempfile.mkstemp(dir=path.parent,prefix=prefix)
     try:
-        with os.fdopen(fd,'w') as out:
+        if sys.platform == 'win32':
+            # Create the private DACL before writing data. Publish the closed file atomically.
+            from hermes_cli.windows_ssh_runtime import write_private_file
+            os.close(fd)
+            write_private_file(Path(temp), text.encode('utf-8'))
+            os.replace(temp, path)
+            return
+        with os.fdopen(fd,'w',encoding='utf-8') as out:
             out.write(text);out.flush();os.fsync(out.fileno())
         os.chmod(temp,0o600);os.replace(temp,path)
     finally:
         if os.path.exists(temp):os.unlink(temp)
 
 def _read_token(path:Path):
+    if sys.platform == 'win32':
+        # Both supported hosts verify owner, DACL and reparse points on the open handle.
+        from hermes_cli.windows_ssh_runtime import _read_shared
+        try:
+            data = _read_shared(path, 65, share=1)  # FILE_SHARE_READ
+        except OSError as error:
+            # A busy file must not rotate a valid token.
+            if getattr(error, 'winerror', None) in (32, 33):
+                raise
+            return None
+        if data is None or len(data) > 64:
+            return None
+        token = data.removesuffix(b'\n').decode('ascii', errors='replace')
+        return token if _TOKEN.fullmatch(token) else None
     try:fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
     except OSError:return None
     try:

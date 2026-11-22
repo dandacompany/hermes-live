@@ -1,4 +1,4 @@
-> **Hermes Live 0.12.1** — name calling requires Apple Silicon macOS. Hover or focus the ear icon → **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
+> **Hermes Live 0.12.5** — name calling requires Apple Silicon macOS. Open the settings beside the Live button and select **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
 
 # hermes-live
 
@@ -8,7 +8,16 @@ Korean documentation: [README.ko.md](./README.ko.md)
 
 A plugin that adds a Live call button next to the Hermes Desktop composer without modifying or rebuilding the official app. Its dedicated call panel supports Gemini Live, Grok Voice, Qwen Realtime, and GPT Live through a Codex subscription, with model and voice selection, transcripts, microphone muting, and call controls.
 
-Hover or focus the ear icon to reveal call and settings controls. Calling a selected name opens that bot in the Bots tab before starting the call. Enable Bots in Desktop; existing Sessions tabs are preserved.
+The labeled Live call button and its settings are visible below the composer. Calling a selected name opens that bot in the Bots tab before starting the call. Enable Bots in Desktop; existing Sessions tabs are preserved.
+
+## What's new since 0.12.1
+
+- **0.12.2 · Remote bots.** Switchboard can open the Bot Chat for a registered remote connection and profile. Its voice key can start or stop a call for that bot. On older Desktop builds, pair the deck once on the Desktop computer.
+- **0.12.3 · Hermes 0.22.0 and later.** The Live call button stays visible below the composer. Use the adjacent settings button to choose a provider, model and voice.
+- **0.12.4 · First use.** The ZIP installs the Desktop plugin once per computer and the backend in each selected profile. The Desktop switch starts on and remembers an explicit off choice. With no saved provider, Live selects Codex subscription when the current profile reports it available and falls back to Gemini Live otherwise. Starting with a missing API key opens Call settings with a setup action.
+- **0.12.5 · Windows installation.** Plugin files inherit the target folder's access permissions, so a regular Desktop or gateway session can read an installation made from an elevated shell. The Windows and macOS/Linux installation examples use the profile selected by `hermes -p` and also cover an explicit `HERMES_HOME`.
+
+On macOS VMs running Hermes 0.22.0 and 0.23.3, the 0.12.4 ZIP was checked for Desktop activation, composer controls and missing-key guidance. On Windows Server running Hermes 0.22.5, the 0.12.5 ZIP was installed from an elevated shell. A regular user could read the files, see the Live button and open settings with Codex subscription selected. These checks did not exercise a live audio call or verify Korean labels in the native app.
 
 ## What's new in 0.12.1
 
@@ -38,7 +47,7 @@ Hover or focus the ear icon to reveal call and settings controls. Calling a sele
 
 ## First-use setup
 
-In **Capabilities → Plugins**, rescan and search **Hermes Live** (with a space), then enable its switch. After enabling the backend and Desktop parts, open **Settings → Plugins → Hermes Live**. The ear button opens setup if required configuration is missing. Setup follows these steps:
+After installing the ZIP and enabling the backend for the profile, open **Settings → Plugins → Hermes Live**. The ear button opens setup if required configuration is missing. Setup follows these steps:
 
 1. Choose **Call bots by name** or **Start calls with a button**. Button calls do not require a local wake model.
 2. Select local bots. Enable Hermes Live on a missing bot through its official plugin settings; existing selections and voices are preserved.
@@ -48,7 +57,7 @@ In **Capabilities → Plugins**, rescan and search **Hermes Live** (with a space
 6. Test the wake phrase locally, then optionally start a real test call. A local recognition test never opens a cloud call. A real call uses the selected account and its usage limits. Untested calls remain labeled unverified.
 7. Start listening explicitly. Listening on the next app launch is a separate preference, off for new users.
 
-Name calling supports **Apple Silicon macOS with Hermes 0.23.0+**. The plugin ships an authenticated whisper.cpp engine and a Python stdlib adapter; new users do not need BotIn, Node.js, build tools, model paths, or paid transcription APIs. Audio capture dependencies are declared for Hermes package management. Existing explicit legacy adapter settings continue working until the user saves the managed microphone setup.
+Name calling supports **Apple Silicon macOS with Hermes 0.22.0+**. The plugin ships an authenticated whisper.cpp engine and a Python stdlib adapter; new users do not need BotIn, Node.js, build tools, model paths, or paid transcription APIs. Audio capture dependencies are declared for Hermes package management. Existing explicit legacy adapter settings continue working until the user saves the managed microphone setup.
 
 The new setup page supports Korean and English; other interface languages currently use English for this page. Existing call/audio/usage translations remain available.
 
@@ -78,7 +87,7 @@ If upgrading from a manually configured wake engine, open **Wake model**, rechec
 
 Select bots in setup or **Live call settings → Wake**. Each selected bot uses its current Bots title in `헤이 {name}` / `Hey {name}` with up to three spoken aliases. Duplicate enabled names are rejected; newly discovered bots remain off. Say `Bye {name}` / `바이 {name}` to end and return to standby. Calling another selected name during a call switches bots. The current call keeps its name snapshot even if settings change.
 
-After setup, use the small ear icon to toggle listening and hover/focus to reveal Live/settings controls. A match plays the chosen local cue, opens the matching bot in Bots, and starts its Codex subscription call with a short first greeting. Preparing, connected, and listening are distinct states.
+After setup, use the Wake tab in Live settings to toggle listening. A match plays the chosen local cue, opens the matching bot in Bots, and starts its Codex subscription call with a short first greeting. Preparing, connected, and listening are distinct states.
 
 Hermes Desktop must remain open and its backend connected. This does not wake a sleeping Mac or open a closed app. Remote wake recognition is unsupported. Wake audio stays local and is not saved; voice-call audio goes to the voice provider. No API-provider fallback is used for Codex calls.
 
@@ -90,7 +99,7 @@ The v0.9.0 settings panel uses Hermes Desktop’s native selectors and segmented
 
 ![Hermes Live v0.9.0 native settings controls](assets/settings-v0.9.png)
 
-An animated tour assembled from current English-interface screenshots: provider settings, audio devices, API cost estimates, and account usage. The purple composer button starts a call with saved settings; its adjacent arrow opens this panel.
+An animated tour assembled from current English-interface screenshots: provider settings, audio devices, API cost estimates, and account usage. The screenshots show an earlier composer layout. In 0.12.3, Live and its settings appear below the composer.
 
 ![Hermes Live settings tour in Hermes Desktop](assets/hermes-live-demo.gif)
 
@@ -104,37 +113,70 @@ Captured on October 23, 2026 in Hermes Desktop v0.22.5 with Hermes Live v0.9.0. 
 
 ## Requirements
 
-- Hermes Desktop and backend **v0.23.0 or newer**. macOS is verified; Windows and Linux are not yet verified.
+- Hermes Desktop and backend **v0.22.0 or newer**. The release checks cover the host contracts at v0.22.0 and v0.23.3 and installation on Windows Server with Hermes v0.22.5.
 - An API key for at least one API provider, or Codex CLI with a ChatGPT subscription login on the backend computer.
 - Microphone permission. Node.js 24 is needed only to rebuild the plugin.
 
+### Switchboard on older Desktop builds
+
+On a Desktop with native plugin file access, the Switchboard v2 deck uses the local plugin directory automatically. On v0.22.0, enable Hermes Live on **This device → default** and open **Settings → Plugins → Hermes Live → Switchboard → Prepare pairing file**. Select the file at the displayed path once. Desktop stores a non-extractable key for this installation and can then service deck commands while a registered remote bot is selected. Choose a pairing file created on your own Desktop. The deck keeps using `plugin-files/data/hermes-live` under the same Desktop userData directory.
+
+A remote-only Desktop or `plugins.isolation: host` can use the foreground connector from the unpacked ZIP on the **Desktop computer**. From the extracted `plugins/hermes-live` directory run the following with a local Python environment containing FastAPI, Uvicorn, websockets and cryptography. Windows also needs pywin32 and the Hermes Python package used by its private-file writer.
+
+```text
+python dashboard/compat_mailbox.py
+```
+
+For a custom Desktop profile directory, append `--user-data "/absolute/path/to/Desktop-userData"` (on Windows, use its absolute Windows path). This must be the **existing Electron userData directory**, which contains the Desktop settings. Under **Switchboard → Select local pairing file**, select `hermes-live-connector.key` at the path the terminal prints. Leave the connector open while using the deck and press Ctrl+C to stop. Start it with the same account and path on later runs to reuse the pairing. The local account owns the directory, and it must restrict writes to that account and system administrators. Ordinary Live buttons and local v1 links use their existing paths without this grant.
+
 ## Installation
 
-### Option A — clone and symlink
+### Install the 0.12.5 ZIP
+
+Replace `mybot` with an existing profile name, or use `default`. Run these commands from the directory containing the ZIP. They ask Hermes for that profile's config path, then install, validate and enable its backend there. The Desktop bundle goes into the Hermes root's `desktop-plugins/hermes-live` once per Desktop installation. Additional profiles reuse the same bundle.
+
+**macOS or Linux**
 
 ```sh
-git clone --branch v0.12.1 https://github.com/dandacompany/hermes-live.git ~/hermes-live
-mkdir -p ~/.hermes/plugins
-ln -s ~/hermes-live ~/.hermes/plugins/hermes-live
+(
+  set -eu
+  profile=mybot
+  config=$(hermes -p "$profile" config path)
+  profile_home=$(dirname "$config")
+  stage=$(mktemp -d)
+  unzip -q hermes-live-0.12.5.zip -d "$stage"
+  python3 "$stage/install.py" --profile-home "$profile_home"
+  hermes -p "$profile" plugins validate "$profile_home/plugins/hermes-live" --install-deps
+  hermes -p "$profile" plugins enable hermes-live
+  hermes -p "$profile" plugins list
+)
 ```
 
-Use the symlink command only if that plugin path does not already exist. The repository includes the compiled Desktop entrypoint, so installation does not require a frontend build.
+**Windows PowerShell** (requires Python 3. You can substitute its executable for `py -3`.)
 
-### Option B — install from GitHub
-
-Use the exact commit-pinned install command in the [v0.12.1 release notes](https://github.com/dandacompany/hermes-live/releases/tag/v0.12.1). An unpinned repository install follows the default branch and may install a different version.
-
-This is a direct repository install. The catalog may supply a different version; use the pinned command, not the bare catalog name.
-
-### Verify and enable
-
-```sh
-hermes plugins validate ~/.hermes/plugins/hermes-live
-hermes plugins enable hermes-live
-hermes plugins list
+```powershell
+$profileName = 'mybot'
+$config = hermes -p $profileName config path
+if ($LASTEXITCODE -ne 0 -or !$config) { throw 'Could not resolve Hermes profile' }
+$profileHome = Split-Path -Parent $config
+$stage = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
+Expand-Archive -LiteralPath '.\hermes-live-0.12.5.zip' -DestinationPath $stage -ErrorAction Stop
+py -3 (Join-Path $stage 'install.py') --profile-home $profileHome
+if ($LASTEXITCODE -ne 0) { throw 'Installation stopped' }
+hermes -p $profileName plugins validate (Join-Path $profileHome 'plugins/hermes-live') --install-deps
+if ($LASTEXITCODE -ne 0) { throw 'Validation failed' }
+hermes -p $profileName plugins enable hermes-live
+if ($LASTEXITCODE -ne 0) { throw 'Activation failed' }
+hermes -p $profileName plugins list
 ```
 
-In Hermes Desktop, select **Plugins → Rescan**, then enable the **Desktop switch for Hermes Live**. Backend and Desktop activation are separate. Restart the backend after ongoing tasks finish when updating backend routes. Rebuild and reload the Desktop plugin after changing its frontend source.
+On Windows, run the installer in the same user account that runs Hermes Desktop or the gateway. An elevated shell for that account also works when the target `plugins` and `desktop-plugins` directories grant that user inheritable read and execute access. Version 0.12.5 stages both packages with those permissions before publishing them. If 0.12.4 was installed from an elevated shell and Hermes reports `Skipping unreadable plugin directory`, use the backup-and-reinstall steps below for the two Hermes Live folders.
+
+For an explicit `HERMES_HOME`, set it to the **absolute target profile directory**, extract the ZIP, and run `python install.py` in the extracted directory. In the same shell run `hermes plugins validate <absolute-path-to-that-profile/plugins/hermes-live> --install-deps`, then `hermes plugins enable hermes-live`. For a remote backend, place `plugins/hermes-live` on the server in that profile and `desktop-plugins/hermes-live` under the Hermes root on the Desktop computer.
+
+**Upgrades.** Close Desktop, move the target profile's previous `plugins/hermes-live` and the previous shared `desktop-plugins/hermes-live` directories intact to a backup outside the scan paths, then install. Update other profiles with older unified packages as well. The ZIP registers a standalone Desktop plugin. After **Capabilities → Plugins → Rescan**, its switch starts on unless you previously turned it off.
+
+With no saved provider, the panel and the call button use Codex subscription when the current profile's `/catalog` reports it available, otherwise Gemini Live. Starting with a missing key opens the **Call** settings with the setup message and **Configure API key**.
 
 ## GPT Live with a Codex subscription
 
@@ -179,7 +221,7 @@ With a remote Hermes connection, install and enable the backend plugin on that s
 
 ## Usage
 
-**Hover or focus the ear icon, then select Live to start a call with your saved settings.** Select settings in the same menu to choose the provider, live model, and voice. During a call, the composer shows a waveform, an **End** button, and a microphone mute control. Before the connection is ready, the button shows **Preparing**; clicking it cancels the connection attempt. Once connected, it changes to **End**. Allow microphone access when macOS asks. Opening or closing the settings panel does not interrupt the call. End the call before changing the provider, model, or voice. Control names below refer to the English interface.
+**Select the Live call button below the composer to start a call with your saved settings.** Select the adjacent settings button to choose the provider, live model, and voice. During a call, the composer shows a waveform, an **End** button, and a microphone mute control. Before the connection is ready, the button shows **Preparing**; clicking it cancels the connection attempt. Once connected, it changes to **End**. Allow microphone access when macOS asks. Opening or closing the settings panel does not interrupt the call. End the call before changing the provider, model, or voice. Control names below refer to the English interface.
 
 - End any existing GPT Live call before starting. The two call engines are independent.
 - API usage is billed to the selected provider account.
@@ -221,6 +263,7 @@ The public source includes TypeScript, Python, the lockfile, and the compiled De
 npm ci
 npm run typecheck
 npm run build
+python3 scripts/package.py
 hermes plugins validate . --install-deps
 ```
 
