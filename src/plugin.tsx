@@ -74,7 +74,7 @@ function apiScopeMatches(scope:Scope){
 }
 
 export default {
- id:'hermes-live',name:'Hermes Live',version:'0.12.5',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:true,
+ id:'hermes-live',name:'Hermes Live',version:'0.12.6',description:'Gemini · Grok · Qwen · Codex subscription live calls',defaultEnabled:true,
  register(ctx:PluginContext){
   ctx.i18n.register(bundles);
   const t=ctx.i18n.t as Translate;
@@ -302,7 +302,7 @@ export default {
   const voiceGate=new VoiceCommandGate();const voiceInstance=crypto.randomUUID();let lastVoiceCommand:LastCommand|null=null;
   const isLocal=()=>{
    const socket=host.activeConnectionId?.();
-   return host.state.connectionId.get()==='local'&&(!socket||socket==='local');
+   return (host.state.connectionId.get()??'local')==='local'&&(socket??'local')==='local';
   };
   const focusedChat=():FocusedChat|null=>{const owner=host.state.focusedSessionOwner.get();return owner?{connection:owner.connectionId,profile:owner.profile,storedId:host.state.focusedStoredSessionId?.get()??null}:null};
   // Remote backends would write the file on another machine; staying silent lets local readers see it as stale.
@@ -427,7 +427,7 @@ export default {
    const profile=useSyncExternalStore(fn=>host.state.profile.subscribe(fn),()=>host.state.profile.get());
    const connection=useSyncExternalStore(fn=>host.state.connectionId.subscribe(fn),()=>host.state.connectionId.get());
    useSyncExternalStore(fn=>{listeners.add(fn);return()=>listeners.delete(fn)},()=>`${voiceMode.paused}:${voiceMode.busy}`);
-   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/>{showPairing&&<SwitchboardPairing korean={locale.startsWith('ko')} local={connection==='local'&&profile==='default'} prepare={()=>ctx.rest('/control-mailbox/prepare',{method:'POST'})} pair={file=>mailbox.pair(file)}/>}</div>{__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics&&<DiagnosticsPanel key={`diag:${connection}:${profile}`} ctx={ctx} diagnostics={diagnostics} korean={locale.startsWith('ko')}/>}<Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
+   return <><div style={{maxWidth:760,margin:'0 auto',padding:'16px 16px 0'}}><VoiceModeControls/>{showPairing&&<SwitchboardPairing korean={locale.startsWith('ko')} local={isLocal()&&profile==='default'} prepare={()=>ctx.rest('/control-mailbox/prepare',{method:'POST'})} pair={file=>mailbox.pair(file)}/>}</div>{__HERMES_LIVE_DEV_DIAGNOSTICS__&&diagnostics&&<DiagnosticsPanel key={`diag:${connection}:${profile}`} ctx={ctx} diagnostics={diagnostics} korean={locale.startsWith('ko')}/>}<Setup suspended={voiceMode.paused||voiceMode.busy} registerStopTest={fn=>{stopSetupTest=fn;return()=>{if(stopSetupTest===fn)stopSetupTest=null}}} key={`${connection}:${profile}`} ctx={ctx} scopeKey={`${connection||'local'}:${profile}`} local={!connection||connection==='local'}
     subscribe={fn=>{listeners.add(fn);return()=>{listeners.delete(fn)}}} callState={()=>controller.snapshot.status}
     active={()=>voiceMode.paused||voiceMode.busy||activity.active||!['idle','error'].includes(controller.snapshot.status)||host.state.busy.get()}
     hold={async()=>{const enabled=wake.enabled;await wake.enable(false);return()=>{if(enabled&&!voiceMode.paused&&!voiceMode.busy&&['idle','error'].includes(controller.snapshot.status))void wake.enable(true)}}}

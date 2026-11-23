@@ -1,5 +1,5 @@
 name: hermes-live
-version: 0.12.5
+version: 0.12.6
 requires_hermes: '>=0.22.0'
 python_dependencies:
   - 'pywin32>=306,<312; sys_platform == "win32"'

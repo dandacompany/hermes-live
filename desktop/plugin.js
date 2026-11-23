@@ -3048,7 +3048,7 @@ function Setup({ suspended = !1, registerStopTest, ctx, local, scopeKey, active,
         c("manualMode"),
         /* @__PURE__ */ jsx5("p", { style: hint, children: c("manualHint") })
       ] }),
-      mode === "wake" && data && !data.assets.supported && /* @__PURE__ */ jsx5("p", { role: "alert", children: c("localOnly") })
+      data?.assets.supported === !1 && /* @__PURE__ */ jsx5("p", { role: "status", children: c("localOnly") })
     ] }),
     step === 1 && local && /* @__PURE__ */ jsxs5("div", { style: panel, children: [
       /* @__PURE__ */ jsx5("p", { style: hint, children: c("selectBots") }),
@@ -4167,6 +4167,14 @@ function remoteDesktop(host4, live, hash) {
         let stillIdleOrSameCall = () => !disposed && live.status().status === state.status && live.callIdentity() === identity, atCommand = () => hash() === arrival && stillIdleOrSameCall();
         atCommand() || refuse("scope_changed");
         let op = remoteOperation(command.action, command, state);
+        if (op === "stop") {
+          try {
+            live.stop();
+          } catch {
+            refuse("stop_failed");
+          }
+          return;
+        }
         supported() || refuse("unsupported_sdk");
         let route = await resolveRemoteRoute(
           {
@@ -4178,14 +4186,7 @@ function remoteDesktop(host4, live, hash) {
           },
           command
         );
-        if (atCommand() || refuse("scope_changed"), remoteOperation(op, command, live.status()), op === "stop") {
-          try {
-            live.stop();
-          } catch {
-            refuse("stop_failed");
-          }
-          return;
-        }
+        atCommand() || refuse("scope_changed"), remoteOperation(op, command, live.status());
         let landing = null, selected = (stored2) => wakeBotReady(
           live.scope(),
           route.profile,
@@ -5187,7 +5188,7 @@ function apiScopeMatches(scope) {
 var plugin_default = {
   id: "hermes-live",
   name: "Hermes Live",
-  version: "0.12.5",
+  version: "0.12.6",
   description: "Gemini \xB7 Grok \xB7 Qwen \xB7 Codex subscription live calls",
   defaultEnabled: !0,
   register(ctx) {
@@ -5431,7 +5432,7 @@ var plugin_default = {
       }
     }, VOICE_ROUTE = "/hermes-live/voice", voiceGate = new VoiceCommandGate(), voiceInstance = crypto.randomUUID(), lastVoiceCommand = null, isLocal = () => {
       let socket = host3.activeConnectionId?.();
-      return host3.state.connectionId.get() === "local" && (!socket || socket === "local");
+      return (host3.state.connectionId.get() ?? "local") === "local" && (socket ?? "local") === "local";
     }, focusedChat = () => {
       let owner = host3.state.focusedSessionOwner.get();
       return owner ? { connection: owner.connectionId, profile: owner.profile, storedId: host3.state.focusedStoredSessionId?.get() ?? null } : null;
@@ -5567,7 +5568,7 @@ var plugin_default = {
       return useSyncExternalStore2((fn) => (listeners.add(fn), () => listeners.delete(fn)), () => `${voiceMode.paused}:${voiceMode.busy}`), /* @__PURE__ */ jsxs9(Fragment3, { children: [
         /* @__PURE__ */ jsxs9("div", { style: { maxWidth: 760, margin: "0 auto", padding: "16px 16px 0" }, children: [
           /* @__PURE__ */ jsx9(VoiceModeControls, {}),
-          showPairing && /* @__PURE__ */ jsx9(SwitchboardPairing, { korean: locale.startsWith("ko"), local: connection === "local" && profile === "default", prepare: () => ctx.rest("/control-mailbox/prepare", { method: "POST" }), pair: (file) => mailbox.pair(file) })
+          showPairing && /* @__PURE__ */ jsx9(SwitchboardPairing, { korean: locale.startsWith("ko"), local: isLocal() && profile === "default", prepare: () => ctx.rest("/control-mailbox/prepare", { method: "POST" }), pair: (file) => mailbox.pair(file) })
         ] }),
         !1,
         /* @__PURE__ */ jsx9(

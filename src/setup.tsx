@@ -112,7 +112,7 @@ export function Setup({suspended=false,registerStopTest,ctx,local,scopeKey,activ
   {step===0&&<div style={panel}>
    <label><input type="radio" name="live-setup-mode" checked={mode==='wake'} disabled={data?.assets.supported===false} onChange={()=>setMode('wake')}/> {c('wakeMode')}<p style={hint}>{c('wakeHint')}</p></label>
    <label><input type="radio" name="live-setup-mode" checked={mode==='call'} onChange={()=>setMode('call')}/> {c('manualMode')}<p style={hint}>{c('manualHint')}</p></label>
-   {mode==='wake'&&data&&!data.assets.supported&&<p role="alert">{c('localOnly')}</p>}
+   {data?.assets.supported===false&&<p role="status">{c('localOnly')}</p>}
   </div>}
   {step===1&&local&&<div style={panel}>
    <p style={hint}>{c('selectBots')}</p>
