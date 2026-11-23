@@ -12,11 +12,11 @@ The labeled Live call button and its settings are visible below the composer. Ca
 
 ## What's new since 0.12.1
 
-- **0.12.6 · Switchboard.** Local voice links work when Desktop omits the local connection ID. Stop or Toggle can end the matching remote bot’s active call even if its connection is offline or removed.
 - **0.12.2 · Remote bots.** Switchboard can open the Bot Chat for a registered remote connection and profile. Its voice key can start or stop a call for that bot. On older Desktop builds, pair the deck once on the Desktop computer.
 - **0.12.3 · Hermes 0.22.0 and later.** The Live call button stays visible below the composer. Use the adjacent settings button to choose a provider, model and voice.
 - **0.12.4 · First use.** The ZIP installs the Desktop plugin once per computer and the backend in each selected profile. The Desktop switch starts on and remembers an explicit off choice. With no saved provider, Live selects Codex subscription when the current profile reports it available and falls back to Gemini Live otherwise. Starting with a missing API key opens Call settings with a setup action.
 - **0.12.5 · Windows installation.** Plugin files inherit the target folder's access permissions, so a regular Desktop or gateway session can read an installation made from an elevated shell. The Windows and macOS/Linux installation examples use the profile selected by `hermes -p` and also cover an explicit `HERMES_HOME`.
+- **0.12.6 · Switchboard.** Local voice links work when Desktop omits the local connection ID. Stop or Toggle can end the matching remote bot’s active call even if its connection is offline or removed.
 
 On macOS VMs running Hermes 0.22.0 and 0.23.3, the 0.12.4 ZIP was checked for Desktop activation, composer controls and missing-key guidance. On Windows Server running Hermes 0.22.5, the 0.12.5 ZIP was installed from an elevated shell. A regular user could read the files, see the Live button and open settings with Codex subscription selected. These checks did not exercise a live audio call or verify Korean labels in the native app.
 
