@@ -1,4 +1,4 @@
-> **Hermes Live 0.12.5** — 이름 호출에는 Apple Silicon Mac이 필요합니다. Live 통화 버튼 옆 설정에서 **음성 기능 잠시 쉬기**를 누르면 Live 통화와 호출 대기가 종료됩니다. Hermes 기본 음성·받아쓰기를 마친 후 **호출 대기 재개**를 누르세요. 일시정지는 새로고침 후에도 유지되며 봇·목소리·마이크·자동 시작 선호는 보존합니다. 기본 음성 사용을 자동 감지하지 않습니다.
+> **Hermes Live 0.12.6** — 이름 호출에는 Apple Silicon Mac이 필요합니다. Live 통화 버튼 옆 설정에서 **음성 기능 잠시 쉬기**를 누르면 Live 통화와 호출 대기가 종료됩니다. Hermes 기본 음성·받아쓰기를 마친 후 **호출 대기 재개**를 누르세요. 일시정지는 새로고침 후에도 유지되며 봇·목소리·마이크·자동 시작 선호는 보존합니다. 기본 음성 사용을 자동 감지하지 않습니다.
 
 > 첫 설정: **설정 → 플러그인 → Hermes Live**에서 봇 선택 → 계정 → 호출 모델 → 마이크 → 직접 해보기 순서로 준비합니다. 버튼 통화만 사용하면 호출 모델을 받지 않습니다. 이름 호출은 Apple Silicon Mac / Hermes 0.22.0 이상을 지원합니다.
 > 모델이 있으면 검증해 재사용하고, 없으면 약 488 MB Whisper Small을 내려받습니다. 실행 엔진은 포함되어 BotIn·Node.js·개발 도구 설치가 필요 없습니다. 다운로드 취소·재시도, 로그인·권한 안내를 제공합니다.
@@ -22,6 +22,7 @@ English: [README.md](./README.md)
 - **0.12.3 · Hermes 0.22.0 이상 지원.** 입력란 아래에 Live 통화 버튼이 항상 표시됩니다. 바로 옆 설정에서 공급자·모델·목소리를 고를 수 있습니다.
 - **0.12.4 · 첫 사용.** ZIP은 Desktop 플러그인을 장비당 한 번, 백엔드를 선택한 프로필마다 설치합니다. Desktop 스위치는 처음에 켜지고, 직접 끈 선택을 기억합니다. 저장한 공급자가 없으면 현재 프로필에서 사용 가능한 Codex 구독을 선택하고, 사용할 수 없으면 Gemini Live를 사용합니다. API 키가 없는 상태에서 시작을 누르면 통화 설정에 키 설정 버튼이 나타납니다.
 - **0.12.5 · Windows 설치.** 설치 파일이 대상 폴더의 권한을 상속해 관리자 셸로 설치한 뒤에도 일반 사용자 세션의 Desktop과 게이트웨이가 읽을 수 있습니다. Windows와 macOS·Linux 설치 예시는 `hermes -p`로 선택한 프로필과 `HERMES_HOME`을 직접 지정하는 방법을 모두 안내합니다.
+- **0.12.6 · Switchboard.** Desktop이 로컬 연결 ID를 생략해도 음성 링크가 작동합니다. 원격 연결이 끊기거나 목록에서 삭제돼도 Stop 또는 Toggle로 해당 봇의 진행 중인 통화를 종료할 수 있습니다.
 
 Hermes 0.22.0·0.23.3 macOS VM에서 0.12.4 ZIP의 Desktop 활성화, 컴포저 버튼, 키 미설정 안내를 확인했습니다. Hermes 0.22.5 Windows Server에서는 0.12.5 ZIP을 관리자 셸로 설치한 뒤 일반 사용자 세션에서 파일을 읽고 Live 버튼과 Codex 구독이 선택된 설정 패널을 확인했습니다. 실제 음성 통화와 네이티브 앱의 한국어 라벨은 이번 실기 검증 범위 밖입니다.
 
@@ -122,7 +123,7 @@ python dashboard/compat_mailbox.py
 
 ## 설치
 
-### 0.12.5 ZIP 설치
+### 0.12.6 ZIP 설치
 
 예시의 `mybot`을 설치할 기존 프로필 이름으로 바꾸세요. 기본 프로필은 `default`입니다. ZIP이 있는 폴더에서 실행하면 `hermes -p … config path`로 확인한 프로필에 백엔드를 설치하고 같은 프로필에서 검증·활성화합니다. Desktop 번들은 이 장비의 Hermes 루트 아래 `desktop-plugins/hermes-live`에 한 번 설치하며, 다른 프로필도 같은 버전을 재사용합니다.
 
@@ -135,7 +136,7 @@ python dashboard/compat_mailbox.py
   config=$(hermes -p "$profile" config path)
   profile_home=$(dirname "$config")
   stage=$(mktemp -d)
-  unzip -q hermes-live-0.12.5.zip -d "$stage"
+  unzip -q hermes-live-0.12.6.zip -d "$stage"
   python3 "$stage/install.py" --profile-home "$profile_home"
   hermes -p "$profile" plugins validate "$profile_home/plugins/hermes-live" --install-deps
   hermes -p "$profile" plugins enable hermes-live
@@ -151,7 +152,7 @@ $config = hermes -p $profileName config path
 if ($LASTEXITCODE -ne 0 -or !$config) { throw 'Could not resolve Hermes profile' }
 $profileHome = Split-Path -Parent $config
 $stage = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
-Expand-Archive -LiteralPath '.\hermes-live-0.12.5.zip' -DestinationPath $stage -ErrorAction Stop
+Expand-Archive -LiteralPath '.\hermes-live-0.12.6.zip' -DestinationPath $stage -ErrorAction Stop
 py -3 (Join-Path $stage 'install.py') --profile-home $profileHome
 if ($LASTEXITCODE -ne 0) { throw 'Installation stopped' }
 hermes -p $profileName plugins validate (Join-Path $profileHome 'plugins/hermes-live') --install-deps

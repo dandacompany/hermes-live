@@ -1,4 +1,4 @@
-> **Hermes Live 0.12.5** — name calling requires Apple Silicon macOS. Open the settings beside the Live button and select **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
+> **Hermes Live 0.12.6** — name calling requires Apple Silicon macOS. Open the settings beside the Live button and select **Pause Live voice** before using Hermes’s built-in voice or dictation. This ends the Live call and releases its wake microphone. Choose **Resume name listening** after finishing the other voice feature. Pause survives reload; bot, voice, microphone and auto-start preferences are preserved. Built-in voice activity is not detected automatically.
 
 # hermes-live
 
@@ -16,6 +16,7 @@ The labeled Live call button and its settings are visible below the composer. Ca
 - **0.12.3 · Hermes 0.22.0 and later.** The Live call button stays visible below the composer. Use the adjacent settings button to choose a provider, model and voice.
 - **0.12.4 · First use.** The ZIP installs the Desktop plugin once per computer and the backend in each selected profile. The Desktop switch starts on and remembers an explicit off choice. With no saved provider, Live selects Codex subscription when the current profile reports it available and falls back to Gemini Live otherwise. Starting with a missing API key opens Call settings with a setup action.
 - **0.12.5 · Windows installation.** Plugin files inherit the target folder's access permissions, so a regular Desktop or gateway session can read an installation made from an elevated shell. The Windows and macOS/Linux installation examples use the profile selected by `hermes -p` and also cover an explicit `HERMES_HOME`.
+- **0.12.6 · Switchboard.** Local voice links work when Desktop omits the local connection ID. Stop or Toggle can end the matching remote bot’s active call even if its connection is offline or removed.
 
 On macOS VMs running Hermes 0.22.0 and 0.23.3, the 0.12.4 ZIP was checked for Desktop activation, composer controls and missing-key guidance. On Windows Server running Hermes 0.22.5, the 0.12.5 ZIP was installed from an elevated shell. A regular user could read the files, see the Live button and open settings with Codex subscription selected. These checks did not exercise a live audio call or verify Korean labels in the native app.
 
@@ -131,7 +132,7 @@ For a custom Desktop profile directory, append `--user-data "/absolute/path/to/D
 
 ## Installation
 
-### Install the 0.12.5 ZIP
+### Install the 0.12.6 ZIP
 
 Replace `mybot` with an existing profile name, or use `default`. Run these commands from the directory containing the ZIP. They ask Hermes for that profile's config path, then install, validate and enable its backend there. The Desktop bundle goes into the Hermes root's `desktop-plugins/hermes-live` once per Desktop installation. Additional profiles reuse the same bundle.
 
@@ -144,7 +145,7 @@ Replace `mybot` with an existing profile name, or use `default`. Run these comma
   config=$(hermes -p "$profile" config path)
   profile_home=$(dirname "$config")
   stage=$(mktemp -d)
-  unzip -q hermes-live-0.12.5.zip -d "$stage"
+  unzip -q hermes-live-0.12.6.zip -d "$stage"
   python3 "$stage/install.py" --profile-home "$profile_home"
   hermes -p "$profile" plugins validate "$profile_home/plugins/hermes-live" --install-deps
   hermes -p "$profile" plugins enable hermes-live
@@ -160,7 +161,7 @@ $config = hermes -p $profileName config path
 if ($LASTEXITCODE -ne 0 -or !$config) { throw 'Could not resolve Hermes profile' }
 $profileHome = Split-Path -Parent $config
 $stage = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
-Expand-Archive -LiteralPath '.\hermes-live-0.12.5.zip' -DestinationPath $stage -ErrorAction Stop
+Expand-Archive -LiteralPath '.\hermes-live-0.12.6.zip' -DestinationPath $stage -ErrorAction Stop
 py -3 (Join-Path $stage 'install.py') --profile-home $profileHome
 if ($LASTEXITCODE -ne 0) { throw 'Installation stopped' }
 hermes -p $profileName plugins validate (Join-Path $profileHome 'plugins/hermes-live') --install-deps

@@ -46,6 +46,14 @@ export function remoteDesktop(host: typeof desktop, live: Live, hash: () => stri
         const atCommand = () => hash() === arrival && stillIdleOrSameCall()
         if (!atCommand()) refuse('scope_changed')
         const op = remoteOperation(command.action, command, state)
+        if (op === 'stop') {
+          try {
+            live.stop()
+          } catch {
+            refuse('stop_failed')
+          }
+          return
+        }
         if (!supported()) refuse('unsupported_sdk')
         const route = await resolveRemoteRoute(
           {
@@ -60,14 +68,6 @@ export function remoteDesktop(host: typeof desktop, live: Live, hash: () => stri
         )
         if (!atCommand()) refuse('scope_changed')
         remoteOperation(op, command, live.status())
-        if (op === 'stop') {
-          try {
-            live.stop()
-          } catch {
-            refuse('stop_failed')
-          }
-          return
-        }
         // The canonical main-session open navigates to this exact stored id. Any other
         // departure from the command route supersedes our authority to change focus.
         let landing: string | null = null
